@@ -1,0 +1,171 @@
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+
+buildscript {
+    repositories {
+        maven {
+            url('http://repository.openbakery.org/')
+        }
+        mavenCentral()
+  }
+
+    dependencies {
+        classpath "org.openbakery:xcode-plugin:0.15.1.develop.114"
+    }
+}
+
+apply plugin: "org.openbakery.xcode-plugin"
+
+def env = System.getenv();
+
+String certificateName = env['IOS_CERTIFICATE_NAME'];
+String provisioningProfileName = env['IOS_PROVISIONING_PROFILE_NAME'];
+String bundleIdentifierName = env['BUNDLE_IDENTIFIER'];
+
+String certificatePath = "../signing/Certificates/" + certificateName + ".p12";
+String provisioningProfilePath = "../signing/Provisioning profiles/" + provisioningProfileName +".mobileprovision";
+
+File certificate = file(certificatePath);
+File provisioningProfile = file(provisioningProfilePath);
+
+String kilooDownloadServerURL = "http://kiloodownload.com/fantasyrpgproject_builds/";
+String downloadServerURL = env['UPLOAD_PATH'];
+if(downloadServerURL!=null)
+{
+    kilooDownloadServerURL = downloadServerURL;
+}
+
+xcodebuild {
+target = 'Unity-iPhone'
+scheme = 'Unity-iPhone'
+configuration = 'Debug'
+type = 'iOS'
+simulator = 'false'
+additionalParameters = "CODE_SIGNING_ALLOWED=NO"
+ signing {
+     certificateURI = certificate.toURI()
+     mobileProvisionURI = provisioningProfile.toURI()
+     certificatePassword = ''
+         }
+ }
+
+infoplist
+{
+    bundleIdentifier = bundleIdentifierName
+}
+
+
+
+//appends the build number to the generated .ipa and .plist file. Run this task after the hockeykit task has been run
+task renameHockeyKitOutput <<
+{
+    //def env = System.getenv();
+    ArrayList<File> listOfFiles = new ArrayList<File>();
+    listf("build/hockeykit",listOfFiles);
+    for (int i = 0; i < listOfFiles.size(); i++) {
+
+            if (listOfFiles.get(i).isFile()) {
+
+                if(listOfFiles.get(i).getName().toLowerCase().contains('.ipa') ||
+                    listOfFiles.get(i).getName().toLowerCase().contains('.plist'))
+                    {
+                        String buildNumber = env['BUILD_NUMBER'];
+                        if(buildNumber != null)
+                        {
+                            buildNumber = '_' + buildNumber;
+                        }else
+                        {
+                            buildNumber = ''
+                        }
+                        String absolutePath = listOfFiles.get(i).getAbsolutePath();
+                        String ext = extension(absolutePath);
+                        String name = listOfFiles.get(i).getName().replace('.'+ ext, '');
+                        String filePath = absolutePath.substring(0,absolutePath.lastIndexOf(File.separator));
+                        String newPath = filePath + '/' + name + buildNumber + '.'+ ext;
+                        File f = new File(absolutePath);
+
+                        if(ext.toLowerCase().contains('plist'))
+                        {
+                                //replace the url here so that the sever can download the ipa
+                                String plistContents = readTextFromFile(f);
+                                String url  = kilooDownloadServerURL + name + buildNumber + '.ipa';
+                                plistContents = plistContents.replaceAll("__URL__",url);
+                                File urlReplaceFile = new File(newPath);
+                                f.renameTo(urlReplaceFile);
+                                writeToFile(newPath , plistContents);
+
+                        }else{
+
+                                f.renameTo(new File(newPath));
+                        }
+                    }
+                }
+        }
+}
+
+//after hockey task has created the plist and ipa, rename them and add the correct download URL to the .plist
+renameHockeyKitOutput.mustRunAfter 'hockeykit'
+
+public void listf(String directoryName, ArrayList<File> files) {
+    File directory = new File(directoryName);
+
+    // get all the files from a directory
+    File[] fList = directory.listFiles();
+    for (File file : fList) {
+        if (file.isFile()) {
+            files.add(file);
+        } else if (file.isDirectory()) {
+            listf(file.getAbsolutePath(), files);
+        }
+    }
+}
+
+public String extension(String fullPath) {
+    int dot = fullPath.lastIndexOf('.');
+    return fullPath.substring(dot + 1);
+ }
+
+public File writeToFile(String fileName , String content)
+{
+         //println content;
+         File file = new File(fileName);
+         BufferedWriter output = null;
+         try {
+              output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file),'UTF-8'));
+              output.write(content);
+             } catch ( IOException e )
+                 {
+                         println e;
+               e.printStackTrace();
+             } finally
+                 {
+               if ( output != null )
+                   {
+                           output.close();
+               }
+
+             }
+         return file;
+}
+
+public String readTextFromFile(File file)
+{
+        String everything = '';
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        try {
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while (line != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            everything = sb.toString();
+        } finally {
+            br.close();
+        }
+
+        return everything;
+}

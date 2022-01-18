@@ -1,0 +1,10 @@
+//
+//  Config.xcconfig
+//  Unity-iPhone
+//
+//  Created by Patrik Bertilsson on 2021-10-15.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+DEBUG_INFORMATION_FORMAT="dwarf"
