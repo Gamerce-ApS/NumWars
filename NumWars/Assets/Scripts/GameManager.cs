@@ -36,6 +36,7 @@ public class GameManager : MonoBehaviour
     public Text p2_score;
     public Text p2_lastScore;
     public Text scoreOverview;
+    public Text tileLeft;
 
     public List<Player> thePlayers = new List<Player>();
 
@@ -51,6 +52,8 @@ public class GameManager : MonoBehaviour
         p2_score.text = "0";
         p1_lastScore.text = "";
         p2_lastScore.text = "";
+        tileLeft.text = PlayerBoard.instance.AllTilesNumbers.Count.ToString() + " / 105";
+
     }
     public void AddScore(int aPlayerId, int aScore)
     {
@@ -65,12 +68,17 @@ public class GameManager : MonoBehaviour
 
     public void UpdateUI()
     {
+        if (thePlayers.Count == 0)
+            return;
+
         p1_name.text = thePlayers[0].Username;
         p2_name.text = thePlayers[1].Username;
         p1_score.text = thePlayers[0].Score.ToString();
         p2_score.text = thePlayers[1].Score.ToString();
         p1_lastScore.text = "+"+thePlayers[0].LastScore.ToString();
         p2_lastScore.text = "+"+thePlayers[1].LastScore.ToString();
+        tileLeft.text = PlayerBoard.instance.AllTilesNumbers.Count.ToString() + " / 105";
+
     }
 
     // Update is called once per frame

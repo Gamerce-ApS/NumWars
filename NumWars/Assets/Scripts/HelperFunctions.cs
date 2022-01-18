@@ -9,6 +9,11 @@ public static class HelperFunctions
         return transform.GetComponent<RectTransform>();
 
     }
+
+    public static int SortByScore(Tile p1, Tile p2)
+    {
+        return int.Parse(p2.textLabel.text).CompareTo(int.Parse(p1.textLabel.text));
+    }
 }
 
 public static class IListExtensions
@@ -28,4 +33,6 @@ public static class IListExtensions
             ts[r] = tmp;
         }
     }
+
+   
 }

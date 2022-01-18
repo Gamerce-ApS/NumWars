@@ -33,21 +33,22 @@ public class PlayerBoard : MonoBehaviour
 
         AllTilesNumbers.Shuffle();
 
-        for (int i = 0; i < 6;i++)
-        {
-            GameObject go = GameObject.Instantiate(TileObject, panel.transform);
-            myTiles.Add(go.GetComponent<Tile>());
-        }
-        LayoutRebuilder.ForceRebuildLayoutImmediate(panel.GetComponent<RectTransform>());
-        for (int i = 0; i < myTiles.Count; i++)
-        {
-            
-            myTiles[i].Init(AllTilesNumbers[0]);
-            AllTilesNumbers.RemoveAt(0);
+        AddNewPlayerTiles();
+        //for (int i = 0; i < 6;i++)
+        //{
+        //    GameObject go = GameObject.Instantiate(TileObject, panel.transform);
+        //    myTiles.Add(go.GetComponent<Tile>());
+        //}
+        //LayoutRebuilder.ForceRebuildLayoutImmediate(panel.GetComponent<RectTransform>());
+        //for (int i = 0; i < myTiles.Count; i++)
+        //{
+
+        //    myTiles[i].Init(AllTilesNumbers[0]);
+        //    AllTilesNumbers.RemoveAt(0);
 
 
-        }
-        panel.GetComponent<HorizontalLayoutGroup>().enabled = false;
+        //}
+        //panel.GetComponent<HorizontalLayoutGroup>().enabled = false;
     }
 
     public void AddNewPlayerTiles()
@@ -60,11 +61,19 @@ public class PlayerBoard : MonoBehaviour
             go.GetComponent<Tile>().Init(AllTilesNumbers[0]);
             AllTilesNumbers.RemoveAt(0);
         }
+        myTiles.Sort(HelperFunctions.SortByScore);
+        for (int i = 0; i < myTiles.Count; i++)
+        {
+            myTiles[i].transform.SetAsFirstSibling();
+        }
         LayoutRebuilder.ForceRebuildLayoutImmediate(panel.GetComponent<RectTransform>());
         for (int i =0; i < myTiles.Count; i++)
         {
             myTiles[i].ResetStartPosition();
         }
+
+        GameManager.instance.UpdateUI();
+
 
     }
     // Update is called once per frame
