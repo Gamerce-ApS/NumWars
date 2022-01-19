@@ -118,7 +118,7 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         originalPanelLocalPosition = dragObjectInternal.localPosition;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(dragAreaInternal, data.position, data.pressEventCamera, out originalLocalPointerPosition);
         _targetScale = Vector3.one;
-
+        _targetScale = new Vector3(1.5f, 1.5f, 1.5f);
 
         transform.SetAsLastSibling();
         if(PlacedOnTile != null)
@@ -182,6 +182,7 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
     }
     public void OnEndDrag(PointerEventData data)
     {
+        GetComponent<Image>().color = new Color(1, 1, 1, 1);
         Debug.Log("EndDrag");
 
         if (Board.instance.Selection.GetComponent<Image>().enabled)
@@ -195,6 +196,7 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         {
             transform.position = _BoardPosition;
             dragObjectInternal.rotation = Quaternion.identity;
+            _targetScale = Vector3.one;
         }
 
 
@@ -242,8 +244,13 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         Vector2 localPointerPosition;
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(dragAreaInternal, data.position, data.pressEventCamera, out localPointerPosition))
         {
-            Vector3 offsetToOriginal = localPointerPosition - originalLocalPointerPosition;
-            dragObjectInternal.localPosition = originalPanelLocalPosition + offsetToOriginal;
+            //Vector3 offsetToOriginal = localPointerPosition - originalLocalPointerPosition;
+
+            //dragObjectInternal.localPosition = originalPanelLocalPosition + offsetToOriginal;
+
+            Vector3 screenPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            screenPos.z = dragObjectInternal.position.z;
+            dragObjectInternal.position = screenPos;
         }
 
       //  ClampToArea();
@@ -255,7 +262,10 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         //Set the Pointer Event Position to that of the game object
 
         
-    m_PointerEventData.position = Camera.main.WorldToScreenPoint(transform.position) - new Vector3(dragObjectInternal.sizeDelta.x/2, -dragObjectInternal.sizeDelta.y/2,0);
+  //  m_PointerEventData.position = Camera.main.WorldToScreenPoint(transform.position) - new Vector3(dragObjectInternal.sizeDelta.x/2, -dragObjectInternal.sizeDelta.y/2,0);
+
+        m_PointerEventData.position = Camera.main.WorldToScreenPoint(transform.position) - new Vector3(0, -dragObjectInternal.sizeDelta.y / 2 *1.6f, 0);
+        GetComponent<Image>().color = new Color(1, 1, 1, 0.5f);
 
         //Create a list of Raycast Results
         List<RaycastResult> results = new List<RaycastResult>();
