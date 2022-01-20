@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHandler
+public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerClickHandler
 {
 
     PointerEventData m_PointerEventData;
@@ -117,6 +117,10 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
     }
     public void OnBeginDrag(PointerEventData data)
     {
+        if (SwapScreen.instance.isOpen)
+            return;
+
+
         originalPanelLocalPosition = dragObjectInternal.localPosition;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(dragAreaInternal, data.position, data.pressEventCamera, out originalLocalPointerPosition);
         _targetScale = Vector3.one;
@@ -184,6 +188,9 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
     }
     public void OnEndDrag(PointerEventData data)
     {
+        if (SwapScreen.instance.isOpen)
+            return;
+
         GetComponent<Image>().color = new Color(1, 1, 1, 1);
         Debug.Log("EndDrag");
 
@@ -242,6 +249,10 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
     float _refreshTimer = 0;
     public void OnDrag(PointerEventData data)
     {
+        if (SwapScreen.instance.isOpen)
+            return;
+
+
         GetComponent<Image>().sprite = Normal;
         textLabel.color = new Color(1,1,1,1);
 
@@ -335,5 +346,41 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         pos.y = Mathf.Clamp(dragObjectInternal.localPosition.y, minPosition.y, maxPosition.y);
 
         dragObjectInternal.localPosition = pos;
+    }
+
+    public void OnPointerClick(PointerEventData pointerEventData)
+    {
+        SwapScreen.instance.ClickedTile(this);
+
+    }
+
+    public void ReturnFromBoard()
+    {
+        if(PlacedOnTile != null)
+        {
+
+
+
+            PlacedOnTile.SetValue(0);
+            PlacedOnTile = null;
+
+
+   
+
+
+            transform.position = _BoardPosition;
+            dragObjectInternal.rotation = Quaternion.identity;
+            _targetScale = Vector3.one;
+
+            textLabel.fontSize = 75;
+            Board.instance.Selection.GetComponent<Image>().enabled = false;
+            _targetRotation = Quaternion.Euler(0, 0, 0);
+            PlayerBoard.instance.UpdateAllTiles();
+            GetComponent<Image>().sprite = Normal;
+            textLabel.color = new Color(1, 1, 1, 1);
+
+
+        }
+
     }
 }
