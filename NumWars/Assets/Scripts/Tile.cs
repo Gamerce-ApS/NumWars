@@ -43,6 +43,8 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         _BoardPosition = transform.position;
 
         textLabel.text = aNumber.ToString();
+
+        textLabel.fontSize = 75;
     }
     Quaternion _targetRotation;
 
@@ -197,6 +199,8 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
             transform.position = _BoardPosition;
             dragObjectInternal.rotation = Quaternion.identity;
             _targetScale = Vector3.one;
+
+            textLabel.fontSize = 75;
         }
 
 
@@ -230,7 +234,7 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
             PlacedOnTile.SetValue(0);
         }
 
-
+        textLabel.fontSize = 83;
 
         textLabel.color = new Color(  98f/ 255f, 60f/ 255f, 95f/ 255f);
 
@@ -264,8 +268,8 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         
   //  m_PointerEventData.position = Camera.main.WorldToScreenPoint(transform.position) - new Vector3(dragObjectInternal.sizeDelta.x/2, -dragObjectInternal.sizeDelta.y/2,0);
 
-        m_PointerEventData.position = Camera.main.WorldToScreenPoint(transform.position) - new Vector3(0, -dragObjectInternal.sizeDelta.y / 2 *1.6f, 0);
-        GetComponent<Image>().color = new Color(1, 1, 1, 0.5f);
+        m_PointerEventData.position = Camera.main.WorldToScreenPoint(transform.position) + new Vector3(0, (dragObjectInternal.sizeDelta.y *0.1f) , 0);
+       // GetComponent<Image>().color = new Color(1, 1, 1, 0.5f);
 
         //Create a list of Raycast Results
         List<RaycastResult> results = new List<RaycastResult>();
