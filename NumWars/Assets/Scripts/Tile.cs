@@ -76,7 +76,10 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
 
 
     }
-
+    public string GetValue()
+    {
+        return textLabel.text;
+    }
     public void SetWhiteTile()
     {
         GetComponent<Image>().sprite = White;
@@ -119,6 +122,9 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
     {
         if (SwapScreen.instance.isOpen)
             return;
+        if (GameManager.instance.CheckIfMyTurn() == false)
+            return;
+
 
 
         originalPanelLocalPosition = dragObjectInternal.localPosition;
@@ -176,7 +182,8 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         yield return new WaitForSeconds(1f);
         PlacedOnTile.SetTile(StaticTile.TileType.NormalTile, int.Parse(textLabel.text));
 
-        PlayerBoard.instance.myTiles.Remove(this);
+        GameManager.instance.thePlayers[0].myTiles.Remove(this);
+        GameManager.instance.thePlayers[1].myTiles.Remove(this);
         Destroy(gameObject);
 
     }
@@ -189,6 +196,8 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
     public void OnEndDrag(PointerEventData data)
     {
         if (SwapScreen.instance.isOpen)
+            return;
+        if (GameManager.instance.CheckIfMyTurn() == false)
             return;
 
         GetComponent<Image>().color = new Color(1, 1, 1, 1);
@@ -251,7 +260,8 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
     {
         if (SwapScreen.instance.isOpen)
             return;
-
+        if (GameManager.instance.CheckIfMyTurn() == false)
+            return;
 
         GetComponent<Image>().sprite = Normal;
         textLabel.color = new Color(1,1,1,1);

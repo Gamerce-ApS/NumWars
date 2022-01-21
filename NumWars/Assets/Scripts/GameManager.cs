@@ -1,20 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Player
-{
-    public Player(string aName,int aID)
-    {
-        Username = aName;
-        ID = aID;
-    }
-    public string Username = "";
-    public int Score = 0;
-    public int ID = 0;
-    public int LastScore = 0;
-}
+
 
 
 public class GameManager : MonoBehaviour
@@ -40,11 +30,20 @@ public class GameManager : MonoBehaviour
 
     public List<Player> thePlayers = new List<Player>();
 
+    public int CurrentTurn = -1;
+
+    public GameObject WaitingOverlay;
+
     // Start is called before the first frame update
     void Start()
     {
-        thePlayers.Add(new Player("Pax: ",0));
-        thePlayers.Add(new Player("AI: ",1));
+        Board.instance.Init();
+        thePlayers.Add(new GameObject("Player1").AddComponent<Player>().Init("Pax: ", 0));
+        thePlayers.Add(new GameObject("Player2").AddComponent<Player>().Init("AI: ", 1,true));
+        PlayerBoard.instance.Init(thePlayers[0]);
+
+        CurrentTurn = 0;
+
 
         p1_name.text = thePlayers[0].Username;
         p2_name.text = thePlayers[1].Username;
@@ -52,18 +51,34 @@ public class GameManager : MonoBehaviour
         p2_score.text = "0";
         p1_lastScore.text = "";
         p2_lastScore.text = "";
-        tileLeft.text = PlayerBoard.instance.AllTilesNumbers.Count.ToString() + " / 105";
+        tileLeft.text = Board.instance.AllTilesNumbers.Count.ToString() + " / 105";
 
     }
-    public void AddScore(int aPlayerId, int aScore)
+    public void AddScore(Player aPlayer, int aScore)
     {
-        thePlayers[aPlayerId].LastScore = aScore;
+        aPlayer.LastScore = aScore;
 
-        thePlayers[aPlayerId].Score += aScore;
+        aPlayer.Score += aScore;
 
         UpdateUI();
 
         scoreOverview.text = aScore.ToString();
+    }
+    public bool CheckIfMyTurn()
+    {
+        if (CurrentTurn == 0)
+        {
+
+            return true;
+        }
+        else
+        {
+
+            AlertText.instance.ShowAlert("Not your turn!");
+
+            return false;
+        }
+
     }
 
     public void UpdateUI()
@@ -77,7 +92,7 @@ public class GameManager : MonoBehaviour
         p2_score.text = thePlayers[1].Score.ToString();
         p1_lastScore.text = "+"+thePlayers[0].LastScore.ToString();
         p2_lastScore.text = "+"+thePlayers[1].LastScore.ToString();
-        tileLeft.text = PlayerBoard.instance.AllTilesNumbers.Count.ToString() + " / 105";
+        tileLeft.text = Board.instance.AllTilesNumbers.Count.ToString() + " / 105";
 
     }
 
@@ -85,5 +100,31 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         
+    }
+    public void NextTurn()
+    {
+
+        if (CurrentTurn == 0)
+            CurrentTurn = 1;
+        else if (CurrentTurn == 1)
+            CurrentTurn = 0;
+
+        Debug.Log("Next Turn: " + CurrentTurn);
+        if (CurrentTurn == 1)
+        {
+
+            if (thePlayers[1].isAI)
+                thePlayers[1].DoAI();
+
+            WaitingOverlay.SetActive(true);
+            WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
+            WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
+        }
+        else
+        {
+
+            WaitingOverlay.GetComponent<CanvasGroup>().DOFade(0, 0.5f).SetEase(Ease.InOutQuart).OnComplete(() => { WaitingOverlay.SetActive(false); });
+           
+        }
     }
 }

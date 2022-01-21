@@ -66,6 +66,9 @@ public class SwapScreen : MonoBehaviour
     }
     public void OpenWindow()
     {
+        if (GameManager.instance.CheckIfMyTurn() == false)
+            return;
+
         isOpen = true;
         bg.gameObject.SetActive(true);
         bg.GetComponent<Image>().color = new Color(0, 0, 0, 0);
@@ -80,9 +83,9 @@ public class SwapScreen : MonoBehaviour
         parent.transform.DOMoveX(originalPosX, 0.3f).SetEase(Ease.InOutQuart);
 
 
-        for (int i = 0; i < PlayerBoard.instance.myTiles.Count;i++)
+        for (int i = 0; i < PlayerBoard.instance.myPlayer.myTiles.Count;i++)
         {
-            PlayerBoard.instance.myTiles[i].ReturnFromBoard();
+            PlayerBoard.instance.myPlayer.myTiles[i].ReturnFromBoard();
         }
 
     }
@@ -98,9 +101,9 @@ public class SwapScreen : MonoBehaviour
         {
             Tile currentT = SelectedTiles[i];
 
-            PlayerBoard.instance.AllTilesNumbers.Add(int.Parse(currentT.textLabel.text));
+            Board.instance.AllTilesNumbers.Add(int.Parse(currentT.textLabel.text));
 
-            PlayerBoard.instance.myTiles.Remove(currentT);
+            PlayerBoard.instance.myPlayer.myTiles.Remove(currentT);
             Destroy(currentT.gameObject);
             SelectedTiles.Remove(currentT);
         }
@@ -110,8 +113,8 @@ public class SwapScreen : MonoBehaviour
             
 
 
-        PlayerBoard.instance.AddNewPlayerTiles();
-
+        PlayerBoard.instance.myPlayer.AddNewPlayerTiles();
+        PlayerBoard.instance.RefreshLayout();
         CloseWindow();
     }
 }

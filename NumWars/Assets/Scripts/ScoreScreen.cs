@@ -29,7 +29,7 @@ public class ScoreScreen : MonoBehaviour
         
     }
 
-    public void ShowScore(List<Tile> score)
+    public void ShowScore(List<Tile> score,Player aPlayer)
     {
         bg.SetActive(true);
         bg.GetComponent<Image>().color = new Color(0, 0, 0, 0);
@@ -39,7 +39,7 @@ public class ScoreScreen : MonoBehaviour
         {
             StartCoroutine(ShowScoreAfterTime (0.25f+ i * 0.6f, score[i] ));
         }
-        StartCoroutine(SummarizeAfterTime(0.5f + score.Count * 0.6f, score));
+        StartCoroutine(SummarizeAfterTime(0.5f + score.Count * 0.6f, score, aPlayer));
 
 
 
@@ -57,7 +57,7 @@ public class ScoreScreen : MonoBehaviour
         createdPoints.Add(go);
     }
 
-    IEnumerator SummarizeAfterTime(float aTime, List<Tile> score)
+    IEnumerator SummarizeAfterTime(float aTime, List<Tile> score,Player thePlayer)
     {
 
        
@@ -118,7 +118,7 @@ public class ScoreScreen : MonoBehaviour
 
         yield return new WaitForSeconds(0.7f);
 
-        GameManager.instance.AddScore(0, totalScore);
+        GameManager.instance.AddScore(thePlayer, totalScore);
         for (int i = 0; i < score.Count; i++)
         {
             score[i].Flip();
@@ -151,8 +151,11 @@ public class ScoreScreen : MonoBehaviour
    
         //  
         bg.SetActive(false);
-        PlayerBoard.instance.AddNewPlayerTiles();
-        
+        thePlayer.AddNewPlayerTiles();
+        PlayerBoard.instance.RefreshLayout();
+
+        GameManager.instance.NextTurn();
+
     }
 
   
