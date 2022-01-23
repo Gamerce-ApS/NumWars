@@ -32,6 +32,21 @@ public class StaticTile : MonoBehaviour
     {
         return Number;
     }
+    public int GetScoreMultiplier(int aScore)
+    {
+        if(myTileType == TileType.MultiplierX2)
+            return aScore*2;
+        if (myTileType == TileType.MultiplierX3)
+            return aScore*3;
+        if (myTileType == TileType.MultiplierX4)
+            return aScore*4;
+        if (myTileType == TileType.MultiplicationTile || myTileType == TileType.SubtractionTile || myTileType == TileType.AdditionTile|| myTileType == TileType.DivisionTile)
+            return aScore+10;
+
+
+
+        return aScore;
+    }
     // Update is called once per frame
     void Update()
     {

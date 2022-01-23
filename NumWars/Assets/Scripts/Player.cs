@@ -7,13 +7,13 @@ public class Player : MonoBehaviour
 {
 
   
-    public Player Init(string aName, int aID, bool aIsAI = false)
+    public Player Init(string aName, int aID,GameObject aScoreObject, bool aIsAI = false)
     {
         Username = aName;
         ID = aID;
         isAI = aIsAI;
-
-        if(ID == 0)
+        scoreObject = aScoreObject;
+        if (ID == 0)
         {
             tileParent = PlayerBoard.instance.panel.transform;
         }
@@ -36,6 +36,8 @@ public class Player : MonoBehaviour
     public List<Tile> myTiles = new List<Tile>();
 
     Transform tileParent;
+
+    public GameObject scoreObject;
 
     // Start is called before the first frame update
     void Start()
@@ -63,7 +65,7 @@ public class Player : MonoBehaviour
 
         yield return new WaitForSeconds(4.5f);
 
-
+        int placedTiles = 0;
         for(int i = 0; i< myTiles.Count;i++ )
         {
             for(int j = 0; j < Board.instance.BoardTiles.Count;j++)
@@ -72,6 +74,7 @@ public class Player : MonoBehaviour
                 {
                     if(Board.instance.CheckValid(Board.instance.BoardTiles[j], myTiles[i].GetValue()) == true )
                     {
+                        placedTiles++;
                         Debug.Log("Valid:" + j + " Value: " + myTiles[i].GetValue());
                         Board.instance.Selection.transform.position = Board.instance.BoardTiles[j].transform.position;
                         myTiles[i].PlacedOnTile = Board.instance.BoardTiles[j];
@@ -82,20 +85,38 @@ public class Player : MonoBehaviour
             }
         }
 
-        yield return new WaitForSeconds(1.0f);
-
-        List<Tile> scoreTiles = new List<Tile>();
-        for (int i = 0; i < myTiles.Count; i++)
+        yield return new WaitForSeconds(1.75f);
+        if(placedTiles == 0)
         {
-            if (myTiles[i].isValidPlaced())
-                scoreTiles.Add(myTiles[i]);
+            // Swap
+            for (int i = myTiles.Count - 1; i >= 0; i--)
+            {
+                Tile currentT = myTiles[i];
+                Board.instance.AllTilesNumbers.Add(int.Parse(currentT.textLabel.text));
+                myTiles.Remove(currentT);
+                Destroy(currentT.gameObject);
+            }
+            AddNewPlayerTiles();
+            GameManager.instance.NextTurn();
+
+
+        }
+        else
+        {
+            List<Tile> scoreTiles = new List<Tile>();
+            for (int i = 0; i < myTiles.Count; i++)
+            {
+                if (myTiles[i].isValidPlaced())
+                    scoreTiles.Add(myTiles[i]);
+            }
+
+            ScoreScreen.instance.ShowScore(scoreTiles, this);
         }
 
-        ScoreScreen.instance.ShowScore(scoreTiles,this);
+   
 
 
 
-       // GameManager.instance.NextTurn();
 
     }
 

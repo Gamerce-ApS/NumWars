@@ -23,7 +23,7 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
 
     Vector3 _BoardPosition;
     Vector3 _OriginalPosition;
-    Vector3 _targetScale = Vector3.one;
+    public Vector3 _targetScale = Vector3.one;
 
     public StaticTile PlacedOnTile = null;
 
@@ -63,8 +63,19 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
 
         if(myTileStatus == TileStatus.PlacingOnBoard)
         {
-            transform.position = Vector3.Lerp(transform.position, _OriginalPosition, Time.deltaTime * 3);
-            if(Vector3.Distance(transform.position,_OriginalPosition) < 1)
+            float dist = 1;
+            float speed = 3;
+            if (GameManager.instance.CurrentTurn == 1)
+            {
+                speed = 10;
+                dist = 0.03f;
+            }
+    
+
+            transform.position = Vector3.Lerp(transform.position, _OriginalPosition, Time.deltaTime * speed);
+
+  
+            if (Vector3.Distance(transform.position,_OriginalPosition) < dist)
             {
                 myTileStatus = TileStatus.OnBoard;
                 transform.position = _OriginalPosition;
@@ -78,6 +89,10 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
     }
     public string GetValue()
     {
+        if(PlacedOnTile != null)
+        {
+           return (PlacedOnTile.GetScoreMultiplier(int.Parse(textLabel.text))).ToString(); 
+        }
         return textLabel.text;
     }
     public void SetWhiteTile()

@@ -51,12 +51,20 @@ public class ScoreScreen : MonoBehaviour
         yield return new WaitForSeconds(aTime);
         GameObject go = GameObject.Instantiate(ScorePrefab, bg.transform);
         go.transform.position = aTile.transform.position;
-        go.transform.GetChild(0).Find("Text").GetComponent<Text>().text = aTile.textLabel.text;
+        go.transform.GetChild(0).Find("Text").GetComponent<Text>().text = aTile.GetValue();
 
 
         createdPoints.Add(go);
     }
-
+    Vector2 GetAvgPos()
+    {
+        Vector3 avgPos = Vector3.zero;
+        for (int i = 0; i < createdPoints.Count; i++)
+        {
+            avgPos += createdPoints[i].GetComponent<RectTransform>().position;
+        }
+        return avgPos / createdPoints.Count;
+    }
     IEnumerator SummarizeAfterTime(float aTime, List<Tile> score,Player thePlayer)
     {
 
@@ -68,22 +76,27 @@ public class ScoreScreen : MonoBehaviour
 
         yield return new WaitForSeconds(aTime);
 
-
-        for (int i = 0; i < createdPoints.Count; i++)
+        if(createdPoints.Count>1)
         {
-            createdPoints[i].GetComponent<RectTransform>().DOMove(new Vector3(0, 0), 0.5f).SetEase(Ease.InOutQuart);
+            Vector2 avgPos = GetAvgPos();
+            for (int i = 0; i < createdPoints.Count; i++)
+            {
+                createdPoints[i].GetComponent<RectTransform>().DOMove(avgPos, 0.5f).SetEase(Ease.InOutQuart);
+            }
         }
+
         yield return new WaitForSeconds(0.3f);
         int totalScore = 0;
         for (int i = 0; i < score.Count; i++)
         {
-            totalScore += int.Parse(score[i].textLabel.text);
+            totalScore += int.Parse(score[i].GetValue());
         }
         for (int i = 0; i < createdPoints.Count; i++)
         {
             createdPoints[i].transform.GetChild(0).Find("Text").GetComponent<Text>().text = totalScore.ToString();
-          //  createdPoints[i].transform.localScale *= 1.3f;
-            createdPoints[i].GetComponent<RectTransform>().DOScale(createdPoints[i].transform.localScale*1.3f, 0.1f).SetEase(Ease.InOutQuart);
+            //  createdPoints[i].transform.localScale *= 1.3f;
+            if (createdPoints.Count > 1)
+                createdPoints[i].GetComponent<RectTransform>().DOScale(createdPoints[i].transform.localScale*1.3f, 0.1f).SetEase(Ease.InOutQuart);
 
         }
 
@@ -92,8 +105,8 @@ public class ScoreScreen : MonoBehaviour
         for (int i = 0; i < createdPoints.Count; i++)
         {
             //createdPoints[i].GetComponent<RectTransform>().DOMove(TotalScore.transform.position-new Vector3(25,0,0), 1).SetEase(Ease.InOutQuart);
-
-            createdPoints[i].GetComponent<RectTransform>().DOMove(GameManager.instance.p1_score.transform.position, 1).SetEase(Ease.InOutQuart);
+            
+            createdPoints[i].GetComponent<RectTransform>().DOMove(thePlayer.scoreObject.transform.position, 1).SetEase(Ease.InOutQuart);
 
             createdPoints[i].transform.GetChild(0).GetComponent<Image>().DOFade(0, 1).SetEase(Ease.InOutQuart); ;
         }

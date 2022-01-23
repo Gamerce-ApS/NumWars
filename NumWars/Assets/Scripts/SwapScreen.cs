@@ -116,5 +116,7 @@ public class SwapScreen : MonoBehaviour
         PlayerBoard.instance.myPlayer.AddNewPlayerTiles();
         PlayerBoard.instance.RefreshLayout();
         CloseWindow();
+
+        GameManager.instance.NextTurn();
     }
 }

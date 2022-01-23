@@ -38,8 +38,8 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         Board.instance.Init();
-        thePlayers.Add(new GameObject("Player1").AddComponent<Player>().Init("Pax: ", 0));
-        thePlayers.Add(new GameObject("Player2").AddComponent<Player>().Init("AI: ", 1,true));
+        thePlayers.Add(new GameObject("Player1").AddComponent<Player>().Init("Pax: ", 0, p1_score.gameObject));
+        thePlayers.Add(new GameObject("Player2").AddComponent<Player>().Init("AI: ", 1, p2_score.gameObject,true));
         PlayerBoard.instance.Init(thePlayers[0]);
 
         CurrentTurn = 0;
@@ -51,7 +51,7 @@ public class GameManager : MonoBehaviour
         p2_score.text = "0";
         p1_lastScore.text = "";
         p2_lastScore.text = "";
-        tileLeft.text = Board.instance.AllTilesNumbers.Count.ToString() + " / 105";
+        tileLeft.text = Board.instance.AllTilesNumbers.Count.ToString();
 
     }
     public void AddScore(Player aPlayer, int aScore)
@@ -92,7 +92,7 @@ public class GameManager : MonoBehaviour
         p2_score.text = thePlayers[1].Score.ToString();
         p1_lastScore.text = "+"+thePlayers[0].LastScore.ToString();
         p2_lastScore.text = "+"+thePlayers[1].LastScore.ToString();
-        tileLeft.text = Board.instance.AllTilesNumbers.Count.ToString() + " / 105";
+        tileLeft.text = Board.instance.AllTilesNumbers.Count.ToString();
 
     }
 
