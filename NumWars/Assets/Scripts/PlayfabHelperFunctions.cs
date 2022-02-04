@@ -468,6 +468,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
     }
     public void UpdateTargetGame(string aGame)
     {
+        if(LoadingOverlay.instance != null)
         LoadingOverlay.instance.ShowLoading("GetSharedGroupData");
 
         PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
@@ -475,7 +476,8 @@ public class PlayfabHelperFunctions : MonoBehaviour
                     SharedGroupId = aGame
                 }, result =>
                 {
-                    LoadingOverlay.instance.DoneLoading("GetSharedGroupData");
+                    if (LoadingOverlay.instance != null)
+                        LoadingOverlay.instance.DoneLoading("GetSharedGroupData");
 
                     foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
                     {

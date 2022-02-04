@@ -182,7 +182,7 @@ public class ScoreScreen : MonoBehaviour
 
         if(shouldAddToHistory)
         {
-            if (Startup._instance != null && Startup._instance.GameToLoad != null)
+            if (!GameManager.instance.thePlayers[1].isAI)
             {
                 Startup._instance.GameToLoad.History.Add(aTile.GetBoardPosition() + "#" + aTile.textLabel.text + "#" + aTile.GetValue() + "#" + Startup._instance.GameToLoad.GetPlayerTurn(GameManager.instance.CurrentTurn).ToString());
             }
