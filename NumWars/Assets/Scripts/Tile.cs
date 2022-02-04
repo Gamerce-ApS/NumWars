@@ -87,6 +87,10 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
 
 
     }
+    public string GetBoardPosition()
+    {
+        return PlacedOnTile.GetBoardPosition().ToString();
+    }
     public string GetValue()
     {
         if(PlacedOnTile != null)

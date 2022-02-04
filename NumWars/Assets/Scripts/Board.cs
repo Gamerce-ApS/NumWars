@@ -1,14 +1,127 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static StaticTile;
+
+[Serializable]
+public  class BoardData
+{
+    public BoardData(string p1, string p2, string turn, List<StaticTile> tileData,string aRoomName,List<string> aHistory)
+    {
+        player1_PlayfabId = p1;
+        player2_PlayfabId = p2;
+        playerTurn = turn;
+        RoomName = aRoomName;
+        for (int i = 0; i < tileData.Count;i++)
+        {
+            BoardTiles.Add(tileData[i].GetJsonObject());
+        }
+        for (int i = 0; i < aHistory.Count; i++)
+        {
+            History.Add(aHistory[i]);
+        }
+    }
+
+    public string player1_PlayfabId = "";
+    public string player2_PlayfabId = "";
+    public string playerTurn = "";
+    public List<string> BoardTiles = new List<string>();
+    public List<string> History = new List<string>();
+    public string RoomName = "";
+    public string player1_score = "";
+    public string player2_score = "";
+    public string player1_displayName = "";
+    public string player2_displayName = "";
+    public string player1_abandon = "";
+    public string player2_abandon = "";
+
+
+    public string GetJson()
+    {
+        return JsonUtility.ToJson(this);
+    }
+    public BoardData(string aJson)
+    {
+        BoardData bd = JsonUtility.FromJson<BoardData>(aJson);
+
+          player1_PlayfabId = bd.player1_PlayfabId;
+          player2_PlayfabId = bd.player2_PlayfabId;
+          playerTurn = bd.playerTurn;
+          BoardTiles = bd.BoardTiles;
+        History = bd.History;
+          RoomName = bd.RoomName;
+        player1_displayName = bd.player1_displayName;
+        player2_displayName = bd.player2_displayName;
+        player1_score = bd.player1_score;
+        player2_score = bd.player2_score;
+        player1_abandon = bd.player1_abandon;
+        player2_abandon = bd.player2_abandon;
+    }
+
+
+    public string GetOtherPlayer()
+    {
+        if (Startup._instance.MyPlayfabID == player1_PlayfabId)
+            return player2_displayName;
+        else
+            return player1_displayName;
+
+    }
+    public int GetPlayerTurn()
+    {
+        // we need to check who owns the game, as "turn 0" is always the host
+        // So if the other players owns the game we need to flip the turn order as localy the current users is seen as player 1.
+        if (Startup._instance.MyPlayfabID == player1_PlayfabId)
+        {
+            return int.Parse(playerTurn);
+        }
+        else
+        {
+            if (playerTurn == "0")
+                return 1;
+            else
+                return 0;
+        }
+    }
+    public int GetPlayerTurn(int aLocalTurn)
+    {
+     // This is used to convert the "local turn" to the backend turn when sending the new board data to the backend
+        if (Startup._instance.MyPlayfabID == player1_PlayfabId)
+        {
+            return (aLocalTurn);
+        }
+        else
+        {
+            if (aLocalTurn == 0)
+                return 1;
+            else
+                return 0;
+        }
+    }
+    public void SetPlayerAbandome()
+    {
+        if(player1_PlayfabId == Startup._instance.MyPlayfabID)
+        {
+            player1_abandon = "1";
+        }else
+        {
+            player1_abandon = "1";
+        }
+    }
+
+
+
+};
+
+
 
 public class Board : MonoBehaviour
 {
     public Transform parent;
 
     public List<StaticTile> BoardTiles = new List<StaticTile>();
-
+    public List<string> History = new List<string>();
     public static Board _instance=null;
     public static Board instance
     {
@@ -52,6 +165,7 @@ public class Board : MonoBehaviour
 
 
         // Create board layout
+
         for (int i = 0; i < parent.childCount; i++)
         {
             StaticTile st = parent.GetChild(i).GetComponent<StaticTile>();
@@ -140,6 +254,23 @@ public class Board : MonoBehaviour
         SetTile(8, 5, TileType.MultiplierX2, 0);
         SetTile(5, 8, TileType.MultiplierX2, 0);
         SetTile(8, 8, TileType.MultiplierX2, 0);
+
+
+     //   PlayerPrefs.SetString("PlayerBoard", new BoardData("id1","id2","0",BoardTiles).GetJson());
+
+    }
+
+    public void LoadBoardData(BoardData aBD)
+    {
+
+        for (int i = 0; i < aBD.BoardTiles.Count; i++)
+        {
+            BoardTiles[i].LoadFromJson(aBD.BoardTiles[i]);
+            BoardTiles[i].Refresh();
+        }
+
+        History = aBD.History;
+
     }
     public bool CheckValid(StaticTile aTile,string aStringNumber)
     {

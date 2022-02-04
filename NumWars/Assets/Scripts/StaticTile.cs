@@ -1,8 +1,23 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public class StaticTileData
+{
+    public StaticTileData(StaticTile.TileType aTileType, Vector2 aBoardPosition, int aNumber)
+    {
+        myTileType = aTileType;
+        BoardPosition = aBoardPosition;
+        Number = aNumber;
+    }
+    public StaticTile.TileType myTileType = StaticTile.TileType.EmptyTile;
+    public Vector2 BoardPosition;
+    public int Number = 0;
+}
+
+[Serializable]
 public class StaticTile : MonoBehaviour
 {
     public enum TileType
@@ -28,6 +43,18 @@ public class StaticTile : MonoBehaviour
     {
         
     }
+    public string GetJsonObject()
+    {
+        StaticTileData std = new StaticTileData(myTileType, BoardPosition, Number);
+        return JsonUtility.ToJson(std);
+    }
+    public void LoadFromJson(string aJsonObj)
+    {
+        StaticTileData std =  JsonUtility.FromJson<StaticTileData>(aJsonObj);
+        myTileType = std.myTileType;
+        BoardPosition= std.BoardPosition;
+        Number = std.Number;
+    }
     public float GetValue()
     {
         return Number;
@@ -52,6 +79,14 @@ public class StaticTile : MonoBehaviour
     {
         
     }
+    public Vector2 GetBoardPosition()
+    {
+        return BoardPosition;
+    }
+    public void Refresh()
+    {
+        SetTile(myTileType, Number);
+    }
     public void SetValue(int aNumber)
     {
         Debug.Log("SetNumber" + aNumber);
@@ -66,12 +101,18 @@ public class StaticTile : MonoBehaviour
 
         myTileType = aType;
 
-        _child = (GameObject)GameObject.Instantiate(ResourceManager.instance.TilePrefabList[(int)aType], transform);
-        _child.transform.position = transform.position;
-        _child.SetActive(true);
+        if(ResourceManager.instance != null&& aType != 0)
+        {
+            _child = (GameObject)GameObject.Instantiate(ResourceManager.instance.TilePrefabList[(int)aType], transform);
+            _child.transform.position = transform.position;
+            _child.SetActive(true);
 
-        if(aType == TileType.StartTile || aType == TileType.NormalTile)
-        _child.transform.GetChild(0).GetComponent<Text>().text = aNumber.ToString();
+            if (aType == TileType.StartTile || aType == TileType.NormalTile)
+                _child.transform.GetChild(0).GetComponent<Text>().text = aNumber.ToString();
+
+        }
+
+
 
     }
 }

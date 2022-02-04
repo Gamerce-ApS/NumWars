@@ -4,6 +4,13 @@ using UnityEngine;
 using DG.Tweening;
 using UnityEngine.UI;
 
+public class FakeTileData
+{
+    public Vector2 Position;
+    public int Number;
+    public int ScoreValue;
+    public int Player;
+};
 public class ScoreScreen : MonoBehaviour
 {
     public static ScoreScreen instance;
@@ -28,7 +35,127 @@ public class ScoreScreen : MonoBehaviour
     {
         
     }
+    // Replay functions
+    public void ShowScoreLastPlay()
+    {
+        List<string> moveHistory = Startup._instance.GameToLoad.History;
+        List<FakeTileData> lastMoves = new List<FakeTileData>();
 
+        int myBackednTurn = Startup._instance.GameToLoad.GetPlayerTurn(GameManager.instance.CurrentTurn);
+
+        for(int i = moveHistory.Count-1; i>=0 ;i--)
+        {
+            string[] moveInfo = moveHistory[i].Split('#');
+            FakeTileData ftd = new FakeTileData();
+            ftd.Position = StringToVector2(moveInfo[0]);
+            ftd.Number = int.Parse(moveInfo[1]);
+            ftd.ScoreValue = int.Parse(moveInfo[2]);
+            ftd.Player = int.Parse(moveInfo[3]);
+
+
+            if(myBackednTurn != ftd.Player)
+            {
+                lastMoves.Add(ftd);
+            }
+            else
+            {
+                break;
+            }
+        }
+        Debug.Log("Replay " + lastMoves.Count + " turns");
+
+
+ 
+
+        int totalScore = 0;
+        for (int i = 0; i < lastMoves.Count; i++)
+        {
+            totalScore += lastMoves[i].ScoreValue;
+        }
+        GameManager.instance.AddScore(GameManager.instance.thePlayers[1], -totalScore,false);
+  
+        for (int i = 0; i < lastMoves.Count; i++)
+        {
+            StartCoroutine(ShowScoreAfterTime(1.75f+0.25f + i * 0.6f, lastMoves[i]));
+        }
+        StartCoroutine(SummarizeAfterTime(0.5f + 0.5f + lastMoves.Count * 0.6f, lastMoves, GameManager.instance.thePlayers[1], totalScore));
+
+    }
+    IEnumerator ShowScoreAfterTime(float aTime, FakeTileData aTile)
+    {
+        yield return new WaitForSeconds(0.01f );
+
+        Transform st = Board.instance.BoardTiles[(int)(aTile.Position.x + aTile.Position.y * 14)].transform.GetChild(0).transform;
+        Vector3 targetPos = st.transform.position;
+        st.transform.position += new Vector3(0, 10, 0);
+        st.transform.DOMove(targetPos, 0.75f+ (float)Random.Range(50, 100) / 100f).SetEase(Ease.InOutQuart);
+
+        yield return new WaitForSeconds(aTime);
+
+
+
+        GameObject go = GameObject.Instantiate(ScorePrefab, bg.transform);
+        go.transform.position = Board.instance.BoardTiles[(int)(aTile.Position.x + aTile.Position.y * 14)].transform.position;
+        go.transform.GetChild(0).Find("Text").GetComponent<Text>().text = aTile.ScoreValue.ToString();
+        createdPoints.Add(go);
+    }
+    IEnumerator SummarizeAfterTime(float aTime, List<FakeTileData> score, Player thePlayer,int totalScore)
+    {
+        yield return new WaitForSeconds(1.5f);
+        bg.SetActive(true);
+        bg.GetComponent<Image>().color = new Color(0, 0, 0, 0);
+        bg.GetComponent<Image>().DOFade(119f / 255f, 1.0f).SetEase(Ease.InOutQuart);
+
+        yield return new WaitForSeconds(aTime);
+        if (createdPoints.Count > 1)
+        {
+            Vector2 avgPos = GetAvgPos();
+            for (int i = 0; i < createdPoints.Count; i++)
+            {
+                createdPoints[i].GetComponent<RectTransform>().DOMove(avgPos, 0.5f).SetEase(Ease.InOutQuart);
+            }
+        }
+        yield return new WaitForSeconds(0.3f);
+     
+        for (int i = 0; i < createdPoints.Count; i++)
+        {
+            createdPoints[i].transform.GetChild(0).Find("Text").GetComponent<Text>().text = totalScore.ToString();
+            if (createdPoints.Count > 1)
+                createdPoints[i].GetComponent<RectTransform>().DOScale(createdPoints[i].transform.localScale * 1.3f, 0.1f).SetEase(Ease.InOutQuart);
+        }
+        yield return new WaitForSeconds(.95f);
+        for (int i = 0; i < createdPoints.Count; i++)
+        {
+
+            createdPoints[i].GetComponent<RectTransform>().DOMove(thePlayer.scoreObject.transform.position, 1).SetEase(Ease.InOutQuart);
+
+            createdPoints[i].transform.GetChild(0).GetComponent<Image>().DOFade(0, 1).SetEase(Ease.InOutQuart); ;
+        }
+        bg.GetComponent<Image>().DOFade(0, 1.5f).SetEase(Ease.InOutQuart); ;
+
+
+        yield return new WaitForSeconds(0.7f);
+
+        GameManager.instance.AddScore(thePlayer, totalScore);
+        //for (int i = 0; i < score.Count; i++)
+        //{
+        //    score[i].Flip();
+        //}
+
+        for (int i = 0; i < createdPoints.Count; i++)
+        {
+            Destroy(createdPoints[i]);
+        }
+        createdPoints.Clear();
+        yield return new WaitForSeconds(1.0f);
+        bg.SetActive(false);
+
+    }
+
+
+
+
+    // Scooring in when yor turn
     public void ShowScore(List<Tile> score,Player aPlayer)
     {
         bg.SetActive(true);
@@ -46,14 +173,20 @@ public class ScoreScreen : MonoBehaviour
 
     }
 
-    IEnumerator ShowScoreAfterTime(float aTime, Tile aTile)
+    IEnumerator ShowScoreAfterTime(float aTime, Tile aTile, bool shouldAddToHistory = true)
     {
         yield return new WaitForSeconds(aTime);
         GameObject go = GameObject.Instantiate(ScorePrefab, bg.transform);
         go.transform.position = aTile.transform.position;
         go.transform.GetChild(0).Find("Text").GetComponent<Text>().text = aTile.GetValue();
 
-
+        if(shouldAddToHistory)
+        {
+            if (Startup._instance != null && Startup._instance.GameToLoad != null)
+            {
+                Startup._instance.GameToLoad.History.Add(aTile.GetBoardPosition() + "#" + aTile.textLabel.text + "#" + aTile.GetValue() + "#" + Startup._instance.GameToLoad.GetPlayerTurn(GameManager.instance.CurrentTurn).ToString());
+            }
+        }
         createdPoints.Add(go);
     }
     Vector2 GetAvgPos()
@@ -67,15 +200,7 @@ public class ScoreScreen : MonoBehaviour
     }
     IEnumerator SummarizeAfterTime(float aTime, List<Tile> score,Player thePlayer)
     {
-
-       
-
-
-
-
-
         yield return new WaitForSeconds(aTime);
-
         if(createdPoints.Count>1)
         {
             Vector2 avgPos = GetAvgPos();
@@ -84,7 +209,6 @@ public class ScoreScreen : MonoBehaviour
                 createdPoints[i].GetComponent<RectTransform>().DOMove(avgPos, 0.5f).SetEase(Ease.InOutQuart);
             }
         }
-
         yield return new WaitForSeconds(0.3f);
         int totalScore = 0;
         for (int i = 0; i < score.Count; i++)
@@ -94,17 +218,12 @@ public class ScoreScreen : MonoBehaviour
         for (int i = 0; i < createdPoints.Count; i++)
         {
             createdPoints[i].transform.GetChild(0).Find("Text").GetComponent<Text>().text = totalScore.ToString();
-            //  createdPoints[i].transform.localScale *= 1.3f;
             if (createdPoints.Count > 1)
                 createdPoints[i].GetComponent<RectTransform>().DOScale(createdPoints[i].transform.localScale*1.3f, 0.1f).SetEase(Ease.InOutQuart);
-
         }
-
         yield return new WaitForSeconds(.95f);
-
         for (int i = 0; i < createdPoints.Count; i++)
         {
-            //createdPoints[i].GetComponent<RectTransform>().DOMove(TotalScore.transform.position-new Vector3(25,0,0), 1).SetEase(Ease.InOutQuart);
             
             createdPoints[i].GetComponent<RectTransform>().DOMove(thePlayer.scoreObject.transform.position, 1).SetEase(Ease.InOutQuart);
 
@@ -113,22 +232,6 @@ public class ScoreScreen : MonoBehaviour
         bg.GetComponent<Image>().DOFade(0, 1.5f).SetEase(Ease.InOutQuart); ;
 
 
-
-        // yield return new WaitForSeconds(0.3f);
-        //TotalScore.SetActive(false);
-        //TotalScore.SetActive(true);
-
-        //    yield return new WaitForSeconds(0.5f);
-        //yield return new WaitForSeconds(0.7f);
-
-        //for (int i = 0; i < createdPoints.Count; i++)
-        //{
-
-        //    createdPoints[i].transform.GetChild(0).GetComponent<Animator>().enabled = false;
-        //   // createdPoints[i].GetComponent<RectTransform>().DOShakePosition( 0.5f,25,25,90,true);
-
-        //}
-
         yield return new WaitForSeconds(0.7f);
 
         GameManager.instance.AddScore(thePlayer, totalScore);
@@ -136,21 +239,6 @@ public class ScoreScreen : MonoBehaviour
         {
             score[i].Flip();
         }
-        //for (int i = 0; i < createdPoints.Count; i++)
-        //{
-        //    Destroy(createdPoints[i]);
-        //}
-        //createdPoints.Clear();
-
-
-        //yield return new WaitForSeconds(3f);
-
-        //for (int i = 0; i < createdPoints.Count; i++)
-        //{
-        //    Destroy(createdPoints[i]);
-        //}
-        //createdPoints.Clear();
-
 
         for (int i = 0; i < createdPoints.Count; i++)
         {
@@ -159,10 +247,8 @@ public class ScoreScreen : MonoBehaviour
         createdPoints.Clear();
 
 
-        //TotalScore.GetComponent<Animator>().Play("scoreOutro");
         yield return new WaitForSeconds(1.0f);
    
-        //  
         bg.SetActive(false);
         thePlayer.AddNewPlayerTiles();
         PlayerBoard.instance.RefreshLayout();
@@ -170,6 +256,23 @@ public class ScoreScreen : MonoBehaviour
         GameManager.instance.NextTurn();
 
     }
+    public static Vector2 StringToVector2(string sVector)
+    {
+        // Remove the parentheses
+        if (sVector.StartsWith("(") && sVector.EndsWith(")"))
+        {
+            sVector = sVector.Substring(1, sVector.Length - 2);
+        }
 
-  
+        // split the items
+        string[] sArray = sVector.Split(',');
+
+        // store as a Vector3
+        Vector2 result = new Vector2(
+            float.Parse(sArray[0]),
+            float.Parse(sArray[1]));
+
+        return result;
+    }
+
 }
