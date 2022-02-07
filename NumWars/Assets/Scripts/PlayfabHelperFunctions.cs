@@ -28,6 +28,24 @@ public class PlayfabHelperFunctions : MonoBehaviour
             playerID = "asdafsfsdf2";
         instance = this;
         LoadingOverlay.instance.ShowLoading("LoginWithCustomID");
+
+
+#if UNITY_IOS
+        PlayFabClientAPI.LoginWithIOSDeviceID(new LoginWithIOSDeviceIDRequest()
+        {
+            CreateAccount = true,
+            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+            {
+                GetPlayerProfile = true
+            }
+        },
+        result =>
+        {
+            LoginSucess(result);
+        },
+         error => Debug.LogError(error.GenerateErrorReport()));
+
+#elif UNITY_EDITOR
         PlayFabClientAPI.LoginWithCustomID(new LoginWithCustomIDRequest()
         {
             CreateAccount = true,
@@ -39,26 +57,29 @@ public class PlayfabHelperFunctions : MonoBehaviour
         },
         result =>
         {
-            LoadingOverlay.instance.DoneLoading("LoginWithCustomID");
-            GetComponent<Startup>().MyPlayfabID = result.AuthenticationContext.PlayFabId;
-
-            if (result.NewlyCreated)
-            {
-                SetUserData();
-            }
-            else
-            {
-                if (result.InfoResultPayload.PlayerProfile.DisplayName != null)
-                    GetComponent<Startup>().displayName = result.InfoResultPayload.PlayerProfile.DisplayName;
-
-                Refresh();
-            }
-
-
-
-
+            LoginSucess(null,result);
         },
         error => Debug.LogError(error.GenerateErrorReport()));
+#endif
+
+
+    }
+    public void LoginSucess(LoginResult result)
+    {
+        LoadingOverlay.instance.DoneLoading("LoginWithCustomID");
+        GetComponent<Startup>().MyPlayfabID = result.AuthenticationContext.PlayFabId;
+
+        if (result.NewlyCreated)
+        {
+            SetUserData();
+        }
+        else
+        {
+            if (result.InfoResultPayload.PlayerProfile.DisplayName != null)
+                GetComponent<Startup>().displayName = result.InfoResultPayload.PlayerProfile.DisplayName;
+
+            Refresh();
+        }
     }
     // Start is called before the first frame update
     void Start()
