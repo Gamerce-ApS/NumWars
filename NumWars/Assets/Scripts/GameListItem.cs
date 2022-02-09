@@ -19,6 +19,12 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     public bool _pressed = false;
     public float _pressTimer = 0;
     public bool _lockUntilRelease = false;
+    public GameObject quit;
+
+    public GameObject won;
+    public GameObject lost;
+
+    public bool isAiGame = false;
     // Start is called before the first frame update
     void Start()
     {
@@ -72,8 +78,9 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         StartCoroutine(unlockClick());
     }
 
-    public void Init(BoardData aBd)
+    public void Init(BoardData aBd,bool hasFinished= false,bool aIsAiGame=false)
     {
+        isAiGame = aIsAiGame;
         bd = aBd;
         if ( Startup._instance.MyPlayfabID == bd.player1_PlayfabId)
         {
@@ -89,7 +96,8 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         
 
         if( bd.playerTurn == "0" && Startup._instance.MyPlayfabID == bd.player1_PlayfabId ||
-            bd.playerTurn == "1" && Startup._instance.MyPlayfabID == bd.player2_PlayfabId)
+            bd.playerTurn == "1" && Startup._instance.MyPlayfabID == bd.player2_PlayfabId ||
+            isAiGame)
         {
             YourTurnGO.SetActive(true);
             OtherTurnGO.SetActive(false);
@@ -100,6 +108,66 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             OtherTurnGO.SetActive(true);
         }
 
+
+
+        if (hasFinished)
+        {
+            if (aBd.player1_PlayfabId == Startup._instance.MyPlayfabID)
+            {
+                if (int.Parse(aBd.player1_score) > int.Parse(aBd.player2_score))
+                {
+                    won.SetActive(true);
+                    lost.SetActive(false);
+                }
+                else
+                {
+                    won.SetActive(false);
+                    lost.SetActive(true);
+                }
+            }
+            else
+            {
+                if (int.Parse(aBd.player2_score) > int.Parse(aBd.player1_score))
+                {
+                    won.SetActive(true);
+                    lost.SetActive(false);
+                }
+                else
+                {
+                    won.SetActive(false);
+                    lost.SetActive(true);
+                }
+            }
+            YourTurnGO.SetActive(false);
+            OtherTurnGO.SetActive(false);
+
+            if(aBd.player1_abandon=="1")
+            {
+                quit.SetActive(true);
+                YourTurnGO.SetActive(false);
+                OtherTurnGO.SetActive(false);
+                won.SetActive(false);
+                lost.SetActive(false);
+                if(aBd.player1_PlayfabId == Startup._instance.MyPlayfabID)
+                    quit.transform.GetChild(0).GetComponent<Text>().text = "YOU\nLEFT";
+                else
+                    quit.transform.GetChild(0).GetComponent<Text>().text = "PLAYER\nLEFT";
+            }
+            if (aBd.player2_abandon == "1")
+            {
+                quit.SetActive(true);
+                YourTurnGO.SetActive(false);
+                OtherTurnGO.SetActive(false);
+                won.SetActive(false);
+                lost.SetActive(false);
+                if (aBd.player1_PlayfabId == Startup._instance.MyPlayfabID)
+                    quit.transform.GetChild(0).GetComponent<Text>().text = "PLAYER\nLEFT";
+                else
+                    quit.transform.GetChild(0).GetComponent<Text>().text = "YOU\nLEFT";
+            }
+        }
+
+
     }
 
     public void ClickLoadGame()
@@ -109,6 +177,11 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
         Debug.Log("Start Game!");
         Startup._instance.GameToLoad = bd;
+
+
+        if(isAiGame)
+         Startup._instance.GameToLoad = null;
+
         SceneManager.LoadScene(1);
     }
     public void ClickDeleteGame()

@@ -51,6 +51,7 @@ public class MainMenuController : MonoBehaviour
     }
     public void PressPlayPratice()
     {
+      
         Startup._instance.GameToLoad = null;
         SceneManager.LoadScene(1);
     }

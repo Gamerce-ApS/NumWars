@@ -22,7 +22,7 @@ public class Player : MonoBehaviour
             tileParent = PlayerBoard.instance.panelAi.transform; ;
         }
 
-        AddNewPlayerTiles();
+      //  AddNewPlayerTiles();
 
 
         return this;
@@ -50,6 +50,24 @@ public class Player : MonoBehaviour
     {
         
     }
+    public List<string> GetMyTiles()
+    {
+        List<string> tileListString = new List<string>();
+        for (int i = 0; i < myTiles.Count; i++)
+        {
+            tileListString.Add(myTiles[i].GetValue());
+        }
+        return tileListString;
+    }
+    public void LoadPlayerTiles(List<string> aList)
+    {
+        for (int i = 0; i < aList.Count; i++)
+        {
+            GameObject go = GameObject.Instantiate(PlayerBoard.instance.TileObject, tileParent);
+            myTiles.Add(go.GetComponent<Tile>());
+            go.GetComponent<Tile>().Init(int.Parse(aList[i]));
+        }
+    }
 
     public void DoAI()
     {
@@ -57,11 +75,19 @@ public class Player : MonoBehaviour
         StartCoroutine(AiSequence());
 
 
-    }
+     
 
+
+
+    }
+    bool swapedLastTurn = false;
     IEnumerator AiSequence()
     {
-
+        // Use this for making empty turns
+        //yield return new WaitForSeconds(1.75f);
+        //yield return new WaitForSeconds(4.5f);
+        //GameManager.instance.NextTurn(true);
+        //yield break;
 
         yield return new WaitForSeconds(4.5f);
 
@@ -86,23 +112,37 @@ public class Player : MonoBehaviour
         }
 
         yield return new WaitForSeconds(1.75f);
-        if(placedTiles == 0)
+        if(placedTiles == 0 )
         {
-            // Swap
-            for (int i = myTiles.Count - 1; i >= 0; i--)
-            {
-                Tile currentT = myTiles[i];
-                Board.instance.AllTilesNumbers.Add(int.Parse(currentT.textLabel.text));
-                myTiles.Remove(currentT);
-                Destroy(currentT.gameObject);
-            }
-            AddNewPlayerTiles();
-            GameManager.instance.NextTurn();
+            bool isEmptyTurn = false;
 
+            if (swapedLastTurn == false)
+            {
+                if (Board.instance.AllTilesNumbers.Count == 0)
+                    isEmptyTurn = true;
+                // Swap
+                for (int i = myTiles.Count - 1; i >= 0; i--)
+                {
+                    Tile currentT = myTiles[i];
+                    Board.instance.AllTilesNumbers.Add(int.Parse(currentT.textLabel.text));
+                    myTiles.Remove(currentT);
+                    Destroy(currentT.gameObject);
+                    swapedLastTurn = true;
+                }
+                AddNewPlayerTiles();
+  
+            }
+            else
+            {
+                isEmptyTurn = true;
+            }
+
+            GameManager.instance.NextTurn(isEmptyTurn);
 
         }
         else
         {
+            swapedLastTurn = false;
             List<Tile> scoreTiles = new List<Tile>();
             for (int i = 0; i < myTiles.Count; i++)
             {
@@ -113,7 +153,8 @@ public class Player : MonoBehaviour
             ScoreScreen.instance.ShowScore(scoreTiles, this);
         }
 
-   
+
+        yield return new WaitForSeconds(2.0f);
 
 
 
@@ -122,17 +163,21 @@ public class Player : MonoBehaviour
 
     public void AddNewPlayerTiles()
     {
-       
-        for (int i = myTiles.Count; i < 6; i++)
-        {
-            GameObject go = GameObject.Instantiate(PlayerBoard.instance.TileObject, tileParent);
-            myTiles.Add(go.GetComponent<Tile>());
-            go.GetComponent<Tile>().Init(Board.instance.AllTilesNumbers[0]);
-            Board.instance.AllTilesNumbers.RemoveAt(0);
-        }
 
         
+            for (int i = myTiles.Count; i < 6; i++)
+            {
+                if (Board.instance.AllTilesNumbers.Count > 0)
+                {
+                    GameObject go = GameObject.Instantiate(PlayerBoard.instance.TileObject, tileParent);
+                    myTiles.Add(go.GetComponent<Tile>());
+                    go.GetComponent<Tile>().Init(Board.instance.AllTilesNumbers[0]);
+                    Board.instance.AllTilesNumbers.RemoveAt(0);
+                }
 
+            }
+            GameManager.instance.tileLeft.text = Board.instance.AllTilesNumbers.Count.ToString();
+        
     }
 
 }

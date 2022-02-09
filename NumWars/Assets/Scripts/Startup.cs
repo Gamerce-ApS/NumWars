@@ -173,7 +173,7 @@ public class Startup : MonoBehaviourPunCallbacks
         {
             if (openGamesList[i].player1_PlayfabId == MyPlayfabID && openGamesList[i].player2_PlayfabId == "")
             {
-                PlayfabHelperFunctions.instance.RemoveRoomFromList(openGamesList[i].RoomName);
+                PlayfabHelperFunctions.instance.RemoveRoomFromList(openGamesList[i].RoomName, openGamesList[i].GetJson());
                 if(Startup._instance.SearchingForGameObject != null)
                 Startup._instance.SearchingForGameObject.SetActive(false);
                 return;
@@ -196,6 +196,30 @@ public class Startup : MonoBehaviourPunCallbacks
         }
 
         _PlayfabHelperFunctions.RemoveAbandonedGames();
+
+
+
+        GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent);
+
+        string[] stringSeparators = new string[] { "[splitter]" };
+        string[] oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
+        for (int i = 0; i < oldGameList.Length; i++)
+        {
+            if (oldGameList[i].Length > 2)
+            {
+                BoardData bd = new BoardData(CompressString.StringCompressor.DecompressString(oldGameList[i]));
+                GameObject obj2 = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._GameListItem, MainMenuController.instance._GameListParent);
+                obj2.GetComponent<GameListItem>().Init(bd,true);
+            }
+
+        }
+
+
+     
+
+
+
+
     }
 
     public void SetPlayfabSecondPlayerInRoom(string player1_playfabID,string player2_playfabID,string player1_displayName, string roomName)

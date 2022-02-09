@@ -7,19 +7,32 @@ using static StaticTile;
 [Serializable]
 public  class BoardData
 {
-    public BoardData(string p1, string p2, string turn, List<StaticTile> tileData,string aRoomName,List<string> aHistory)
+    public BoardData(string p1, string p2, string turn, List<StaticTile> tileData,string aRoomName,List<string> aHistory, List<string> tilesLeft,string aEmptyTurns, List<string> ap1_tiles, List<string> ap2_tiles)
     {
         player1_PlayfabId = p1;
         player2_PlayfabId = p2;
         playerTurn = turn;
         RoomName = aRoomName;
+        EmptyTurns = aEmptyTurns;
         for (int i = 0; i < tileData.Count;i++)
         {
             BoardTiles.Add(tileData[i].GetJsonObject());
         }
+        for (int i = 0; i < tilesLeft.Count; i++)
+        {
+            TilesLeft.Add(tilesLeft[i]);
+        }
         for (int i = 0; i < aHistory.Count; i++)
         {
             History.Add(aHistory[i]);
+        }
+        for (int i = 0; i < ap1_tiles.Count; i++)
+        {
+            p1_tiles.Add(ap1_tiles[i]);
+        }
+        for (int i = 0; i < ap2_tiles.Count; i++)
+        {
+            p2_tiles.Add(ap2_tiles[i]);
         }
     }
 
@@ -28,6 +41,8 @@ public  class BoardData
     public string playerTurn = "";
     public List<string> BoardTiles = new List<string>();
     public List<string> History = new List<string>();
+    public List<string> p1_tiles = new List<string>();
+    public List<string> p2_tiles = new List<string>();
     public string RoomName = "";
     public string player1_score = "";
     public string player2_score = "";
@@ -36,6 +51,8 @@ public  class BoardData
     public string player1_abandon = "";
     public string player2_abandon = "";
 
+    public string EmptyTurns = "";
+    public List<string> TilesLeft = new List<string>();
 
     public string GetJson()
     {
@@ -57,6 +74,12 @@ public  class BoardData
         player2_score = bd.player2_score;
         player1_abandon = bd.player1_abandon;
         player2_abandon = bd.player2_abandon;
+
+        EmptyTurns = bd.EmptyTurns;
+        TilesLeft = bd.TilesLeft;
+        p1_tiles = bd.p1_tiles;
+        p2_tiles = bd.p2_tiles;
+
     }
 
 
@@ -118,6 +141,7 @@ public  class BoardData
 
 public class Board : MonoBehaviour
 {
+
     public Transform parent;
 
     public List<StaticTile> BoardTiles = new List<StaticTile>();
@@ -260,6 +284,51 @@ public class Board : MonoBehaviour
 
     }
 
+    // Temp stuff for generating new game
+    public List<string> p1_tiles = new List<string>();
+    public List<string> p2_tiles = new List<string>();
+    public void GenerateStartBoard()
+    {
+        AllTilesNumbers.Clear();
+        p1_tiles.Clear();
+        p2_tiles.Clear();
+        for (int i = 1; i < 11; i++)
+        {
+            for (int j = 0; j < 7; j++)
+                AllTilesNumbers.Add(i);
+        }
+        for (int i = 11; i < 22; i++)
+        {
+            AllTilesNumbers.Add(i);
+        }
+        AllTilesNumbers.Add(24); AllTilesNumbers.Add(25); AllTilesNumbers.Add(27); AllTilesNumbers.Add(28); AllTilesNumbers.Add(30); AllTilesNumbers.Add(32); AllTilesNumbers.Add(35); AllTilesNumbers.Add(36);
+        AllTilesNumbers.Add(40); AllTilesNumbers.Add(42); AllTilesNumbers.Add(45); AllTilesNumbers.Add(48); AllTilesNumbers.Add(49); AllTilesNumbers.Add(50); AllTilesNumbers.Add(54); AllTilesNumbers.Add(56); AllTilesNumbers.Add(60);
+        AllTilesNumbers.Add(63); AllTilesNumbers.Add(64); AllTilesNumbers.Add(70); AllTilesNumbers.Add(72); AllTilesNumbers.Add(80); AllTilesNumbers.Add(81); AllTilesNumbers.Add(90);
+
+        AllTilesNumbers.Shuffle();
+
+        for(int i = 0; i < 6; i++)
+        {
+            p1_tiles.Add(AllTilesNumbers[0].ToString());
+            AllTilesNumbers.RemoveAt(0);
+            p2_tiles.Add(AllTilesNumbers[0].ToString());
+            AllTilesNumbers.RemoveAt(0);
+
+        }
+
+    }
+
+
+    public List<String> GetTilesLeft()
+    {
+        List<String> allT = new List<string>();
+        for (int i = 0; i < AllTilesNumbers.Count; i++)
+        {
+            allT.Add(AllTilesNumbers[i].ToString());
+        }
+        return allT;
+
+    }
     public void LoadBoardData(BoardData aBD)
     {
 
@@ -270,6 +339,14 @@ public class Board : MonoBehaviour
         }
 
         History = aBD.History;
+        AllTilesNumbers.Clear();
+        for (int i = 0; i < aBD.TilesLeft.Count; i++)
+        {
+            AllTilesNumbers.Add(int.Parse( aBD.TilesLeft[i] ));
+        }
+
+        
+
 
     }
     public bool CheckValid(StaticTile aTile,string aStringNumber)
@@ -283,25 +360,29 @@ public class Board : MonoBehaviour
             if (aTile.myTileType != TileType.MultiplicationTile && aTile.myTileType != TileType.SubtractionTile && aTile.myTileType != TileType.DivisionTile )
             {
                 //Up
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                if(aTile.BoardPosition.y-2>=0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() +
                           BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
                           aNumber)
                         return true;
                 //Down
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() +
                         BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
                         aNumber)
                         return true;
                 //Left
-                if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() +
                         BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
                         return true;
                 //Right
-                if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() +
                         BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
@@ -312,25 +393,29 @@ public class Board : MonoBehaviour
             if (aTile.myTileType != TileType.AdditionTile && aTile.myTileType != TileType.SubtractionTile && aTile.myTileType != TileType.DivisionTile)
             {
                 //Up
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() *
                     BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Down
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() *
                     BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Left
-                if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() *
                     BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Right
-                if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() *
                     BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                     aNumber)
@@ -340,50 +425,58 @@ public class Board : MonoBehaviour
             if (aTile.myTileType != TileType.AdditionTile && aTile.myTileType != TileType.MultiplicationTile && aTile.myTileType != TileType.DivisionTile)
             {
                 //Up
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() -
                     BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Down
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() -
                     BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Left
-                if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
                     BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Right
-                if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
                     BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                     aNumber)
                         return true;
 
                 //Up
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() -
                     BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Down
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() -
                     BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Left
-                if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
                     BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Right
-                if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
                     BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                     aNumber)
@@ -393,50 +486,58 @@ public class Board : MonoBehaviour
             if (aTile.myTileType != TileType.AdditionTile && aTile.myTileType != TileType.MultiplicationTile && aTile.myTileType != TileType.SubtractionTile)
             {
                 //Up
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() /
                     BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Down
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() /
                     BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Left
-                if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
                     BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Right
-                if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
                     BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                     aNumber)
                         return true;
 
                 //Up
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() /
                     BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 3) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Down
-                if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() /
                     BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Left
-                if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
                     BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Right
-                if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
                     BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                     aNumber)

@@ -101,6 +101,16 @@ public class ScoreScreen : MonoBehaviour
     }
     IEnumerator SummarizeAfterTime(float aTime, List<FakeTileData> score, Player thePlayer,int totalScore)
     {
+        if(score.Count==0)
+        {
+            if (int.Parse(Startup._instance.GameToLoad.EmptyTurns) >= 4)
+            {
+                GameFinishedScreen.instance.Show(Startup._instance.GameToLoad);
+            }
+            yield break;
+        }
+
+
         yield return new WaitForSeconds(1.5f);
         bg.SetActive(true);
         bg.GetComponent<Image>().color = new Color(0, 0, 0, 0);
@@ -150,6 +160,13 @@ public class ScoreScreen : MonoBehaviour
         yield return new WaitForSeconds(1.0f);
         bg.SetActive(false);
 
+
+
+        
+        if (int.Parse(Startup._instance.GameToLoad.EmptyTurns) >= 4)
+        {
+            GameFinishedScreen.instance.Show(Startup._instance.GameToLoad);
+        }
     }
 
 
@@ -253,7 +270,12 @@ public class ScoreScreen : MonoBehaviour
         thePlayer.AddNewPlayerTiles();
         PlayerBoard.instance.RefreshLayout();
 
-        GameManager.instance.NextTurn();
+        bool isEmptyTurn = false;
+
+        if (score.Count <= 0)
+            isEmptyTurn = true;
+
+        GameManager.instance.NextTurn(isEmptyTurn);
 
     }
     public static Vector2 StringToVector2(string sVector)

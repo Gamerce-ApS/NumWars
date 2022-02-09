@@ -13,6 +13,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
     public GameObject _GameListItem;
+    public GameObject _FinishedTitleListItem;
     public GameObject SearchingForGamePrefab;
 
 
@@ -30,7 +31,24 @@ public class PlayfabHelperFunctions : MonoBehaviour
         LoadingOverlay.instance.ShowLoading("LoginWithCustomID");
 
 
-#if UNITY_IOS
+
+#if UNITY_EDITOR
+        PlayFabClientAPI.LoginWithCustomID(new LoginWithCustomIDRequest()
+        {
+            CreateAccount = true,
+            CustomId = playerID,
+            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+            {
+                GetPlayerProfile = true
+            }
+        },
+        result =>
+        {
+            LoginSucess(result);
+        },
+        error => Debug.LogError(error.GenerateErrorReport()));
+
+#elif UNITY_IOS
         PlayFabClientAPI.LoginWithIOSDeviceID(new LoginWithIOSDeviceIDRequest()
         {
             CreateAccount = true,
@@ -45,21 +63,6 @@ public class PlayfabHelperFunctions : MonoBehaviour
         },
          error => Debug.LogError(error.GenerateErrorReport()));
 
-#elif UNITY_EDITOR
-        PlayFabClientAPI.LoginWithCustomID(new LoginWithCustomIDRequest()
-        {
-            CreateAccount = true,
-            CustomId = playerID,
-            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
-            {
-                GetPlayerProfile = true
-            }
-        },
-        result =>
-        {
-            LoginSucess(null,result);
-        },
-        error => Debug.LogError(error.GenerateErrorReport()));
 #endif
 
 
@@ -133,7 +136,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
         if (playfabId.Count > 1)
             secondPlayer = playfabId[1];
 
-        BoardData bd = new BoardData(playfabId[0], secondPlayer, "0", Board.instance.BoardTiles, roomName,new List<string>());
+        BoardData bd = new BoardData(playfabId[0], secondPlayer, "0", Board.instance.BoardTiles, roomName,new List<string>(), new List<string>(), "0", new List<string>(), new List<string>());
         bd.player1_displayName = Startup._instance.displayName;
         LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
 
@@ -217,10 +220,46 @@ public class PlayfabHelperFunctions : MonoBehaviour
             Debug.Log(error.GenerateErrorReport());
         });
     }
-    public void RemoveSharedGroupToGameList(string aSharedGroupName,System.Action onComplete= null)
+    public void AddAiGameToOldGames(string aCompresserdAiBoard)
+    {
+        GetComponent<Startup>().myData["OldGames"].Value += "[splitter]" + aCompresserdAiBoard;
+        //LoadingOverlay.instance.ShowLoading("UpdateUserData");
+
+        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+        {
+            Data = new Dictionary<string, string>() {
+            {"MyGames",Startup._instance.myData["MyGames"].Value},
+            {"OldGames",Startup._instance.myData["OldGames"].Value},
+        }
+        },
+        result =>
+        {
+            //LoadingOverlay.instance.DoneLoading("UpdateUserData");
+
+            // This is for if we find a abandoned game we want to remove a potentail next one
+
+            //StartCoroutine(Startup._instance.DelayRefresh());
+
+            PlayerPrefs.SetString("AIGame", "");
+
+            Debug.Log("Removed game");
+
+        },
+        error => {
+            Debug.Log(error.GenerateErrorReport());
+        });
+    }
+    public void RemoveSharedGroupToGameList(string aSharedGroupName, System.Action onComplete, string aDBjson )
     {
         Startup._instance.myData["MyGames"].Value = Startup._instance.myData["MyGames"].Value.Replace("," + aSharedGroupName,"");
-        GetComponent<Startup>().myData["OldGames"].Value += "," + aSharedGroupName;
+
+       
+          
+               string st = (aDBjson);
+          
+        
+
+        GetComponent<Startup>().myData["OldGames"].Value += "[splitter]" + st;
         LoadingOverlay.instance.ShowLoading("UpdateUserData");
 
         PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
@@ -253,11 +292,13 @@ public class PlayfabHelperFunctions : MonoBehaviour
     }
     public void SetSharedDataForNewGame(string player1_playfabID, string player2_playfabID,string player1_displayName, string roomName)
     {
-        BoardData bd = new BoardData(player1_playfabID, player2_playfabID, "0", Board.instance.BoardTiles,roomName, new List<string>());
+        Board.instance.GenerateStartBoard();
+        BoardData bd = new BoardData(player1_playfabID, player2_playfabID, "0", Board.instance.BoardTiles,roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles);
         bd.player1_displayName = player1_displayName;
         bd.player2_displayName = Startup._instance.displayName;
         bd.player1_score = "0";
         bd.player2_score = "0";
+        bd.EmptyTurns = "0";
         LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
 
         PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
@@ -409,12 +450,41 @@ public class PlayfabHelperFunctions : MonoBehaviour
         Startup._instance.openGamesList.Clear();
         //GetComponent<Startup>()._roomListLabel.text = "";
         string[] gameList = GetComponent<Startup>().myData["MyGames"].Value.Split(',');
-        for(int i = 0;i < gameList.Length;i++)
+        string[] stringSeparators = new string[] { "[splitter]" };
+        string[] oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
+        for(int i = 0; i < oldGameList.Length;i++)
+        {
+            if(oldGameList[i].Length>2)
+            {
+
+                Debug.Log(CompressString.StringCompressor.DecompressString(oldGameList[i]));
+            }
+             
+        }
+
+
+        string jsonAIBoard = PlayerPrefs.GetString("AIGame", "");
+        if (jsonAIBoard  != "")
+        {
+            BoardData aiGameBoard = new BoardData(jsonAIBoard);
+
+           
+                GameObject obj2 = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent);
+                obj2.GetComponent<GameListItem>().Init(aiGameBoard, false, true);
+            
+
+        }
+
+
+
+
+        bool shouldAddOldGamesNow = true;
+        for (int i = 0;i < gameList.Length;i++)
         {
             if(gameList[i].Length>1)
             {
                 LoadingOverlay.instance.ShowLoading("GetSharedGroupData");
-
+                shouldAddOldGamesNow = false;
                 PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
                 {
                     SharedGroupId = gameList[i]
@@ -442,6 +512,13 @@ public class PlayfabHelperFunctions : MonoBehaviour
                             Startup._instance.SearchingForGameObject.SetActive(true);
                         }
 
+                        //Debug.Log(entry.Value.Value.Length);
+
+                     //   string st = CompressString.StringCompressor.CompressString(entry.Value.Value);
+                      //  Debug.Log(st);
+                        //Debug.Log(st.Length);
+                       // Debug.Log(CompressString.StringCompressor.DecompressString(st));
+
                         Startup._instance.openGamesList.Add(bd);
                     }
 
@@ -453,12 +530,13 @@ public class PlayfabHelperFunctions : MonoBehaviour
                     Debug.Log(error.GenerateErrorReport());
                 });
             }
-      
         }
 
+       if(shouldAddOldGamesNow)
+            Startup._instance.FinishedGettingGameListCheckForOpenGames();
 
     }
-    public void RemoveRoomFromList(string aRoomName,System.Action onComplete=null)
+    public void RemoveRoomFromList(string aRoomName,string aRoomJson,System.Action onComplete=null)
     {
         LoadingOverlay.instance.ShowLoading("RemoveSharedGroupMembers");
 
@@ -469,6 +547,14 @@ public class PlayfabHelperFunctions : MonoBehaviour
         }, result =>
         {
             LoadingOverlay.instance.DoneLoading("RemoveSharedGroupMembers");
+
+
+            string st = "";
+       
+                    st = CompressString.StringCompressor.CompressString(aRoomJson);
+     
+
+
             for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
             {
                 if (Startup._instance.openGamesList[i].player1_PlayfabId == Startup._instance.MyPlayfabID && Startup._instance.openGamesList[i].player2_PlayfabId == "")
@@ -478,7 +564,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
                 }
             }
 
-            RemoveSharedGroupToGameList(aRoomName, onComplete);
+            RemoveSharedGroupToGameList(aRoomName, onComplete, st);
 
             Debug.Log("Removed old inactive SharedData room");
 
@@ -606,9 +692,9 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
         for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
         {
-            if (Startup._instance.openGamesList[i].player1_abandon == "1" || Startup._instance.openGamesList[i].player2_abandon == "1")
+            if (Startup._instance.openGamesList[i].player1_abandon == "1" || Startup._instance.openGamesList[i].player2_abandon == "1" || int.Parse(Startup._instance.openGamesList[i].EmptyTurns) >= 4)
             {
-                RemoveRoomFromList(Startup._instance.openGamesList[i].RoomName, RemoveAbandonedGamesCO);
+                RemoveRoomFromList(Startup._instance.openGamesList[i].RoomName, Startup._instance.openGamesList[i].GetJson(), RemoveAbandonedGamesCO);
                 Startup._instance.openGamesList.RemoveAt(i);
                 return;
             }
@@ -653,7 +739,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
                {
                    LoadingOverlay.instance.DoneLoading("UpdateSharedGroupData");
                    Debug.Log("Successfully updated SetAbadome in room name:" + aRoomName);
-                   RemoveRoomFromList(aRoomName);
+                   RemoveRoomFromList(aRoomName, bd.GetJson());
 
                },
                error =>
