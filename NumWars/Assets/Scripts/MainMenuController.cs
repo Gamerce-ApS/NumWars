@@ -17,6 +17,9 @@ public class MainMenuController : MonoBehaviour
 
     public static MainMenuController instance;
 
+    public InputField setNameTextLabel;
+    public GameObject SetNameGO;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -68,5 +71,23 @@ public class MainMenuController : MonoBehaviour
     {
         NewGameWindow.transform.GetChild(0).GetComponent<Image>().DOFade(0, 157f / 255f).SetEase(Ease.InOutQuart);
         NewGameWindow.transform.GetChild(1).transform.DOMoveX(_TextFlyInBoxoriginalPos.x + 10, 0.3f).SetEase(Ease.InOutQuart).OnComplete( ()=> { NewGameWindow.SetActive(false); } );
+    }
+    public void OpenSetNameWidnow()
+    {
+        SetNameGO.SetActive(true);
+        
+        setNameTextLabel.text = _Name.text;
+    }
+    public void ClickSetName()
+    {
+
+        if(setNameTextLabel.text == _Name.text)
+        {
+            SetNameGO.SetActive(false);
+            return;
+
+        }
+        SetNameGO.SetActive(false);
+        PlayfabHelperFunctions.instance.UpdateDisplayName(setNameTextLabel.text);
     }
 }

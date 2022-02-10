@@ -48,20 +48,33 @@ public class PlayfabHelperFunctions : MonoBehaviour
         },
         error => Debug.LogError(error.GenerateErrorReport()));
 
+
+
+
+
+
+
+
+
 #elif UNITY_IOS
-        PlayFabClientAPI.LoginWithIOSDeviceID(new LoginWithIOSDeviceIDRequest()
-        {
+    PlayFabClientAPI.LoginWithIOSDeviceID(new LoginWithIOSDeviceIDRequest()
+        { 
+
+            TitleId = PlayFabSettings.TitleId,
+            DeviceId = SystemInfo.deviceUniqueIdentifier,
+            OS = SystemInfo.operatingSystem,
+            DeviceModel = SystemInfo.deviceModel,
             CreateAccount = true,
             InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
             {
                 GetPlayerProfile = true
             }
         },
-        result =>
-        {
-            LoginSucess(result);
-        },
-         error => Debug.LogError(error.GenerateErrorReport()));
+result =>
+{
+    LoginSucess(result);
+},
+ error => Debug.LogError(error.GenerateErrorReport()));
 
 #endif
 
@@ -368,8 +381,8 @@ public class PlayfabHelperFunctions : MonoBehaviour
             Data = new Dictionary<string, string>() {
             {"Ranking", "0"},
             {"Picture", "0"},
-            {"MyGames", ""},
-            {"OldGames", ""},
+            {"MyGames", ","},
+            {"OldGames", ","},
         }
         },
         result =>
