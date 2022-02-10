@@ -133,7 +133,12 @@ public class Startup : MonoBehaviourPunCallbacks
         // Created room and added to players playfab list in shared data, now we wait for people to join
 
     }
- 
+    public void JoinRandomRoom()
+    {
+        LoadingOverlay.instance.ShowLoading("JoinRandomRoom");
+
+        PhotonNetwork.JoinRandomRoom(); // Joina random or create a new room and shared data entry
+    }
 
     public override void OnJoinedRoom()
     {

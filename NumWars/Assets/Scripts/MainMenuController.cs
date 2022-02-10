@@ -56,9 +56,7 @@ public class MainMenuController : MonoBehaviour
         }
         else
         {
-            LoadingOverlay.instance.ShowLoading("JoinRandomRoom");
-
-            PhotonNetwork.JoinRandomRoom(); // Joina random or create a new room and shared data entry
+            Startup._instance.JoinRandomRoom();
         }
 
     }
