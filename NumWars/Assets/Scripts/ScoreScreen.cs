@@ -36,7 +36,7 @@ public class ScoreScreen : MonoBehaviour
         
     }
     // Replay functions
-    public void ShowScoreLastPlay()
+    public void ShowScoreLastPlay(bool isFromStart)
     {
         List<string> moveHistory = Startup._instance.GameToLoad.History;
         List<FakeTileData> lastMoves = new List<FakeTileData>();
@@ -72,6 +72,9 @@ public class ScoreScreen : MonoBehaviour
         {
             totalScore += lastMoves[i].ScoreValue;
         }
+
+        // if we come from start the score needs to be removed as it has not been updated
+        if(isFromStart)
         GameManager.instance.AddScore(GameManager.instance.thePlayers[1], -totalScore,false);
   
         for (int i = 0; i < lastMoves.Count; i++)

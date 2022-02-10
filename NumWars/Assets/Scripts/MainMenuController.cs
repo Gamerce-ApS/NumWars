@@ -27,10 +27,17 @@ public class MainMenuController : MonoBehaviour
         _TextFlyInBoxoriginalPos = NewGameWindow.transform.GetChild(1).transform.position;
     }
 
+    float UpdateTimer = 0;
     // Update is called once per frame
     void Update()
     {
-        
+        UpdateTimer += Time.deltaTime;
+
+        if(UpdateTimer>10)
+        {
+            Startup._instance.Refresh();
+            UpdateTimer = 0;
+        }
     }
     public void PressPlayOnline()
     {

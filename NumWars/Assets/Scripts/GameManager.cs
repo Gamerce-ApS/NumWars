@@ -146,12 +146,12 @@ public class GameManager : MonoBehaviour
             WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
 
             if (int.Parse(Startup._instance.GameToLoad.EmptyTurns) >= 4)
-                ScoreScreen.instance.ShowScoreLastPlay();
+                ScoreScreen.instance.ShowScoreLastPlay(true);
         }
         else
         {
             if(thePlayers[1].isAI == false)
-                ScoreScreen.instance.ShowScoreLastPlay();
+                ScoreScreen.instance.ShowScoreLastPlay(true);
         }
 
 
@@ -265,7 +265,7 @@ public class GameManager : MonoBehaviour
                 CurrentTurn = 0;
                 WaitingOverlay.GetComponent<CanvasGroup>().DOFade(0, 0.5f).SetEase(Ease.InOutQuart).OnComplete(() => { WaitingOverlay.SetActive(false); });
 
-                ScoreScreen.instance.ShowScoreLastPlay();
+                ScoreScreen.instance.ShowScoreLastPlay(false);
 
             }
         }
