@@ -29,6 +29,11 @@ public class GameManager : MonoBehaviour
     public Text scoreOverview;
     public Text tileLeft;
 
+    public RectTransform TimerGO;
+    public RectTransform SwapButtonGO;
+    public RectTransform DoneButtonGO;
+    public RectTransform SettingsButtonGO;
+
     public List<Player> thePlayers = new List<Player>();
 
     public int CurrentTurn = -1;
@@ -40,6 +45,11 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        float aspect = (float)Screen.height / (float)Screen.width;
+        Debug.Log("aspect:"+aspect);
+        if (aspect<1.4f)
+        SetIpadScreen();
+
         Board.instance.Init();
         
         thePlayers.Add(new GameObject("Player1").AddComponent<Player>().Init(Startup._instance.displayName + ": ", 0, p1_score.gameObject));
@@ -150,6 +160,28 @@ public class GameManager : MonoBehaviour
 
 
     }
+
+    public void SetIpadScreen()
+    {
+        Board.instance.transform.GetComponent<RectTransform>().transform.localScale = new Vector3(0.82f, 0.82f, 0.82f);
+        PlayerBoard.instance.transform.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 105, 0);
+
+        TimerGO.anchoredPosition = new Vector3(-15, -833, 0);
+        TimerGO.transform.localScale = new Vector3(0.4612228f, 0.4612228f, 0.4612228f);
+
+
+
+
+
+        SwapButtonGO.anchoredPosition = new Vector3(-288f, 211f, 0);
+        DoneButtonGO.anchoredPosition = new Vector3(282.9f, 210.5f,0);
+        SettingsButtonGO.anchoredPosition = new Vector3(11.182f, -89f, 0);
+
+
+        WaitingOverlay.transform.localScale = new Vector3(0.81f, 0.81f, 0.81f);
+        
+    }
+
     public void AddScore(Player aPlayer, int aScore, bool updateLast=true)
     {
         if(updateLast)
