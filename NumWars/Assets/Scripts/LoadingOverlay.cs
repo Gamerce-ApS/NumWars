@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class LoadingOverlay : MonoBehaviour
 {
@@ -16,7 +17,7 @@ public class LoadingOverlay : MonoBehaviour
     }
 
     public List<string> LoadingCall = new List<string>();
-
+    public Text log;
     float timer = -1;
     // Start is called before the first frame update
     void Start()
@@ -45,6 +46,7 @@ public class LoadingOverlay : MonoBehaviour
         timer = -1;
         transform.GetChild(0).gameObject.SetActive(true);
         LoadingCall.Add(function);
+        log.text = "Start:" + function;
     }
     public void DoneLoading(string aFunction)
     {
@@ -53,6 +55,7 @@ public class LoadingOverlay : MonoBehaviour
         {
             timer = 0.50f;
         }
+        log.text = "Done:" + aFunction;
     }
 
 }
