@@ -390,6 +390,7 @@ result =>
             LoadingOverlay.instance.DoneLoading("UpdateUserData");
             Debug.Log("Successfully updated user data");
             StartCoroutine(GetComponent<Startup>().DelayRefresh());
+            MainMenuController.instance.OpenSetNameWidnow(true);
 
         },
         error => {

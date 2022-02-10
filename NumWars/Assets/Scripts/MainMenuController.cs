@@ -31,6 +31,13 @@ public class MainMenuController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (SetNameGO.activeSelf ||
+            NewGameWindow.activeSelf)
+        {
+            UpdateTimer = 0;
+            return;
+        }
+
         UpdateTimer += Time.deltaTime;
 
         if(UpdateTimer>10)
@@ -79,14 +86,22 @@ public class MainMenuController : MonoBehaviour
         NewGameWindow.transform.GetChild(0).GetComponent<Image>().DOFade(0, 157f / 255f).SetEase(Ease.InOutQuart);
         NewGameWindow.transform.GetChild(1).transform.DOMoveX(_TextFlyInBoxoriginalPos.x + 10, 0.3f).SetEase(Ease.InOutQuart).OnComplete( ()=> { NewGameWindow.SetActive(false); } );
     }
-    public void OpenSetNameWidnow()
+    public void OpenSetNameWidnow(bool isAnewAccount = false)
     {
         SetNameGO.SetActive(true);
         
-        setNameTextLabel.text = _Name.text;
+
+        if (isAnewAccount)
+            setNameTextLabel.text = "What's your name?";
+        else
+        {
+            setNameTextLabel.text = _Name.text;
+        }
     }
     public void ClickSetName()
     {
+        if (setNameTextLabel.text == "What's your name?")
+            return;
 
         if(setNameTextLabel.text == _Name.text)
         {
