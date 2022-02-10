@@ -110,4 +110,10 @@ public class MainMenuController : MonoBehaviour
         SetNameGO.SetActive(false);
         PlayfabHelperFunctions.instance.UpdateDisplayName(setNameTextLabel.text);
     }
+
+    public void ClearData()
+    {
+        PlayerPrefs.DeleteAll();
+        SceneManager.LoadScene(0);
+    }
 }
