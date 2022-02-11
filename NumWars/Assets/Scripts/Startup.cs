@@ -77,11 +77,22 @@ public class Startup : MonoBehaviourPunCallbacks
         //_PlayfabHelperFunctions.UpdateDisplayName(_txtLabel.text);
     }
 
-
+    float timer = 0;
     // Update is called once per frame
     void Update()
     {
+        if(timer != -1)
+        if(!PhotonNetwork.IsConnected)
+        {
+            timer += Time.deltaTime;
+            if(timer>8)
+            {
+                PhotonNetwork.ConnectUsingSettings();
+                PhotonNetwork.GameVersion = "1";
+                timer = 0;
+            }
 
+        }
     }
     public void ChangeValueFor(string aData)
     {
@@ -100,7 +111,7 @@ public class Startup : MonoBehaviourPunCallbacks
             Debug.Log("OnConnectedToMaster: Next -> try to Join Random Room");
             Debug.Log("PUN Basics Tutorial/Launcher: OnConnectedToMaster() was called by PUN. Now this client is connected and could join a room.\n Calling: PhotonNetwork.JoinRandomRoom(); Operation will fail if no room found");
         }
-
+        timer = -1;
         _PlayfabHelperFunctions.Login();
     }
 
@@ -289,6 +300,7 @@ public class Startup : MonoBehaviourPunCallbacks
     {
         Debug.Log("<Color=Red>OnDisconnected</Color> " + cause);
         Debug.LogError("PUN Basics Tutorial/Launcher:Disconnected");
+        timer = 0;
     }
 
     #endregion
