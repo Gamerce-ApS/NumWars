@@ -146,9 +146,19 @@ public class Startup : MonoBehaviourPunCallbacks
     }
     public void JoinRandomRoom()
     {
-        LoadingOverlay.instance.ShowLoading("JoinRandomRoom");
+        if (PhotonNetwork.NetworkClientState == ClientState.ConnectedToMasterServer)
+        {
+            LoadingOverlay.instance.ShowLoading("JoinRandomRoom");
 
-        PhotonNetwork.JoinRandomRoom(); // Joina random or create a new room and shared data entry
+            PhotonNetwork.JoinRandomRoom(); // Joina random or create a new room and shared data entry
+        }
+        else
+        {
+            Debug.LogError("Can't join random room now, client is not ready");
+        }
+
+
+
     }
 
     public override void OnJoinedRoom()
@@ -213,6 +223,10 @@ public class Startup : MonoBehaviourPunCallbacks
 
         _PlayfabHelperFunctions.RemoveAbandonedGames();
 
+        if(Startup._instance.SearchingForGameObject == null && PhotonNetwork.InRoom == true)
+        {
+            PhotonNetwork.LeaveRoom();
+        }
 
 
         GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent);
