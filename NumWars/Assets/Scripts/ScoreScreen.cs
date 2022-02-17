@@ -43,7 +43,17 @@ public class ScoreScreen : MonoBehaviour
 
         int myBackednTurn = Startup._instance.GameToLoad.GetPlayerTurn(GameManager.instance.CurrentTurn);
 
-        for(int i = moveHistory.Count-1; i>=0 ;i--)
+
+        if(moveHistory[moveHistory.Count-1]== "#SWAP#")
+        {
+            AlertText.instance.ShowAlert("Player swapped!",0.5f);
+            return;
+        }
+
+
+
+
+        for (int i = moveHistory.Count-1; i>=0 ;i--)
         {
             string[] moveInfo = moveHistory[i].Split('#');
             FakeTileData ftd = new FakeTileData();

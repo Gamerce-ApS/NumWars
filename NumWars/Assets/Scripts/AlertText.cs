@@ -33,24 +33,31 @@ public class AlertText : MonoBehaviour
     {
 
     }
-    public void ShowAlert(string text)
+    public void ShowAlert(string text,float aDelay=0)
     {
         if (isFlyTextRunning == false)
         {
             gameObject.SetActive(true);
-            gameObject.transform.GetChild(0).GetComponent<Text>().text = text;
-            StartCoroutine(FlyText());
+            
+            StartCoroutine(FlyText(text,aDelay));
         }
 
     }
 
     public bool isFlyTextRunning = false;
-    IEnumerator FlyText()
+    IEnumerator FlyText(string text, float aDelay)
     {
         isFlyTextRunning = true;
-        
+
         gameObject.GetComponent<Image>().color = new Color(0, 0, 0, 0);
+        gameObject.transform.GetChild(0).GetComponent<Text>().text = "";
+
+        yield return new WaitForSeconds(aDelay);
+
+        gameObject.transform.GetChild(0).GetComponent<Text>().text = text;
+
         gameObject.GetComponent<Image>().DOFade(107f / 255f, 0.5f).SetEase(Ease.InOutQuart);
+
 
         gameObject.transform.GetChild(0).position = new Vector3(_TextFlyInBoxoriginalPosX - 10, gameObject.transform.GetChild(0).position.y, gameObject.transform.GetChild(0).position.z);
         gameObject.transform.GetChild(0).DOMoveX(_TextFlyInBoxoriginalPosX, 0.3f).SetEase(Ease.InOutQuart);

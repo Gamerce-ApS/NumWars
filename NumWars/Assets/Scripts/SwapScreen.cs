@@ -117,6 +117,12 @@ public class SwapScreen : MonoBehaviour
         PlayerBoard.instance.RefreshLayout();
         CloseWindow();
 
+
+        if (!GameManager.instance.thePlayers[1].isAI)
+        {
+            Startup._instance.GameToLoad.History.Add("#SWAP#");
+        }
+
         GameManager.instance.NextTurn(false);
     }
 }

@@ -58,4 +58,5 @@ public class LoadingOverlay : MonoBehaviour
         log.text = "Done:" + aFunction;
     }
 
+
 }

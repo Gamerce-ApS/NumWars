@@ -56,9 +56,42 @@ public class Startup : MonoBehaviourPunCallbacks
             PhotonNetwork.ConnectUsingSettings();
             PhotonNetwork.GameVersion = "1";
         }
+
+
+
+
+        UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert | UnityEngine.iOS.NotificationType.Badge | UnityEngine.iOS.NotificationType.Sound, true);
+
+
+        StartCoroutine(RegisterPush());
+
+
     }
 
+    IEnumerator RegisterPush()
+    {
+        yield return new WaitForSeconds(3);
 
+        byte[] token = UnityEngine.iOS.NotificationServices.deviceToken;
+        if (token != null)
+        {
+            RegisterForIOSPushNotificationRequest request = new RegisterForIOSPushNotificationRequest();
+            request.DeviceToken = System.BitConverter.ToString(token).Replace("-", "").ToLower();
+            PlayFabClientAPI.RegisterForIOSPushNotification(request, (RegisterForIOSPushNotificationResult result) =>
+            {
+                Debug.Log("Push Registration Successful");
+            }, error =>
+            {
+                Debug.Log("Got error registering Push");
+
+
+            });
+        }
+        else
+        {
+            Debug.Log("Push Token was null!");
+        }
+    }
     public void Refresh()
     {
         _PlayfabHelperFunctions.Refresh();
@@ -229,25 +262,31 @@ public class Startup : MonoBehaviourPunCallbacks
         }
 
 
-        GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent);
-
-        string[] stringSeparators = new string[] { "[splitter]" };
-        string[] oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
-        for (int i = 0; i < oldGameList.Length; i++)
+        //If no loading in progress we know it's the last call.
+        if(LoadingOverlay.instance.LoadingCall.Count== 1)
         {
-            if (oldGameList[i].Length > 2)
-            {
-                BoardData bd = new BoardData(CompressString.StringCompressor.DecompressString(oldGameList[i]));
-                GameObject obj2 = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._GameListItem, MainMenuController.instance._GameListParent);
-                obj2.GetComponent<GameListItem>().Init(bd,true);
-            }
+            GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent);
 
+            string[] stringSeparators = new string[] { "[splitter]" };
+            string[] oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
+            for (int i = 0; i < oldGameList.Length; i++)
+            {
+                if (oldGameList[i].Length > 2)
+                {
+                    BoardData bd = new BoardData(CompressString.StringCompressor.DecompressString(oldGameList[i]));
+                    GameObject obj2 = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._GameListItem, MainMenuController.instance._GameListParent);
+                    obj2.GetComponent<GameListItem>().Init(bd, true);
+                }
+
+            }
         }
 
 
-     
 
-        
+
+
+
+
 
 
     }

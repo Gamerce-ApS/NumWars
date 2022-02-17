@@ -647,7 +647,16 @@ result =>
 
 
     }
-
+    public void SendPushToUser(string aId)
+    {
+        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        {
+            FunctionName = "ChallengePlayer",
+            FunctionParameter = new Dictionary<string, object>() {
+            { "TargetId", aId }
+        }
+        }, null, error => Debug.LogError(error.GenerateErrorReport()));
+    }
     public void Refresh()
     {
         LoadingOverlay.instance.ShowLoading("GetPlayerProfile");
