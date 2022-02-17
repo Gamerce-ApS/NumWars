@@ -5,7 +5,7 @@ using Photon.Realtime;
 using PlayFab;
 using PlayFab.ClientModels;
 using PlayFab.CloudScriptModels;
-
+using Unity.Notifications.iOS;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -91,6 +91,37 @@ public class Startup : MonoBehaviourPunCallbacks
         {
             Debug.Log("Push Token was null!");
         }
+
+
+
+        // this is for if we get a message while the app is runnings // as playfab cant set ShowInForeground
+        iOSNotificationCenter.OnRemoteNotificationReceived += remoteNotification =>
+        {
+            // When a remote notification is received, modify its contents and show it after 1 second.
+            var timeTrigger = new iOSNotificationTimeIntervalTrigger()
+            {
+                TimeInterval = new System.TimeSpan(0, 0, 1),
+                Repeats = false
+            };
+
+            iOSNotification notification = new iOSNotification()
+            {
+                Title =  remoteNotification.Title,
+                Body =  remoteNotification.Body,
+                Subtitle =  remoteNotification.Subtitle,
+                ShowInForeground = true,
+                ForegroundPresentationOption = PresentationOption.Sound | PresentationOption.Alert,
+                CategoryIdentifier = remoteNotification.CategoryIdentifier,
+                ThreadIdentifier = remoteNotification.ThreadIdentifier,
+                Trigger = timeTrigger,
+            };
+            iOSNotificationCenter.ScheduleNotification(notification);
+        };
+
+
+
+
+
     }
     public void Refresh()
     {

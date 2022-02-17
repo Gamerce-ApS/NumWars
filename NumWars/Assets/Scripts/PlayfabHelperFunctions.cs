@@ -328,7 +328,9 @@ result =>
             Debug.Log("Successfully updated user data with new player id's");
 
             AddSharedGroupToGameList(roomName);
-           
+
+            SendPushToUser(bd.player1_PlayfabId, "", "You have started a game against "+ Startup._instance.displayName);
+
         },
         error =>
         {
@@ -635,6 +637,24 @@ result =>
             Debug.Log("Successfully updated shared data with where players took a turn");
             GameManager.instance.updateInProgress = false;
 
+            string userToSend = "";
+            string displayName = "";
+            if (aBoarddata.playerTurn == "0")
+            {
+                userToSend = aBoarddata.player1_PlayfabId;
+                displayName = aBoarddata.player1_displayName;
+            }
+
+            else
+            {
+                userToSend = aBoarddata.player2_PlayfabId;
+                displayName = aBoarddata.player2_displayName;
+            }
+ 
+
+
+            SendPushToUser(userToSend,"It's your turn!", displayName+" is done placing tiles!");
+
 
         },
         error =>
@@ -647,13 +667,16 @@ result =>
 
 
     }
-    public void SendPushToUser(string aId)
+    public void SendPushToUser(string aId,string title, string message)
     {
         PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
         {
             FunctionName = "ChallengePlayer",
             FunctionParameter = new Dictionary<string, object>() {
-            { "TargetId", aId }
+            { "TargetId", aId },
+            { "Title", title },
+            { "Message", message },
+
         }
         }, null, error => Debug.LogError(error.GenerateErrorReport()));
     }
