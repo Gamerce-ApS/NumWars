@@ -301,24 +301,25 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
 
 
 
-        //Set up the new Pointer Event
-        m_PointerEventData = new PointerEventData(m_EventSystem);
-        //Set the Pointer Event Position to that of the game object
 
-        
-  //  m_PointerEventData.position = Camera.main.WorldToScreenPoint(transform.position) - new Vector3(dragObjectInternal.sizeDelta.x/2, -dragObjectInternal.sizeDelta.y/2,0);
-
-        m_PointerEventData.position = Camera.main.WorldToScreenPoint(transform.position) + new Vector3(0, (dragObjectInternal.sizeDelta.y *0.1f) , 0);
-       // GetComponent<Image>().color = new Color(1, 1, 1, 0.5f);
-
-        //Create a list of Raycast Results
-        List<RaycastResult> results = new List<RaycastResult>();
-
-        //Raycast using the Graphics Raycaster and mouse click position
-        EventSystem.current.RaycastAll(m_PointerEventData, results);
 
         if(_refreshTimer<0)
         {
+            //Set up the new Pointer Event
+            m_PointerEventData = new PointerEventData(m_EventSystem);
+            //Set the Pointer Event Position to that of the game object
+
+
+            //  m_PointerEventData.position = Camera.main.WorldToScreenPoint(transform.position) - new Vector3(dragObjectInternal.sizeDelta.x/2, -dragObjectInternal.sizeDelta.y/2,0);
+
+            m_PointerEventData.position = Camera.main.WorldToScreenPoint(transform.position) + new Vector3(0, (dragObjectInternal.sizeDelta.y * 0.1f), 0);
+            // GetComponent<Image>().color = new Color(1, 1, 1, 0.5f);
+
+            //Create a list of Raycast Results
+            List<RaycastResult> results = new List<RaycastResult>();
+
+            //Raycast using the Graphics Raycaster and mouse click position
+            EventSystem.current.RaycastAll(m_PointerEventData, results);
             if (results.Count > 0)
             {
                 bool didHitTile = false;
@@ -328,7 +329,8 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
                     {
                         StaticTile theTile = results[i].gameObject.GetComponent<StaticTile>();
 
-                        if(theTile.myTileType != StaticTile.TileType.StartTile && theTile.myTileType != StaticTile.TileType.NormalTile)
+                      
+                        if (theTile.myTileType != StaticTile.TileType.StartTile && theTile.myTileType != StaticTile.TileType.NormalTile && CheckIfHasTile(theTile) == false)
                         {
                             Board.instance.Selection.transform.GetComponent<RectTransform>().position = results[i].gameObject.GetComponent<RectTransform>().position;
                             Board.instance.Selection.GetComponent<Image>().enabled = true;
@@ -340,8 +342,22 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
                 }
                 if(didHitTile == false)
                 {
-                    Board.instance.Selection.GetComponent<Image>().enabled = false;
-                    PlacedOnTile = null;
+                    StaticTile t = GetClosestAvalibleTile();
+                    if(t != null)
+                    {
+                        Board.instance.Selection.transform.GetComponent<RectTransform>().position = t.gameObject.GetComponent<RectTransform>().position;
+                        Board.instance.Selection.GetComponent<Image>().enabled = true;
+                        didHitTile = true;
+                        PlacedOnTile = t;
+                    }
+                    else
+                    {
+                        Board.instance.Selection.GetComponent<Image>().enabled = false;
+                        PlacedOnTile = null;
+                    }
+
+
+
                 }
 
             }
@@ -363,7 +379,134 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
 
             lastFramePos = dragObjectInternal.localPosition;
     }
-    
+    public bool CheckIfHasTile(StaticTile aTile)
+    {
+        for (int j = 0; j < PlayerBoard.instance.myPlayer.myTiles.Count; j++)
+        {
+            if (PlayerBoard.instance.myPlayer.myTiles[j].PlacedOnTile == aTile && PlayerBoard.instance.myPlayer.myTiles[j] != this)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    public StaticTile GetClosestAvalibleTile()
+    {
+        float closestDist = 1.5f;
+        StaticTile reutrnTile = null;
+        for (int j = 0; j < 10; j++)
+        {
+
+            StaticTile hit1 = DoRaycast(new Vector3(1*j, 0, 0));
+            StaticTile hit2 = DoRaycast(new Vector3(1*j, 1 * j, 0));
+            StaticTile hit3 = DoRaycast(new Vector3(0, 1 * j, 0));
+            StaticTile hit4 = DoRaycast(new Vector3(-1 * j, 1 * j, 0));
+            StaticTile hit5 = DoRaycast(new Vector3(-1 * j, 0, 0));
+            StaticTile hit6 = DoRaycast(new Vector3(-1 * j, -1 * j, 0));
+            StaticTile hit7 = DoRaycast(new Vector3(0, -1 * j, 0));
+            StaticTile hit8 = DoRaycast(new Vector3(1 * j, -1 * j, 0));
+
+   
+            if (hit1 != null)
+            {
+                if (CheckIfHasTile(hit1) == false && Vector3.Distance(hit1.transform.position, transform.position) < closestDist)
+                {
+                    closestDist = Vector3.Distance(hit1.transform.position, transform.position);
+                    reutrnTile = hit1;
+                }
+            }
+            if (hit2 != null)
+            {
+                if (CheckIfHasTile(hit2) == false && Vector3.Distance(hit2.transform.position, transform.position) < closestDist)
+                {
+                    closestDist = Vector3.Distance(hit2.transform.position, transform.position);
+                    reutrnTile = hit2;
+                }
+            }
+            if (hit3 != null)
+            {
+                if (CheckIfHasTile(hit3) == false && Vector3.Distance(hit3.transform.position, transform.position) < closestDist)
+                {
+                    closestDist = Vector3.Distance(hit3.transform.position, transform.position);
+                    reutrnTile = hit3;
+                }
+            }
+            if (hit4 != null)
+            {
+                if (CheckIfHasTile(hit4) == false && Vector3.Distance(hit4.transform.position, transform.position) < closestDist)
+                {
+                    closestDist = Vector3.Distance(hit4.transform.position, transform.position);
+                    reutrnTile = hit4;
+                }
+            }
+            if (hit5 != null)
+            {
+                if (CheckIfHasTile(hit5) == false && Vector3.Distance(hit5.transform.position, transform.position) < closestDist)
+                {
+                    closestDist = Vector3.Distance(hit5.transform.position, transform.position);
+                    reutrnTile = hit5;
+                }
+            }
+            if (hit6 != null)
+            {
+                if (CheckIfHasTile(hit6) == false && Vector3.Distance(hit6.transform.position, transform.position) < closestDist)
+                {
+                    closestDist = Vector3.Distance(hit6.transform.position, transform.position);
+                    reutrnTile = hit6;
+                }
+            }
+            if (hit7 != null)
+            {
+                if (CheckIfHasTile(hit7) == false && Vector3.Distance(hit7.transform.position, transform.position) < closestDist)
+                {
+                    closestDist = Vector3.Distance(hit7.transform.position, transform.position);
+                    reutrnTile = hit7;
+                }
+            }
+            if (hit8 != null)
+            {
+                if (CheckIfHasTile(hit8) == false && Vector3.Distance(hit8.transform.position, transform.position) < closestDist)
+                {
+                    closestDist = Vector3.Distance(hit8.transform.position, transform.position);
+                    reutrnTile = hit8;
+                }
+            }
+
+
+
+
+
+        }
+        return reutrnTile;
+        return null;
+
+
+    }
+    public StaticTile DoRaycast(Vector3 offset)
+    {
+        PointerEventData m_PointerEventData2 = new PointerEventData(m_EventSystem);
+        m_PointerEventData2.position = Camera.main.WorldToScreenPoint(transform.position) + new Vector3(dragObjectInternal.sizeDelta.x/2* offset.x, (dragObjectInternal.sizeDelta.y/2* offset.y), 0);
+        List<RaycastResult> resultsClose = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(m_PointerEventData2, resultsClose);
+        if (resultsClose.Count > 0)
+        {
+
+            for (int i = 0; i < resultsClose.Count; i++)
+            {
+                if (resultsClose[i].gameObject.name.Contains("TileEmtpy"))
+                {
+                    StaticTile theTile = resultsClose[i].gameObject.GetComponent<StaticTile>();
+
+                    if (theTile.myTileType != StaticTile.TileType.StartTile && theTile.myTileType != StaticTile.TileType.NormalTile)
+                    {
+                        return theTile;
+                    }
+
+                }
+            }
+        }
+        return null;
+    }
     private void ClampToArea()
     {
         Vector3 pos = dragObjectInternal.localPosition;

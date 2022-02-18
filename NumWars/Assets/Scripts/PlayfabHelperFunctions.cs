@@ -642,18 +642,18 @@ result =>
             if (aBoarddata.playerTurn == "0")
             {
                 userToSend = aBoarddata.player1_PlayfabId;
-                displayName = aBoarddata.player1_displayName;
+                displayName = aBoarddata.player2_displayName;
             }
 
             else
             {
                 userToSend = aBoarddata.player2_PlayfabId;
-                displayName = aBoarddata.player2_displayName;
+                displayName = aBoarddata.player1_displayName;
             }
  
 
 
-            SendPushToUser(userToSend,"It's your turn!", displayName+" is done placing tiles!");
+            SendPushToUser(userToSend,"", "It's your turn against "+displayName +"!");
 
 
         },

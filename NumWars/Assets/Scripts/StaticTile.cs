@@ -89,7 +89,7 @@ public class StaticTile : MonoBehaviour
     }
     public void SetValue(int aNumber)
     {
-        Debug.Log("SetNumber" + aNumber);
+//        Debug.Log("SetNumber" + aNumber);
         Number = aNumber;
     }
     public void SetTile(TileType aType, int aNumber)

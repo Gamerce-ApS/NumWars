@@ -43,7 +43,7 @@ public class ScoreScreen : MonoBehaviour
 
         int myBackednTurn = Startup._instance.GameToLoad.GetPlayerTurn(GameManager.instance.CurrentTurn);
 
-
+        if(moveHistory.Count>0)
         if(moveHistory[moveHistory.Count-1]== "#SWAP#")
         {
             AlertText.instance.ShowAlert("Player swapped!",0.5f);

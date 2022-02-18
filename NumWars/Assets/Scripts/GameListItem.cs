@@ -112,6 +112,11 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
         if (hasFinished)
         {
+            if (aBd.player1_score == "")
+                aBd.player1_score = "0";
+            if (aBd.player2_score == "")
+                aBd.player2_score = "0";
+
             if (aBd.player1_PlayfabId == Startup._instance.MyPlayfabID)
             {
                 if (int.Parse(aBd.player1_score) > int.Parse(aBd.player2_score))

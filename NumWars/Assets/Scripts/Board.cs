@@ -196,10 +196,20 @@ public class Board : MonoBehaviour
             st.BoardPosition = new Vector2(i - ((int)i / 14) * 14, (int)i / 14);
             BoardTiles.Add(st);
         }
-        SetTile(6, 6, TileType.StartTile, 1);
-        SetTile(7, 6, TileType.StartTile, 2);
-        SetTile(6, 7, TileType.StartTile, 3);
-        SetTile(7, 7, TileType.StartTile, 4);
+
+
+        List<int> startNumbers = new List<int>();
+        startNumbers.Add(1);
+        startNumbers.Add(2);
+        startNumbers.Add(3);
+        startNumbers.Add(4);
+        startNumbers.Shuffle();
+        SetTile(6, 6, TileType.StartTile, startNumbers[0]);
+        SetTile(7, 6, TileType.StartTile, startNumbers[1]);
+        SetTile(6, 7, TileType.StartTile, startNumbers[2]);
+        SetTile(7, 7, TileType.StartTile, startNumbers[3]);
+
+
 
 
         SetTile(5, 0, TileType.MultiplierX3, 0);
@@ -517,8 +527,8 @@ public class Board : MonoBehaviour
                 //Up
                 if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
-                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() /
-                    BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 3) * 14].GetValue() ==
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() /
+                    BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() ==
                     aNumber)
                         return true;
                 //Down
