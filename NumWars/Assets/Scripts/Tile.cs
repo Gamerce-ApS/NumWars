@@ -26,6 +26,7 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
     public Vector3 _targetScale = Vector3.one;
 
     public StaticTile PlacedOnTile = null;
+    public Transform TileParent;
 
     public TileStatus myTileStatus = TileStatus.InBottomBar;
     public enum TileStatus
@@ -85,26 +86,29 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         transform.localScale = Vector3.Lerp(transform.localScale, _targetScale, Time.deltaTime * 20);
         // DG.Tweening.DOTween.Shake(transform.position,)
 
-
-        if (myTileStatus == TileStatus.OnBoard)
+        if(GameManager.instance.CurrentTurn == 0)
         {
-            if(PlacedOnTile != null)
+            if (myTileStatus == TileStatus.OnBoard)
             {
-                transform.position = PlacedOnTile.transform.position;
-                transform.localScale = new Vector3(0.5f * Board.instance.GetScaleDif(), 0.5f * Board.instance.GetScaleDif(), 0.5f * Board.instance.GetScaleDif());
-                transform.parent = PlayerBoard.instance.MaskedParent.transform;
+                if (PlacedOnTile != null)
+                {
+                    transform.position = PlacedOnTile.transform.position;
+                    transform.localScale = new Vector3(0.5f * Board.instance.GetScaleDif(), 0.5f * Board.instance.GetScaleDif(), 0.5f * Board.instance.GetScaleDif());
+                    transform.parent = PlayerBoard.instance.MaskedParent.transform;
+                }
+                else
+                {
+                    transform.parent = TileParent;
+
+                }
+
             }
             else
             {
-                transform.parent = PlayerBoard.instance.panel.transform;
-
+                transform.parent = TileParent;
             }
-
         }
-        else
-        {
-            transform.parent = PlayerBoard.instance.panel.transform;
-        }
+     
 
 
     }
@@ -166,6 +170,7 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
             return;
 
 
+        myTileStatus = TileStatus.Dragging;
 
         originalPanelLocalPosition = dragObjectInternal.localPosition;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(dragAreaInternal, data.position, data.pressEventCamera, out originalLocalPointerPosition);
@@ -210,6 +215,9 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
     {
         if(isValidPlaced())
         {
+
+
+
             GetComponent<Animator>().Play("tileflip");
 
             StartCoroutine( DestroyAfterTime() );
@@ -257,6 +265,8 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
             _targetScale = Vector3.one;
 
             textLabel.fontSize = 75;
+            PlacedOnTile = null;
+            myTileStatus = TileStatus.InBottomBar;
         }
 
 
@@ -572,7 +582,7 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
             GetComponent<Image>().sprite = Normal;
             textLabel.color = new Color(1, 1, 1, 1);
 
-
+            myTileStatus = TileStatus.InBottomBar;
         }
 
     }

@@ -736,6 +736,9 @@ public class Board : MonoBehaviour
 
             }
 
+      
+
+
 
 
 
@@ -787,7 +790,15 @@ public class Board : MonoBehaviour
 
 
 
+        if (ScoreScreen.instance.bg.activeSelf )
+        {
 
+            transform.localPosition = Vector3.Lerp(transform.localPosition, Vector3.zero, Time.deltaTime * 11);
+
+            initialScale = new Vector3(1.017f, 1.017f, 1.017f);
+            transform.transform.localScale = Vector3.Lerp(transform.transform.localScale, initialScale, Time.deltaTime * 5);
+
+        }
 
     }
 }

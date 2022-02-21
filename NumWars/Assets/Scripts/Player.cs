@@ -66,6 +66,7 @@ public class Player : MonoBehaviour
             GameObject go = GameObject.Instantiate(PlayerBoard.instance.TileObject, tileParent);
             myTiles.Add(go.GetComponent<Tile>());
             go.GetComponent<Tile>().Init(int.Parse(aList[i]));
+            go.GetComponent<Tile>().TileParent = tileParent;
         }
     }
 
@@ -172,7 +173,8 @@ public class Player : MonoBehaviour
                     GameObject go = GameObject.Instantiate(PlayerBoard.instance.TileObject, tileParent);
                     myTiles.Add(go.GetComponent<Tile>());
                     go.GetComponent<Tile>().Init(Board.instance.AllTilesNumbers[0]);
-                    Board.instance.AllTilesNumbers.RemoveAt(0);
+                go.GetComponent<Tile>().TileParent = tileParent;
+                Board.instance.AllTilesNumbers.RemoveAt(0);
                 }
 
             }
