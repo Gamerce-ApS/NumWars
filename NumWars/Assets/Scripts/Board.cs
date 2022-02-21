@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using static StaticTile;
 
 [Serializable]
@@ -616,9 +618,176 @@ public class Board : MonoBehaviour
 
     
     }
+    public float GetScaleDif()
+    {
+        return 1+transform.localScale.x- 1.017f;
+    }
+    private float initialDistance;
+    private Vector3 initialScale;
+    private Vector3 initialPosition;
     // Update is called once per frame
     void Update()
     {
-        
+        if( SceneManager.GetActiveScene().name == "MenuScene")
+        {
+            return;
+        }
+
+
+        if (Board.instance.Selection.GetComponent<Image>().enabled)
+            return;
+
+        if (Input.touchCount == 2)
+        {
+            var touchZero = Input.GetTouch(0);
+            var touchOne = Input.GetTouch(1);
+
+            // if one of the touches Ended or Canceled do nothing
+            if (touchZero.phase == TouchPhase.Ended || touchZero.phase == TouchPhase.Canceled
+               || touchOne.phase == TouchPhase.Ended || touchOne.phase == TouchPhase.Canceled)
+            {
+                return;
+            }
+
+            // It is enough to check whether one of them began since we
+            // already excluded the Ended and Canceled phase in the line before
+            if (touchZero.phase == TouchPhase.Began || touchOne.phase == TouchPhase.Began)
+            {
+                // track the initial values
+                initialDistance = Vector2.Distance(touchZero.position, touchOne.position);
+                initialScale = transform.transform.localScale;
+                initialPosition = transform.localPosition;
+            }
+            // else now is any other case where touchZero and/or touchOne are in one of the states
+            // of Stationary or Moved
+            else
+            {
+                // otherwise get the current distance
+                var currentDistance = Vector2.Distance(touchZero.position, touchOne.position);
+
+                // A little emergency brake ;)
+                if (Mathf.Approximately(initialDistance, 0)) return;
+
+                // get the scale factor of the current distance relative to the inital one
+                var factor = currentDistance / initialDistance;
+
+                if((initialScale * factor).x < 1.017f)
+                {
+                    initialScale = new Vector3(1.017f, 1.017f, 1.017f);
+                    factor = 1;
+                }
+                // apply the scale
+                // instead of a continuous addition rather always base the 
+                // calculation on the initial and current value only
+                bool shouldScale = true;
+                if (factor<0)
+                    transform.localPosition = Vector3.Lerp(transform.localPosition, Vector3.zero, Time.deltaTime * 7);
+
+                transform.localPosition += new Vector3(touchZero.deltaPosition.x, touchZero.deltaPosition.y,0);
+
+                Vector3[] v = new Vector3[4];
+                transform.GetComponent<RectTransform>().GetWorldCorners(v);
+
+                Vector3[] canvasC = new Vector3[4];
+                GameObject.Find("Canvas").GetComponent<RectTransform>().GetWorldCorners(canvasC);
+
+
+                Vector3[] canvasMask = new Vector3[4];
+                transform.parent.GetComponent<RectTransform>().GetWorldCorners(canvasMask);
+
+
+                if (v[0].x > canvasC[0].x)
+                {
+                    transform.localPosition -= new Vector3(touchZero.deltaPosition.x, 0, 0);
+                    shouldScale = false;
+                }
+
+                else if (v[2].x < canvasC[2].x)
+                {
+                    transform.localPosition -= new Vector3(touchZero.deltaPosition.x, 0, 0);
+                    shouldScale = false;
+
+                }
+                if (v[0].y > canvasMask[0].y)
+                {
+                    transform.localPosition -= new Vector3(0, touchZero.deltaPosition.y, 0);
+                    shouldScale = false;
+
+                }
+                else if (v[2].y < canvasMask[2].y)
+                {
+                    transform.localPosition -= new Vector3(0, touchZero.deltaPosition.y, 0);
+                    shouldScale = false;
+
+                }
+
+                if (transform.localScale.x < 1.02f)
+                    transform.localPosition = Vector3.Lerp(transform.localPosition, Vector3.zero, Time.deltaTime * 7);
+
+
+                if(shouldScale )
+                    transform.transform.localScale = initialScale * factor;
+                else
+                {
+                    transform.localPosition = Vector3.Lerp(transform.localPosition, Vector3.zero, Time.deltaTime * 7);
+
+                }
+
+
+            }
+
+
+
+
+
+        }
+        else if (Input.touchCount == 1)
+        {
+            var touchZero = Input.GetTouch(0);
+
+
+            transform.localPosition += new Vector3(touchZero.deltaPosition.x, touchZero.deltaPosition.y, 0);
+
+            Vector3[] v = new Vector3[4];
+            transform.GetComponent<RectTransform>().GetWorldCorners(v);
+
+            Vector3[] canvasC = new Vector3[4];
+            GameObject.Find("Canvas").GetComponent<RectTransform>().GetWorldCorners(canvasC);
+
+            Vector3[] canvasMask = new Vector3[4];
+            transform.parent.GetComponent<RectTransform>().GetWorldCorners(canvasMask);
+
+
+            if (v[0].x > canvasC[0].x)
+            {
+                transform.localPosition -= new Vector3(touchZero.deltaPosition.x, 0, 0);
+            }
+            else if(v[2].x < canvasC[2].x)
+            {
+                transform.localPosition -= new Vector3(touchZero.deltaPosition.x, 0, 0);
+            }
+
+            if (v[0].y > canvasMask[0].y)
+            {
+                transform.localPosition -= new Vector3(0, touchZero.deltaPosition.y, 0);
+            }
+            else if (v[2].y < canvasMask[2].y)
+            {
+                transform.localPosition -= new Vector3(0, touchZero.deltaPosition.y, 0);
+            }
+
+
+
+        }
+        else
+        {
+            if (transform.localScale.x < 1.02f)
+                transform.localPosition = Vector3.Lerp(transform.localPosition, Vector3.zero, Time.deltaTime * 7);
+        }
+
+
+
+
+
     }
 }

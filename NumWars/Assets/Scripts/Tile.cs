@@ -83,7 +83,28 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         }
 
         transform.localScale = Vector3.Lerp(transform.localScale, _targetScale, Time.deltaTime * 20);
-       // DG.Tweening.DOTween.Shake(transform.position,)
+        // DG.Tweening.DOTween.Shake(transform.position,)
+
+
+        if (myTileStatus == TileStatus.OnBoard)
+        {
+            if(PlacedOnTile != null)
+            {
+                transform.position = PlacedOnTile.transform.position;
+                transform.localScale = new Vector3(0.5f * Board.instance.GetScaleDif(), 0.5f * Board.instance.GetScaleDif(), 0.5f * Board.instance.GetScaleDif());
+                transform.parent = PlayerBoard.instance.MaskedParent.transform;
+            }
+            else
+            {
+                transform.parent = PlayerBoard.instance.panel.transform;
+
+            }
+
+        }
+        else
+        {
+            transform.parent = PlayerBoard.instance.panel.transform;
+        }
 
 
     }

@@ -8,6 +8,7 @@ public class PlayerBoard : MonoBehaviour
     public GameObject TileObject;
     public GameObject panel;
     public GameObject panelAi;
+    public GameObject MaskedParent;
     public static PlayerBoard instance;
 
 
