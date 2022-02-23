@@ -393,7 +393,7 @@ result =>
             {"Ranking", "0"},
             {"Picture", "0"},
             {"MyGames", ","},
-            {"OldGames", ","},
+            {"OldGames", "[splitter][splitter]"},
         }
         },
         result =>

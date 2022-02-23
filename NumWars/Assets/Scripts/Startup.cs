@@ -294,7 +294,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
         //If no loading in progress we know it's the last call.
-        if(LoadingOverlay.instance.LoadingCall.Count== 1)
+        if(LoadingOverlay.instance.LoadingCall.Count== 0)
         {
             GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent);
 
