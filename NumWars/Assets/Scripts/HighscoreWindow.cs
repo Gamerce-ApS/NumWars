@@ -27,10 +27,11 @@ public class HighscoreWindow : MonoBehaviour
     //Get the players with the top 10 high scores in the game
     public void RequestLeaderboard()
     {
-        PlayFabClientAPI.GetLeaderboard(new GetLeaderboardRequest
+        PlayFabClientAPI.GetLeaderboardAroundPlayer(new GetLeaderboardAroundPlayerRequest
         {
+            PlayFabId=Startup._instance.MyPlayfabID,
             StatisticName = "Highscore",
-            StartPosition = 0,
+          
             MaxResultsCount = 20
         }, result => DisplayLeaderboard(result), FailureCallback);
     }
@@ -42,7 +43,7 @@ public class HighscoreWindow : MonoBehaviour
         Debug.LogError(error.GenerateErrorReport());
     }
 
-    public void DisplayLeaderboard(GetLeaderboardResult result)
+    public void DisplayLeaderboard(GetLeaderboardAroundPlayerResult result)
     {
         foreach (Transform child in _parent)
         {

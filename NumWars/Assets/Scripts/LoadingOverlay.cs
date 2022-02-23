@@ -19,6 +19,8 @@ public class LoadingOverlay : MonoBehaviour
     public List<string> LoadingCall = new List<string>();
     public Text log;
     float timer = -1;
+
+    public GameObject LoadingGOList;
     // Start is called before the first frame update
     void Start()
     {
@@ -34,7 +36,8 @@ public class LoadingOverlay : MonoBehaviour
             if (timer < 0)
             {
                 timer = -1;
-                transform.GetChild(0).gameObject.SetActive(false);
+               // transform.GetChild(0).gameObject.SetActive(false);
+                LoadingGOList.SetActive(false);
 
             }
         }
@@ -44,7 +47,8 @@ public class LoadingOverlay : MonoBehaviour
     public void ShowLoading(string function)
     {
         timer = -1;
-        transform.GetChild(0).gameObject.SetActive(true);
+      //  transform.GetChild(0).gameObject.SetActive(true);
+        LoadingGOList.SetActive(true);
         LoadingCall.Add(function);
         log.text = "Start:" + function;
     }

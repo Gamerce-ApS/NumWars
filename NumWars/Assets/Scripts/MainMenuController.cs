@@ -20,6 +20,8 @@ public class MainMenuController : MonoBehaviour
     public InputField setNameTextLabel;
     public GameObject SetNameGO;
 
+    public Text nameSettingTextError;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -98,8 +100,12 @@ public class MainMenuController : MonoBehaviour
     }
     public void ClickSetName()
     {
-        if (setNameTextLabel.text == "What's your name?")
+        if (setNameTextLabel.text == "What's your name?" || setNameTextLabel.text.Length<3)
+        {
+            nameSettingTextError.text = "Invalid name";
             return;
+        }
+
 
         if(setNameTextLabel.text == _Name.text)
         {
@@ -107,7 +113,7 @@ public class MainMenuController : MonoBehaviour
             return;
 
         }
-        SetNameGO.SetActive(false);
+    //    SetNameGO.SetActive(false);
         PlayfabHelperFunctions.instance.UpdateDisplayName(setNameTextLabel.text);
     }
 

@@ -398,7 +398,11 @@ public class GameManager : MonoBehaviour
 
         }
     }
+    public void HideThinkingOverlay()
+    {
+        WaitingOverlay.GetComponent<CanvasGroup>().DOFade(0, 0.5f).SetEase(Ease.InOutQuart).OnComplete(() => { WaitingOverlay.SetActive(false); });
 
+    }
     public void MakeLastPlayedTilesColored()
     {
         Color col;

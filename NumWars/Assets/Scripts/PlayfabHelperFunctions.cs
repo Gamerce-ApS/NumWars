@@ -116,11 +116,20 @@ result =>
             DisplayName = aName 
         }, result =>
         {
+            
             LoadingOverlay.instance.DoneLoading("UpdateUserTitleDisplayName");
             Debug.Log("The player's display name is now: " + result.DisplayName);
+            MainMenuController.instance.SetNameGO.SetActive(false);
+
             StartCoroutine(GetComponent<Startup>().DelayRefresh());
 
-        }, error => Debug.LogError(error.GenerateErrorReport()));
+        }, error =>{
+                        Debug.LogError(error.GenerateErrorReport());
+                        LoadingOverlay.instance.DoneLoading("UpdateUserTitleDisplayName");
+
+            MainMenuController.instance.nameSettingTextError.text = "Invalid name";
+
+        });
     }
 
     public void SetPlayfabCreatedRoom(string playfabId, string roomName)
