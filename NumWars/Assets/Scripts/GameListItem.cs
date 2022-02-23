@@ -194,7 +194,18 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         if (_lockUntilRelease)
             return;
 
-        Debug.Log("Delete game:" + bd.RoomName);
-        PlayfabHelperFunctions.instance.DeleteGame(bd.RoomName);
+        if(isAiGame)
+        {
+            PlayerPrefs.DeleteKey("AIGame");
+            PlayfabHelperFunctions.instance.Refresh();
+        }
+        else
+        {
+            Debug.Log("Delete game:" + bd.RoomName);
+            PlayfabHelperFunctions.instance.DeleteGame(bd.RoomName);
+        }
+
+
+
     }
 }

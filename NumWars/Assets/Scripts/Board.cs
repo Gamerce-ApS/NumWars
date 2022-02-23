@@ -618,6 +618,13 @@ public class Board : MonoBehaviour
 
     
     }
+    public void SetTileColor(int aX, int aY, Color aCol)
+    {
+
+        BoardTiles[aX + aY * 14].transform.GetChild(0).GetComponent<Image>().color = aCol;
+        //BoardTiles[aX + aY * 14].transform.GetChild(0).gameObject.SetActive(false);
+        //Destroy(BoardTiles[aX + aY * 14].transform.GetChild(0).gameObject);
+    }
     public float GetScaleDif()
     {
         return 1+transform.localScale.x- 1.017f;

@@ -158,9 +158,9 @@ public class Startup : MonoBehaviourPunCallbacks
 
         }
     }
-    public void ChangeValueFor(string aData)
+    public void ChangeValueFor(string aEntry,string aValue)
     {
-        _PlayfabHelperFunctions.ChangeValueFor(aData);
+        _PlayfabHelperFunctions.ChangeValueFor(aEntry, aValue);
     }
 
     #region MonoBehaviourPunCallbacks CallBacks
@@ -396,6 +396,13 @@ public class Startup : MonoBehaviourPunCallbacks
     {
         return "";
     }
+    public void AdjustThropies(int aValue)
+    {
+        myData["Ranking"].Value = (int.Parse(myData["Ranking"].Value) + aValue).ToString();
 
+        _PlayfabHelperFunctions.SubmitHighscore(int.Parse( myData["Ranking"].Value ));
+
+        _PlayfabHelperFunctions.ChangeValueFor("Ranking", myData["Ranking"].Value);
+    }
 
 }

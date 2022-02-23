@@ -68,6 +68,12 @@ public class GameFinishedScreen : MonoBehaviour
             p2_thropies.text = "-";
             p2_score.text = bf.player2_score;
             p2_wins.text = "-";
+
+            if(int.Parse(bf.player1_score) > int.Parse(bf.player2_score))
+                Startup._instance.AdjustThropies(30);
+            else
+                Startup._instance.AdjustThropies(-15);
+
         }
         else
         {
@@ -80,6 +86,12 @@ public class GameFinishedScreen : MonoBehaviour
             p1_thropies.text = "-";
             p1_score.text = bf.player2_score;
             p1_wins.text = "-";
+
+            if (int.Parse(bf.player2_score) > int.Parse(bf.player1_score))
+                Startup._instance.AdjustThropies(30);
+            else
+                Startup._instance.AdjustThropies(-15);
+
         }
 
         if(int.Parse(p1_score.text) > int.Parse(p2_score.text))
@@ -92,6 +104,9 @@ public class GameFinishedScreen : MonoBehaviour
             p1_wins_go.SetActive(false);
             p2_wins_go.SetActive(true);
         }
+
+
+
     }
     public void PressContinue()
     {

@@ -111,8 +111,8 @@ public class GameManager : MonoBehaviour
               
                 thePlayers[0].LoadPlayerTiles(ai_bd.p1_tiles);
                 thePlayers[1].LoadPlayerTiles(ai_bd.p2_tiles);
-                
 
+                
 
 
 
@@ -227,11 +227,25 @@ public class GameManager : MonoBehaviour
 
     private float _refreshTimer = 0;
     public bool updateInProgress = false;
+    float runSetupAfterTime = 0.2f;
     // Update is called once per frame
     void Update()
     {
 
-        if(thePlayers[1].isAI == false)
+        if (runSetupAfterTime != -1)
+        {
+            runSetupAfterTime -= Time.deltaTime;
+            if(runSetupAfterTime<0)
+            {
+                runSetupAfterTime = -1;
+                StartGameFirstFrame();
+            }
+
+    
+        }
+
+
+        if (thePlayers[1].isAI == false)
         {
             if (CheckIfMyTurn(false) == false)
             {
@@ -343,6 +357,8 @@ public class GameManager : MonoBehaviour
         }
         else
         {
+            //Use this for testing win scenario
+           // AIGAME_EMPTY_TURNS = ((AIGAME_EMPTY_TURNS) + 1);
             if (isEmptyTurn)
             {
                 AIGAME_EMPTY_TURNS = ((AIGAME_EMPTY_TURNS) + 1);
@@ -354,10 +370,10 @@ public class GameManager : MonoBehaviour
             }
 
 
-            
 
 
-            BoardData updatedBoard = new BoardData(Startup._instance.MyPlayfabID, "", "1", Board.instance.BoardTiles, "AI_GAME", new List<string>(), Board.instance.GetTilesLeft(), "0",thePlayers[0].GetMyTiles(), thePlayers[1].GetMyTiles());
+
+            BoardData updatedBoard = new BoardData(Startup._instance.MyPlayfabID, "", "1", Board.instance.BoardTiles, "AI_GAME", Board.instance.History, Board.instance.GetTilesLeft(), "0",thePlayers[0].GetMyTiles(), thePlayers[1].GetMyTiles());
 
             updatedBoard.player1_displayName = Startup._instance.displayName;
             updatedBoard.player2_displayName = "AI";
@@ -382,6 +398,72 @@ public class GameManager : MonoBehaviour
 
         }
     }
+
+    public void MakeLastPlayedTilesColored()
+    {
+        Color col;
+        ColorUtility.TryParseHtmlString("#FFFE67", out col);
+
+        List<string> moveHistory = Board.instance.History;
+        List<FakeTileData> lastMoves = new List<FakeTileData>();
+
+        int myBackednTurn = GameManager.instance.CurrentTurn;
+
+        if(Startup._instance.GameToLoad != null)
+        {
+             myBackednTurn = Startup._instance.GameToLoad.GetPlayerTurn(GameManager.instance.CurrentTurn);
+             moveHistory = Startup._instance.GameToLoad.History;
+
+        }
+
+        for (int i = moveHistory.Count - 1; i >= 0; i--)
+        {
+            string[] moveInfo = moveHistory[i].Split('#');
+
+            if( moveHistory[i] != "#SWAP#")
+            {
+                Vector2 v2 = ScoreScreen.StringToVector2(moveInfo[0]);
+                Board.instance.SetTileColor((int)(v2.x), (int)(v2.y), Color.white);
+            }
+
+
+
+        }
+
+        for (int i = moveHistory.Count - 1; i >= 0; i--)
+        {
+            if( moveHistory[i] == "#SWAP#")
+            {
+                break;
+            }
+            string[] moveInfo = moveHistory[i].Split('#');
+            FakeTileData ftd = new FakeTileData();
+            ftd.Position = ScoreScreen.StringToVector2(moveInfo[0]);
+            ftd.Number = int.Parse(moveInfo[1]);
+            ftd.ScoreValue = int.Parse(moveInfo[2]);
+            ftd.Player = int.Parse(moveInfo[3]);
+
+            if (myBackednTurn != ftd.Player)
+            {
+                lastMoves.Add(ftd);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+
+        for(int i = 0; i < lastMoves.Count;i++)
+        {
+            Board.instance.SetTileColor((int)(lastMoves[i].Position.x), (int)(lastMoves[i].Position.y), col);
+
+
+        }
+
+
+
+    }
     public void EndGameAfterPasses(BoardData bd)
     {
         GameFinishedScreen.instance.Show(bd);
@@ -390,5 +472,9 @@ public class GameManager : MonoBehaviour
     {
         SceneManager.LoadScene(0);
         Startup._instance.Refresh(0.1f);
+    }
+    public void StartGameFirstFrame()
+    {
+        MakeLastPlayedTilesColored();
     }
 }

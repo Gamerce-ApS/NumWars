@@ -400,23 +400,23 @@ result =>
             Debug.Log(error.GenerateErrorReport());
         });
     }
-    public void ChangeValueFor(string aData)
+    public void ChangeValueFor(string aEntry,string aValue)
     {
-        LoadingOverlay.instance.ShowLoading("UpdateUserData");
+        //LoadingOverlay.instance.ShowLoading("UpdateUserData");
 
         PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
         {
             Data = new Dictionary<string, string>() {
-                {aData, Random.Range(1,100).ToString()}
+                {aEntry, aValue}
 
             }
         },
        result =>
        {
-           LoadingOverlay.instance.DoneLoading("UpdateUserData");
+           //LoadingOverlay.instance.DoneLoading("UpdateUserData");
 
            Debug.Log("Successfully updated user data");
-           StartCoroutine(GetComponent<Startup>().DelayRefresh());
+           //StartCoroutine(GetComponent<Startup>().DelayRefresh());
 
        },
        error => {
@@ -801,5 +801,30 @@ result =>
         });
   
     }
+    public void SubmitHighscore(int playerScore)
+    {
+        PlayFabClientAPI.UpdatePlayerStatistics(new UpdatePlayerStatisticsRequest
+        {
+            Statistics = new List<StatisticUpdate> {
+            new StatisticUpdate {
+                StatisticName = "Highscore",
+                Value = playerScore
+            }
+        }
+        }, result => OnStatisticsUpdated(result), FailureCallback);
+    }
+
+    private void OnStatisticsUpdated(UpdatePlayerStatisticsResult updateResult)
+    {
+        Debug.Log("Successfully submitted high score");
+    }
+
+    private void FailureCallback(PlayFabError error)
+    {
+        Debug.LogWarning("Something went wrong with your API call. Here's some debug information:");
+        Debug.LogError(error.GenerateErrorReport());
+    }
+
+
 
 }

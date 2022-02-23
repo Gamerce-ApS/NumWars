@@ -129,6 +129,9 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         GetComponent<Image>().sprite = White;
         textLabel.color = new Color(98f / 255f, 60f / 255f, 95f / 255f);
 
+        Color col;
+        ColorUtility.TryParseHtmlString("#FFFE67", out col);
+        GetComponent<Image>().color = col;
     }
 
     public RectTransform dragObject;
@@ -220,15 +223,25 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
 
             GetComponent<Animator>().Play("tileflip");
 
+
+
             StartCoroutine( DestroyAfterTime() );
+
+
+
 
           //  GameObject.Instantiate(Board.instance.ScoreEffect, transform.position, Quaternion.identity, transform.parent);
         }
     }
     IEnumerator DestroyAfterTime()
     {
+
+
         yield return new WaitForSeconds(1f);
         PlacedOnTile.SetTile(StaticTile.TileType.NormalTile, int.Parse(textLabel.text));
+
+     //   PlacedOnTile.transform.GetChild(0).GetComponent<Image>().color = col;
+
 
         GameManager.instance.thePlayers[0].myTiles.Remove(this);
         GameManager.instance.thePlayers[1].myTiles.Remove(this);

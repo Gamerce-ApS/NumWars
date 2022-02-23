@@ -165,8 +165,17 @@ public class Player : MonoBehaviour
     public void AddNewPlayerTiles()
     {
 
-        
-            for (int i = myTiles.Count; i < 6; i++)
+        //Board.instance.AllTilesNumbers[0] = (2);
+        //Board.instance.AllTilesNumbers[1]=(4);
+        //Board.instance.AllTilesNumbers[2]=(6);
+        //Board.instance.AllTilesNumbers[3]=(10);
+        //Board.instance.AllTilesNumbers[4] =(4);
+        //Board.instance.AllTilesNumbers[5]=(14);
+
+
+
+
+        for (int i = myTiles.Count; i < 6; i++)
             {
                 if (Board.instance.AllTilesNumbers.Count > 0)
                 {

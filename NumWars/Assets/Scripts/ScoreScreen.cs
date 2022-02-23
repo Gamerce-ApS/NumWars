@@ -20,6 +20,7 @@ public class ScoreScreen : MonoBehaviour
     public GameObject bg;
 
     public GameObject TotalScore;
+    public GameObject bingo;
 
     
 
@@ -159,6 +160,15 @@ public class ScoreScreen : MonoBehaviour
 
         yield return new WaitForSeconds(0.7f);
 
+
+        if(createdPoints.Count == 6)
+        {
+            bingo.SetActive(false);
+            bingo.SetActive(true);
+            totalScore += 50;
+
+        }
+
         GameManager.instance.AddScore(thePlayer, totalScore);
         //for (int i = 0; i < score.Count; i++)
         //{
@@ -212,9 +222,17 @@ public class ScoreScreen : MonoBehaviour
 
         if(shouldAddToHistory)
         {
-            if (!GameManager.instance.thePlayers[1].isAI)
+            if (GameManager.instance.thePlayers[1].isAI)
+            {
+                if (Board.instance.History == null)
+                    Board.instance.History = new List<string>();
+
+                Board.instance.History.Add(aTile.GetBoardPosition() + "#" + aTile.textLabel.text + "#" + aTile.GetValue() + "#" + GameManager.instance.CurrentTurn.ToString());
+            }
+            else
             {
                 Startup._instance.GameToLoad.History.Add(aTile.GetBoardPosition() + "#" + aTile.textLabel.text + "#" + aTile.GetValue() + "#" + Startup._instance.GameToLoad.GetPlayerTurn(GameManager.instance.CurrentTurn).ToString());
+
             }
         }
         createdPoints.Add(go);
@@ -252,6 +270,18 @@ public class ScoreScreen : MonoBehaviour
                 createdPoints[i].GetComponent<RectTransform>().DOScale(createdPoints[i].transform.localScale*1.3f, 0.1f).SetEase(Ease.InOutQuart);
         }
         yield return new WaitForSeconds(.95f);
+
+
+        if (createdPoints.Count == 6)
+        {
+            bingo.SetActive(false);
+            bingo.SetActive(true);
+            totalScore += 50;
+            yield return new WaitForSeconds(0.4f);
+            createdPoints[createdPoints.Count-1].transform.GetChild(0).Find("Text").GetComponent<Text>().text = totalScore.ToString();
+            yield return new WaitForSeconds(0.4f);
+        }
+
         for (int i = 0; i < createdPoints.Count; i++)
         {
             
@@ -263,6 +293,8 @@ public class ScoreScreen : MonoBehaviour
 
 
         yield return new WaitForSeconds(0.7f);
+
+       
 
         GameManager.instance.AddScore(thePlayer, totalScore);
         for (int i = 0; i < score.Count; i++)
@@ -278,7 +310,10 @@ public class ScoreScreen : MonoBehaviour
 
 
         yield return new WaitForSeconds(1.0f);
-   
+
+
+
+
         bg.SetActive(false);
         thePlayer.AddNewPlayerTiles();
         PlayerBoard.instance.RefreshLayout();
@@ -289,6 +324,9 @@ public class ScoreScreen : MonoBehaviour
             isEmptyTurn = true;
 
         GameManager.instance.NextTurn(isEmptyTurn);
+
+        yield return new WaitForSeconds(0.03f);
+        GameManager.instance.MakeLastPlayedTilesColored();
 
     }
     public static Vector2 StringToVector2(string sVector)
