@@ -186,35 +186,57 @@ result =>
 
         LoadingOverlay.instance.ShowLoading("PlayFabCloudScriptAPI.ExecuteFunction");
 
-        PlayFabCloudScriptAPI.ExecuteFunction(new ExecuteFunctionRequest()
-        {
-            Entity = new PlayFab.CloudScriptModels.EntityKey()
-            {
-                Id = PlayFabSettings.staticPlayer.EntityId, //Get this from when you logged in,
-                Type = PlayFabSettings.staticPlayer.EntityType, //Get this from when you logged in
-            },
-            FunctionName = "httptrigger1", //This should be the name of your Azure Function that you created.
-            FunctionParameter = new Dictionary<string, object>() { { "player1_playfabID", roomName }, { "player2_playfabID", player2_playfabID } }, //This is the data that you would want to pass into your function.
-            GeneratePlayStreamEvent = false //Set this to true if you would like this call to show up in PlayStream
-        }, (ExecuteFunctionResult result) =>
-        {
-            LoadingOverlay.instance.DoneLoading("PlayFabCloudScriptAPI.ExecuteFunction");
-            if (result.FunctionResultTooLarge ?? false)
-            {
-                Debug.Log("This can happen if you exceed the limit that can be returned from an Azure Function, See PlayFab Limits Page for details.");
-                return;
-            }
-            Debug.Log($"The {result.FunctionName} function took {result.ExecutionTimeMilliseconds} to complete");
-            Debug.Log($"Result: {result.FunctionResult.ToString()}");
+        //PlayFabCloudScriptAPI.ExecuteFunction(new ExecuteFunctionRequest()
+        //{
+        //    Entity = new PlayFab.CloudScriptModels.EntityKey()
+        //    {
+        //        Id = PlayFabSettings.staticPlayer.EntityId, //Get this from when you logged in,
+        //        Type = PlayFabSettings.staticPlayer.EntityType, //Get this from when you logged in
+        //    },
+        //    FunctionName = "httptrigger1", //This should be the name of your Azure Function that you created.
+        //    FunctionParameter = new Dictionary<string, object>() { { "player1_playfabID", roomName }, { "player2_playfabID", player2_playfabID } }, //This is the data that you would want to pass into your function.
+        //    GeneratePlayStreamEvent = false //Set this to true if you would like this call to show up in PlayStream
+        //}, (ExecuteFunctionResult result) =>
+        //{
+        //    LoadingOverlay.instance.DoneLoading("PlayFabCloudScriptAPI.ExecuteFunction");
+        //    if (result.FunctionResultTooLarge ?? false)
+        //    {
+        //        Debug.Log("This can happen if you exceed the limit that can be returned from an Azure Function, See PlayFab Limits Page for details.");
+        //        return;
+        //    }
+        //    Debug.Log($"The {result.FunctionName} function took {result.ExecutionTimeMilliseconds} to complete");
+        //    Debug.Log($"Result: {result.FunctionResult.ToString()}");
 
 
+        //    SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName);
+
+
+        //}, (PlayFabError error) =>
+        //{
+        //    Debug.Log($"Opps Something went wrong: {error.GenerateErrorReport()}");
+        //});
+
+
+        List<string> aUser = new List<string>();
+        aUser.Add(player2_playfabID);
+
+        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        {
+            FunctionName = "AddPlayerToSharedGroup",
+            FunctionParameter = new Dictionary<string, object>() {
+            { "PlayFabIds", aUser },
+            { "SharedGroupId", roomName }
+        }
+        }, result => {
+            Debug.Log(result.FunctionResult);
             SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName);
-
-
-        }, (PlayFabError error) =>
+        }, error =>
         {
-            Debug.Log($"Opps Something went wrong: {error.GenerateErrorReport()}");
-        });
+            Debug.LogError(error.GenerateErrorReport());
+        }
+);
+
+
 
 
 
@@ -470,7 +492,12 @@ result =>
     {
         foreach (Transform child in MainMenuController.instance._GameListParent.transform)
         {
-            GameObject.Destroy(child.gameObject);
+
+            if(child.gameObject.name.Contains("SerachingForGame") == false)
+            {
+                GameObject.Destroy(child.gameObject);
+            }
+
         }
         Startup._instance.openGamesList.Clear();
         //GetComponent<Startup>()._roomListLabel.text = "";
@@ -532,9 +559,17 @@ result =>
 
                         }else
                         {
-                            Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
-                            Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
-                            Startup._instance.SearchingForGameObject.SetActive(true);
+                            if(Startup._instance.SearchingForGameObject == null)
+                            {
+                                Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
+                                Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+                                Startup._instance.SearchingForGameObject.SetActive(true);
+                            }
+                            else
+                            {
+                                Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+                            }
+      
                         }
 
                         //Debug.Log(entry.Value.Value.Length);
@@ -689,6 +724,47 @@ result =>
         }
         }, null, error => Debug.LogError(error.GenerateErrorReport()));
     }
+    public void CreateAndAddToSharedGroup(string[] aPlayFabIds, string aSharedGroupId)
+    {
+        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        {
+            FunctionName = "CreateAndAddSharedGroup",
+            FunctionParameter = new Dictionary<string, object>() {
+            { "PlayFabIds", aPlayFabIds },
+            { "SharedGroupId", aSharedGroupId }
+        }
+        }, result => {
+            Debug.Log(result.FunctionResult);
+
+        }, error =>
+        {
+            Debug.LogError(error.GenerateErrorReport());
+        }
+        );
+
+    }
+    public void AddPlayerToSharedGroup(string[] aPlayFabIds, string aSharedGroupId)
+    {
+        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        {
+            FunctionName = "AddPlayerToSharedGroup",
+            FunctionParameter = new Dictionary<string, object>() {
+            { "PlayFabIds", aPlayFabIds },
+            { "SharedGroupId", aSharedGroupId }
+        }
+        }, result => {
+            Debug.Log(result.FunctionResult);
+
+        }, error =>
+        {
+            Debug.LogError(error.GenerateErrorReport());
+        }
+        );
+
+    }
+
+
+
     public void Refresh()
     {
         LoadingOverlay.instance.ShowLoading("GetPlayerProfile");
