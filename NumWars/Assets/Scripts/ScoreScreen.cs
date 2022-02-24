@@ -56,6 +56,10 @@ public class ScoreScreen : MonoBehaviour
 
         for (int i = moveHistory.Count-1; i>=0 ;i--)
         {
+            if (moveHistory[i] == "#SWAP#")
+            {
+                break;
+            }
             string[] moveInfo = moveHistory[i].Split('#');
             FakeTileData ftd = new FakeTileData();
             ftd.Position = StringToVector2(moveInfo[0]);
