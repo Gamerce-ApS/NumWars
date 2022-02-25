@@ -303,7 +303,18 @@ public class GameManager : MonoBehaviour
                 thePlayers[1].DoAI();
             else
             {
-                BoardData updatedBoard = new BoardData(Startup._instance.GameToLoad.player1_PlayfabId, Startup._instance.GameToLoad.player2_PlayfabId, Startup._instance.GameToLoad.GetPlayerTurn(CurrentTurn).ToString(), Board.instance.BoardTiles, Startup._instance.GameToLoad.RoomName, Startup._instance.GameToLoad.History, Startup._instance.GameToLoad.TilesLeft, Startup._instance.GameToLoad.EmptyTurns, Startup._instance.GameToLoad.p1_tiles, Startup._instance.GameToLoad.p2_tiles);
+                
+                
+                List<string> p1_tiles = thePlayers[0].GetMyTiles();
+                List<string> p2_tiles = Startup._instance.GameToLoad.p2_tiles;
+
+                if(Startup._instance.GameToLoad.player2_PlayfabId == Startup._instance.MyPlayfabID)
+                {
+                   p1_tiles = Startup._instance.GameToLoad.p1_tiles;
+                    p2_tiles = thePlayers[0].GetMyTiles();
+                }
+
+                BoardData updatedBoard = new BoardData(Startup._instance.GameToLoad.player1_PlayfabId, Startup._instance.GameToLoad.player2_PlayfabId, Startup._instance.GameToLoad.GetPlayerTurn(CurrentTurn).ToString(), Board.instance.BoardTiles, Startup._instance.GameToLoad.RoomName, Startup._instance.GameToLoad.History, Board.instance.GetTilesLeft(), Startup._instance.GameToLoad.EmptyTurns, p1_tiles, p2_tiles);
                 updatedBoard.player1_displayName = Startup._instance.GameToLoad.player1_displayName;
                 updatedBoard.player2_displayName = Startup._instance.GameToLoad.player2_displayName;
                 updatedBoard.player1_score = Startup._instance.GameToLoad.player1_score;

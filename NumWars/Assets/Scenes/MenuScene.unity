@@ -27532,7 +27532,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98eea38bc079c49ea90840afefc527a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  TESTING_PLAYER_1: 1
+  TESTING_PLAYER_1: 0
   _GameListItem: {fileID: 233649022396315325, guid: 702b28954dbd4471eb59924d76cbe215,
     type: 3}
   _FinishedTitleListItem: {fileID: 2482119071395072608, guid: 26fc37150c1c24417ad56b3d8f67b9be,
