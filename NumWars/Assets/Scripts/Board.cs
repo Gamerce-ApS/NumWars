@@ -635,14 +635,27 @@ public class Board : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+      
+
         if( SceneManager.GetActiveScene().name == "MenuScene")
         {
             return;
         }
 
 
-        if (Board.instance.Selection.GetComponent<Image>().enabled)
+        if (Board.instance.Selection.GetComponent<Image>().enabled || GetIsDraginTile())
+        {
+            dragCooldownTimer = 0.1f;
             return;
+        }
+  
+
+        if (dragCooldownTimer > 0)
+        {
+            dragCooldownTimer -= Time.deltaTime;
+            return;
+        }
 
         if (Input.touchCount == 2)
         {
@@ -683,6 +696,12 @@ public class Board : MonoBehaviour
                     initialScale = new Vector3(1.017f, 1.017f, 1.017f);
                     factor = 1;
                 }
+                if((initialScale * factor).x > 2.30338f)
+                {
+                    initialScale = new Vector3(2.30338f, 2.30338f, 2.30338f);
+                    factor = 1;
+                }
+
                 // apply the scale
                 // instead of a continuous addition rather always base the 
                 // calculation on the initial and current value only
@@ -753,38 +772,42 @@ public class Board : MonoBehaviour
         }
         else if (Input.touchCount == 1)
         {
-            var touchZero = Input.GetTouch(0);
-
-
-            transform.localPosition += new Vector3(touchZero.deltaPosition.x, touchZero.deltaPosition.y, 0);
-
-            Vector3[] v = new Vector3[4];
-            transform.GetComponent<RectTransform>().GetWorldCorners(v);
-
-            Vector3[] canvasC = new Vector3[4];
-            GameObject.Find("Canvas").GetComponent<RectTransform>().GetWorldCorners(canvasC);
-
-            Vector3[] canvasMask = new Vector3[4];
-            transform.parent.GetComponent<RectTransform>().GetWorldCorners(canvasMask);
-
-
-            if (v[0].x > canvasC[0].x)
+            if(transform.localScale.x > 1.08f)
             {
-                transform.localPosition -= new Vector3(touchZero.deltaPosition.x, 0, 0);
-            }
-            else if(v[2].x < canvasC[2].x)
-            {
-                transform.localPosition -= new Vector3(touchZero.deltaPosition.x, 0, 0);
-            }
+                var touchZero = Input.GetTouch(0);
 
-            if (v[0].y > canvasMask[0].y)
-            {
-                transform.localPosition -= new Vector3(0, touchZero.deltaPosition.y, 0);
+
+                transform.localPosition += new Vector3(touchZero.deltaPosition.x, touchZero.deltaPosition.y, 0);
+
+                Vector3[] v = new Vector3[4];
+                transform.GetComponent<RectTransform>().GetWorldCorners(v);
+
+                Vector3[] canvasC = new Vector3[4];
+                GameObject.Find("Canvas").GetComponent<RectTransform>().GetWorldCorners(canvasC);
+
+                Vector3[] canvasMask = new Vector3[4];
+                transform.parent.GetComponent<RectTransform>().GetWorldCorners(canvasMask);
+
+
+                if (v[0].x > canvasC[0].x)
+                {
+                    transform.localPosition -= new Vector3(touchZero.deltaPosition.x, 0, 0);
+                }
+                else if (v[2].x < canvasC[2].x)
+                {
+                    transform.localPosition -= new Vector3(touchZero.deltaPosition.x, 0, 0);
+                }
+
+                if (v[0].y > canvasMask[0].y)
+                {
+                    transform.localPosition -= new Vector3(0, touchZero.deltaPosition.y, 0);
+                }
+                else if (v[2].y < canvasMask[2].y)
+                {
+                    transform.localPosition -= new Vector3(0, touchZero.deltaPosition.y, 0);
+                }
             }
-            else if (v[2].y < canvasMask[2].y)
-            {
-                transform.localPosition -= new Vector3(0, touchZero.deltaPosition.y, 0);
-            }
+  
 
 
 
@@ -807,5 +830,20 @@ public class Board : MonoBehaviour
 
         }
 
+    }
+    float dragCooldownTimer = 0;
+    bool GetIsDraginTile ()
+    {
+        for(int i = 0; i < GameManager.instance.thePlayers[0].myTiles.Count;i++)
+        {
+            if( GameManager.instance.thePlayers[0].myTiles[i].myTileStatus == Tile.TileStatus.Dragging)
+            {
+                dragCooldownTimer = 0.1f;
+                return true;
+            }
+
+        }
+
+        return false;
     }
 }
