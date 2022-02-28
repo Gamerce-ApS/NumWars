@@ -79,8 +79,19 @@ public static class HelperFunctions
     {
         return int.Parse(p2.textLabel.text).CompareTo(int.Parse(p1.textLabel.text));
     }
+    public static int SortByScore(FakeTileData p1, FakeTileData p2)
+    {
+        return (p2.Number).CompareTo((p1.Number));
+    }
 
-
+    public static int SortByScoreInverse(Tile p1, Tile p2)
+    {
+        return -int.Parse(p2.textLabel.text).CompareTo(int.Parse(p1.textLabel.text));
+    }
+    public static int SortByScoreInverse(FakeTileData p1, FakeTileData p2)
+    {
+        return -(p2.Number).CompareTo((p1.Number));
+    }
 
 
 

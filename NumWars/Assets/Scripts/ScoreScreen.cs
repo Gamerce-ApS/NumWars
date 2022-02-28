@@ -91,7 +91,10 @@ public class ScoreScreen : MonoBehaviour
         // if we come from start the score needs to be removed as it has not been updated
         if(isFromStart)
         GameManager.instance.AddScore(GameManager.instance.thePlayers[1], -totalScore,false);
-  
+
+        lastMoves.Sort(HelperFunctions.SortByScoreInverse);
+
+
         for (int i = 0; i < lastMoves.Count; i++)
         {
             StartCoroutine(ShowScoreAfterTime(1.75f+0.25f + i * 0.6f, lastMoves[i]));
@@ -205,6 +208,8 @@ public class ScoreScreen : MonoBehaviour
         bg.SetActive(true);
         bg.GetComponent<Image>().color = new Color(0, 0, 0, 0);
         bg.GetComponent<Image>().DOFade(119f / 255f, 1.0f).SetEase(Ease.InOutQuart);
+
+        score.Sort(HelperFunctions.SortByScoreInverse);
 
         for (int i = 0; i < score.Count;i++)
         {
