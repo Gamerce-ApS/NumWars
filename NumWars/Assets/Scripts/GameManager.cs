@@ -300,7 +300,15 @@ public class GameManager : MonoBehaviour
         if (CurrentTurn == 1)
         {
             if (thePlayers[1].isAI)
+            {
+
                 thePlayers[1].DoAI();
+
+                if (isEmptyTurn) // you ended your turn with an empty move, it will not be stored until AI makes his move
+                {
+                    Board.instance.History.Add("#EMPTY#");
+                }
+            }
             else
             {
                 
@@ -325,6 +333,7 @@ public class GameManager : MonoBehaviour
                 if (isEmptyTurn)
                 {
                     updatedBoard.EmptyTurns = (int.Parse(updatedBoard.EmptyTurns) + 1).ToString();
+                    updatedBoard.History.Add("#EMPTY#");
                 }
                 else
                 {
@@ -373,6 +382,8 @@ public class GameManager : MonoBehaviour
             if (isEmptyTurn)
             {
                 AIGAME_EMPTY_TURNS = ((AIGAME_EMPTY_TURNS) + 1);
+
+                Board.instance.History.Add("#EMPTY#");
             }
             else
             {
@@ -435,7 +446,7 @@ public class GameManager : MonoBehaviour
         {
             string[] moveInfo = moveHistory[i].Split('#');
 
-            if( moveHistory[i] != "#SWAP#")
+            if( moveHistory[i] != "#SWAP#" && moveHistory[i] != "#EMPTY#")
             {
                 Vector2 v2 = ScoreScreen.StringToVector2(moveInfo[0]);
                 Board.instance.SetTileColor((int)(v2.x), (int)(v2.y), Color.white);
@@ -447,7 +458,7 @@ public class GameManager : MonoBehaviour
 
         for (int i = moveHistory.Count - 1; i >= 0; i--)
         {
-            if( moveHistory[i] == "#SWAP#")
+            if( moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#")
             {
                 break;
             }

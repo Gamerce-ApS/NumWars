@@ -56,7 +56,7 @@ public class ScoreScreen : MonoBehaviour
 
         for (int i = moveHistory.Count-1; i>=0 ;i--)
         {
-            if (moveHistory[i] == "#SWAP#")
+            if (moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#")
             {
                 break;
             }
