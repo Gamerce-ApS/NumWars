@@ -307,6 +307,7 @@ public class GameManager : MonoBehaviour
                 if (isEmptyTurn) // you ended your turn with an empty move, it will not be stored until AI makes his move
                 {
                     Board.instance.History.Add("#EMPTY#");
+                    GameManager.instance.MakeLastPlayedTilesColored();
                 }
             }
             else
