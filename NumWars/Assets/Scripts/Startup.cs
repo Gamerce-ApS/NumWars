@@ -15,10 +15,15 @@ using UnityEngine.UI;
 public class Startup : MonoBehaviourPunCallbacks
 {
 
+    public PlayFab.ClientModels.PlayerProfileModel PlayerProfile;
+    public UserAccountInfo UserAccount;
+    
+
     public Dictionary<string, UserDataRecord> myData;
 
     public string displayName = "";
     public string MyPlayfabID = "";
+    public string avatarURL = "";
 
     public GameObject SearchingForGameObject=null;
 

@@ -5,6 +5,11 @@ using Photon.Pun;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Facebook.Unity;
+using PlayFab;
+using PlayFab.ClientModels;
+using UnityEngine;
+using LoginResult = PlayFab.ClientModels.LoginResult;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -21,6 +26,9 @@ public class MainMenuController : MonoBehaviour
     public GameObject SetNameGO;
 
     public Text nameSettingTextError;
+    public Image ProfilePicture;
+
+
 
     // Start is called before the first frame update
     void Start()
@@ -125,4 +133,12 @@ public class MainMenuController : MonoBehaviour
         PlayerPrefs.DeleteAll();
         SceneManager.LoadScene(0);
     }
+
+    public void ClickLoginWithFacebook()
+    {
+        PlayfabHelperFunctions.instance.FacebookLink();
+    }
+
+
+
 }

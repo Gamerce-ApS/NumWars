@@ -6367,6 +6367,7 @@ MonoBehaviour:
   setNameTextLabel: {fileID: 914331530}
   SetNameGO: {fileID: 1483656980}
   nameSettingTextError: {fileID: 1978413768}
+  ProfilePicture: {fileID: 1963903345}
 --- !u!4 &417412718
 Transform:
   m_ObjectHideFlags: 0
@@ -26088,7 +26089,7 @@ GameObject:
   - component: {fileID: 1793896431}
   - component: {fileID: 1793896430}
   m_Layer: 5
-  m_Name: Pratice
+  m_Name: LoginWithFacebook
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -26156,7 +26157,18 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1793896431}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 417412717}
+        m_MethodName: ClickLoginWithFacebook
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1793896431
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27499,8 +27511,77 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f833f45d91e7486aa287c3e8a40d40f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  PlayerProfile:
+    AdCampaignAttributions: []
+    AvatarUrl: 
+    ContactEmailAddresses: []
+    DisplayName: 
+    ExperimentVariants: []
+    LinkedAccounts: []
+    Locations: []
+    Memberships: []
+    PlayerId: 
+    PublisherId: 
+    PushNotificationRegistrations: []
+    Statistics: []
+    Tags: []
+    TitleId: 
+    ValuesToDate: []
+  UserAccount:
+    AndroidDeviceInfo:
+      AndroidDeviceId: 
+    AppleAccountInfo:
+      AppleSubjectId: 
+    CustomIdInfo:
+      CustomId: 
+    FacebookInfo:
+      FacebookId: 
+      FullName: 
+    FacebookInstantGamesIdInfo:
+      FacebookInstantGamesId: 
+    GameCenterInfo:
+      GameCenterId: 
+    GoogleInfo:
+      GoogleEmail: 
+      GoogleGender: 
+      GoogleId: 
+      GoogleLocale: 
+      GoogleName: 
+    IosDeviceInfo:
+      IosDeviceId: 
+    KongregateInfo:
+      KongregateId: 
+      KongregateName: 
+    NintendoSwitchAccountInfo:
+      NintendoSwitchAccountSubjectId: 
+    NintendoSwitchDeviceIdInfo:
+      NintendoSwitchDeviceId: 
+    OpenIdInfo: []
+    PlayFabId: 
+    PrivateInfo:
+      Email: 
+    PsnInfo:
+      PsnAccountId: 
+      PsnOnlineId: 
+    SteamInfo:
+      SteamCountry: 
+      SteamId: 
+      SteamName: 
+    TitleInfo:
+      AvatarUrl: 
+      DisplayName: 
+      TitlePlayerAccount:
+        Id: 
+        Type: 
+    TwitchInfo:
+      TwitchId: 
+      TwitchUserName: 
+    Username: 
+    XboxInfo:
+      XboxUserId: 
   displayName: 
   MyPlayfabID: 
+  avatarURL: 
   SearchingForGameObject: {fileID: 0}
   openGamesList: []
   GameToLoad:
@@ -27997,6 +28078,80 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1960154857}
   m_CullTransparentMesh: 0
+--- !u!1 &1963903344
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1963903347}
+  - component: {fileID: 1963903346}
+  - component: {fileID: 1963903345}
+  m_Layer: 5
+  m_Name: Image (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1963903345
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1963903344}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 58b26d596a4e24ecea28b2e76d006817, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1963903346
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1963903344}
+  m_CullTransparentMesh: 0
+--- !u!224 &1963903347
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1963903344}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 2011850976}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0.000015258789, y: -0.000042305845}
+  m_SizeDelta: {x: 237.08664, y: 223.14038}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1972228408
 GameObject:
   m_ObjectHideFlags: 0
@@ -29124,6 +29279,7 @@ GameObject:
   - component: {fileID: 2011850976}
   - component: {fileID: 2011850978}
   - component: {fileID: 2011850977}
+  - component: {fileID: 2011850979}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -29141,7 +29297,8 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 1963903347}
   m_Father: {fileID: 328346452}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -29187,6 +29344,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2011850975}
   m_CullTransparentMesh: 0
+--- !u!114 &2011850979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2011850975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ShowMaskGraphic: 1
 --- !u!1 &2018832353
 GameObject:
   m_ObjectHideFlags: 0

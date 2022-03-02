@@ -1,10 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Facebook.Unity;
 using PlayFab;
 using PlayFab.ClientModels;
 using PlayFab.CloudScriptModels;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
+using LoginIdentityProvider = PlayFab.ClientModels.LoginIdentityProvider;
+using LoginResult = PlayFab.ClientModels.LoginResult;
 
 public class PlayfabHelperFunctions : MonoBehaviour
 {
@@ -38,8 +42,9 @@ public class PlayfabHelperFunctions : MonoBehaviour
             CreateAccount = true,
             CustomId = playerID,
             InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
-            {
-                GetPlayerProfile = true
+            { GetUserAccountInfo =true,
+                GetPlayerProfile = true,
+               
             }
         },
         result =>
@@ -93,10 +98,40 @@ result =>
         {
             if (result.InfoResultPayload.PlayerProfile.DisplayName != null)
                 GetComponent<Startup>().displayName = result.InfoResultPayload.PlayerProfile.DisplayName;
+            GetComponent<Startup>().avatarURL = result.InfoResultPayload.AccountInfo.TitleInfo.AvatarUrl;
+            
+            GetComponent<Startup>().PlayerProfile = result.InfoResultPayload.PlayerProfile;
+            GetComponent<Startup>().UserAccount = result.InfoResultPayload.AccountInfo;
+
+            bool isLinked = false;
+            if (result.InfoResultPayload.AccountInfo.FacebookInfo != null &&  result.InfoResultPayload.AccountInfo.FacebookInfo.FacebookId.Length>0)
+            {
+                isLinked = true;
+
+            }
+
+            //for (int i = 0; i < Startup._instance.PlayerProfile.LinkedAccounts.Count; i++)
+            //{
+            //    if (Startup._instance.PlayerProfile.LinkedAccounts[i].Platform == LoginIdentityProvider.Facebook)
+            //    {
+            //        isLinked = true;
+
+            //    }
+            //}
+
+         //   if(isLinked)
+            {
+                FacebookInit();
+
+
+            }
+
 
             Refresh();
         }
     }
+ 
+
     // Start is called before the first frame update
     void Start()
     {
@@ -910,6 +945,143 @@ result =>
         Debug.LogError(error.GenerateErrorReport());
     }
 
+
+
+
+
+
+    // Facebook
+
+    public void FacebookInit()
+    {
+        FB.Init(OnFacebookInitialized);
+    }
+    public void FacebookLink()
+    {
+        FB.LogInWithReadPermissions(null, OnFacebookLoggedIn);
+    }
+    private void OnFacebookInitialized()
+    {
+        Debug.Log("Logging into Facebook...");
+
+        // Once Facebook SDK is initialized, if we are logged in, we log out to demonstrate the entire authentication cycle.
+        //if (FB.IsLoggedIn)
+        //    FB.LogOut();
+
+        // We invoke basic login procedure and pass in the callback to process the result
+
+
+
+        // FB.API("me/picture?type=square&height=88&width=88", HttpMethod.GET, FbGetPicture);
+
+        if (GetComponent<Startup>().avatarURL.Length > 0)
+            LoadAvatarURL(GetComponent<Startup>().avatarURL);
+
+    }
+    private void OnFacebookLoggedIn(ILoginResult result)
+    {
+        // If result has no errors, it means we have authenticated in Facebook successfully
+        if (result == null || string.IsNullOrEmpty(result.Error))
+        {
+            Debug.Log("Facebook Auth Complete! Access Token: " + AccessToken.CurrentAccessToken.TokenString + "\nLogging into PlayFab...");
+
+            /*
+             * We proceed with making a call to PlayFab API. We pass in current Facebook AccessToken and let it create
+             * and account using CreateAccount flag set to true. We also pass the callback for Success and Failure results
+             */
+
+
+            
+
+            bool isLinked = false;
+            if (GetComponent<Startup>().UserAccount.FacebookInfo != null && GetComponent<Startup>().UserAccount.FacebookInfo.FacebookId.Length > 0)
+            {
+                isLinked = true;
+
+            }
+
+            if (isLinked == false)
+            {
+                PlayFabClientAPI.LinkFacebookAccount(new LinkFacebookAccountRequest { AccessToken = AccessToken.CurrentAccessToken.TokenString }, OnPlayfabFacebookAuthComplete, OnPlayfabFacebookAuthFailed);
+            }
+            else
+            {
+                //PlayFabClientAPI.UpdateAvatarUrl(new UpdateAvatarUrlRequest { ImageUrl = avatarURL }, OnUpdateAvatarURL, OnPlayfabFacebookAuthFailed);
+                //FB.API("me/picture?type=square&height=88&width=88", HttpMethod.GET, FbGetPicture);
+                if( GetComponent<Startup>().avatarURL.Length>0 )
+                {
+                    LoadAvatarURL(GetComponent<Startup>().avatarURL);
+                }
+            }
+
+
+
+        }
+        else
+        {
+            // If Facebook authentication failed, we stop the cycle with the message
+            Debug.Log("Facebook Auth Failed: " + result.Error + "\n" + result.RawResult);
+        }
+    }
+    // When processing both results, we just set the message, explaining what's going on.
+    private void OnPlayfabFacebookAuthComplete(LinkFacebookAccountResult result)
+    {
+        
+        Debug.Log("PlayFab Facebook Auth Complete. Session ticket: " + result.ToJson());
+        string avatarURL = "https://graph.facebook.com/" + Facebook.Unity.AccessToken.CurrentAccessToken.UserId + "/picture?type=small";
+
+        PlayFabClientAPI.UpdateAvatarUrl(new UpdateAvatarUrlRequest { ImageUrl = avatarURL }, OnUpdateAvatarURL, OnPlayfabFacebookAuthFailed);
+        LoadAvatarURL(avatarURL);
+       // FB.API("me/picture?type=square&height=88&width=88", HttpMethod.GET, FbGetPicture);
+
+    }
+
+    private void OnPlayfabFacebookAuthFailed(PlayFabError error)
+    {
+        Debug.Log("PlayFab Facebook Auth Failed: " + error.GenerateErrorReport());
+    }
+
+    private static void FbGetPicture(IGraphResult result)
+    {
+        if (result.Texture != null)
+        {
+            MainMenuController.instance.ProfilePicture.sprite = Sprite.Create(result.Texture, new Rect(0, 0, result.Texture.height, result.Texture.width), new Vector2());
+            MainMenuController.instance.ProfilePicture.rectTransform.sizeDelta = new Vector2(88, 88);
+            MainMenuController.instance.ProfilePicture.enabled = true;
+
+        }
+
+    }
+    public void LoadAvatarURL(string aURL)
+    {
+       // Debug.Log(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
+    //    FB.API(aURL+ "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE", HttpMethod.GET, FbGetPicture);
+
+        StartCoroutine(GetFBProfilePicture(aURL));
+    }
+
+    public static IEnumerator GetFBProfilePicture(string aURL)
+    {
+
+        //string url = "https" + "://graph.facebook.com/10159330728290589/picture";
+        WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
+        yield return www;
+        Texture2D profilePic = www.texture;
+
+        MainMenuController.instance.ProfilePicture.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+        MainMenuController.instance.ProfilePicture.rectTransform.sizeDelta = new Vector2(88, 88);
+        MainMenuController.instance.ProfilePicture.enabled = true;
+        
+
+
+
+
+    }
+
+
+    public void OnUpdateAvatarURL(EmptyResponse response)
+    {
+    }
 
 
 }

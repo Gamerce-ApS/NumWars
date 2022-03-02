@@ -32,7 +32,13 @@ public class HighscoreWindow : MonoBehaviour
             PlayFabId=Startup._instance.MyPlayfabID,
             StatisticName = "Highscore",
           
-            MaxResultsCount = 20
+            MaxResultsCount = 20,
+             ProfileConstraints = new PlayerProfileViewConstraints()
+             {
+                 ShowDisplayName = true,
+                 ShowAvatarUrl = true
+             }
+
         }, result => DisplayLeaderboard(result), FailureCallback);
     }
 
@@ -58,7 +64,33 @@ public class HighscoreWindow : MonoBehaviour
             go.transform.GetChild(2).GetComponent<Text>().text = result.Leaderboard[i].DisplayName;
             go.transform.GetChild(4).GetComponent<Text>().text = result.Leaderboard[i].Position.ToString()+".";
             go.transform.GetChild(1).GetComponent<Text>().text = result.Leaderboard[i].StatValue.ToString();
+
+
+
+            string avatarURL = "";
+
+            if(result.Leaderboard[i].Profile.AvatarUrl != null)
+            avatarURL = result.Leaderboard[i].Profile.AvatarUrl;
+
+            Image img = go.transform.GetChild(0).GetChild(0).GetComponent<Image>();
+
+            if (avatarURL.Length>0)
+            StartCoroutine(SetPicture(avatarURL, img));
+
+            
         }
+
+    }
+
+    private IEnumerator SetPicture(string aURL, Image aImage)
+    {
+        WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
+        yield return www;
+        Texture2D profilePic = www.texture;
+
+        aImage.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+        aImage.rectTransform.sizeDelta = new Vector2(88, 88);
+
 
     }
 
