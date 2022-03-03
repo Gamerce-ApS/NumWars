@@ -170,7 +170,7 @@ PlayerSettings:
   applicationIdentifier:
     iPhone: com.gamerce.numwars
   buildNumber:
-    iPhone: 1
+    iPhone: 5
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 19
   AndroidTargetSdkVersion: 0
@@ -268,7 +268,7 @@ PlayerSettings:
   - m_BuildTarget: 
     m_Icons:
     - serializedVersion: 2
-      m_Icon: {fileID: 2800000, guid: 20ab29b0e90064c58931e7e82075e280, type: 3}
+      m_Icon: {fileID: 2800000, guid: 033148870f6d442ed9c38014370b8e38, type: 3}
       m_Width: 128
       m_Height: 128
       m_Kind: 0
