@@ -72,6 +72,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
             CreateAccount = true,
             InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
             {
+                GetUserAccountInfo =true,
                 GetPlayerProfile = true
             }
         },
