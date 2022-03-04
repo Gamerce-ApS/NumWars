@@ -57,3 +57,16 @@ sysinfo.txt
 
 # Crashlytics generated file
 crashlytics-build.properties
+NumWars/obj/Debug/PunDemos.DemoSlotcarEditor.csproj.AssemblyReference.cache
+NumWars/obj/Debug/PunDemos.DemoHubEditor.csproj.AssemblyReference.cache
+NumWars/obj/Debug/PlayFabSDKEditor.csproj.AssemblyReference.cache
+NumWars/obj/Debug/PlayFabEditorExtensions.csproj.AssemblyReference.cache
+NumWars/obj/Debug/PlayFab.csproj.AssemblyReference.cache
+NumWars/obj/Debug/PhotonUnityNetworking.Utilities.Culling.Editor.csproj.AssemblyReference.cache
+NumWars/obj/Debug/PhotonUnityNetworking.Utilities.csproj.AssemblyReference.cache
+NumWars/obj/Debug/PhotonUnityNetworking.Editor.csproj.AssemblyReference.cache
+NumWars/obj/Debug/PhotonUnityNetworking.Demos.csproj.AssemblyReference.cache
+NumWars/obj/Debug/PhotonUnityNetworking.csproj.AssemblyReference.cache
+NumWars/obj/Debug/PhotonChat.csproj.AssemblyReference.cache
+NumWars/obj/Debug/Assembly-CSharp-firstpass.csproj.AssemblyReference.cache
+NumWars/obj/Debug/Assembly-CSharp-Editor.csproj.AssemblyReference.cache
