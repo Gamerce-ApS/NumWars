@@ -138,7 +138,27 @@ public class MainMenuController : MonoBehaviour
     {
         PlayfabHelperFunctions.instance.FacebookLink();
     }
+    public void ClickUnlinkWithFacebook()
+    {
+        PlayfabHelperFunctions.instance.FacebookUnLink();
+    }
+    public GameObject LinkFBButton;
+    public GameObject UnlinkFBButton;
 
+    public void SetFBLinked(bool isLinked)
+    {
+        if( isLinked )
+        {
+            UnlinkFBButton.SetActive(true);
 
+            LinkFBButton.SetActive(false);
+        }else
+        {
+            UnlinkFBButton.SetActive(false);
+
+            LinkFBButton.SetActive(true);
+        }
+
+    }
 
 }

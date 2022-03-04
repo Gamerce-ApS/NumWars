@@ -108,7 +108,12 @@ result =>
             if (result.InfoResultPayload.AccountInfo.FacebookInfo != null &&  result.InfoResultPayload.AccountInfo.FacebookInfo.FacebookId.Length>0)
             {
                 isLinked = true;
+                MainMenuController.instance.SetFBLinked(true);
 
+            }
+            else
+            {
+                MainMenuController.instance.SetFBLinked(false);
             }
 
             //for (int i = 0; i < Startup._instance.PlayerProfile.LinkedAccounts.Count; i++)
@@ -961,6 +966,16 @@ result =>
     {
         FB.LogInWithReadPermissions(null, OnFacebookLoggedIn);
     }
+    public void FacebookUnLink()
+    {
+        PlayFabClientAPI.UnlinkFacebookAccount(new UnlinkFacebookAccountRequest {  }, OnUnlinked, null);
+
+    }
+    private void OnUnlinked( UnlinkFacebookAccountResult result)
+    {
+        Debug.Log("unlinked facebook");
+        MainMenuController.instance.SetFBLinked(false);
+    }
     private void OnFacebookInitialized()
     {
         Debug.Log("Logging into Facebook...");
@@ -981,8 +996,9 @@ result =>
     }
     private void OnFacebookLoggedIn(ILoginResult result)
     {
+        
         // If result has no errors, it means we have authenticated in Facebook successfully
-        if (result == null || string.IsNullOrEmpty(result.Error))
+        if ((result == null || string.IsNullOrEmpty(result.Error) ) && result.Cancelled == false)
         {
             Debug.Log("Facebook Auth Complete! Access Token: " + AccessToken.CurrentAccessToken.TokenString + "\nLogging into PlayFab...");
 
@@ -998,7 +1014,7 @@ result =>
             if (GetComponent<Startup>().UserAccount.FacebookInfo != null && GetComponent<Startup>().UserAccount.FacebookInfo.FacebookId.Length > 0)
             {
                 isLinked = true;
-
+                
             }
 
             if (isLinked == false)
@@ -1013,6 +1029,7 @@ result =>
                 {
                     LoadAvatarURL(GetComponent<Startup>().avatarURL);
                 }
+                MainMenuController.instance.SetFBLinked(true);
             }
 
 
@@ -1033,7 +1050,9 @@ result =>
 
         PlayFabClientAPI.UpdateAvatarUrl(new UpdateAvatarUrlRequest { ImageUrl = avatarURL }, OnUpdateAvatarURL, OnPlayfabFacebookAuthFailed);
         LoadAvatarURL(avatarURL);
-       // FB.API("me/picture?type=square&height=88&width=88", HttpMethod.GET, FbGetPicture);
+
+        MainMenuController.instance.SetFBLinked(true);
+        // FB.API("me/picture?type=square&height=88&width=88", HttpMethod.GET, FbGetPicture);
 
     }
 
