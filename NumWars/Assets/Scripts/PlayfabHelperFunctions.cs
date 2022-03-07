@@ -457,6 +457,8 @@ result =>
             {"Picture", "0"},
             {"MyGames", ","},
             {"OldGames", "[splitter][splitter]"},
+            {"StatsData", " "},
+            
         }
         },
         result =>

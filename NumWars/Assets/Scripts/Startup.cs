@@ -40,6 +40,9 @@ public class Startup : MonoBehaviourPunCallbacks
     // Start is called before the first frame update
     void Start()
     {
+       
+
+
         if (Startup._instance != null)
         {
             
@@ -401,13 +404,48 @@ public class Startup : MonoBehaviourPunCallbacks
     {
         return "";
     }
-    public void AdjustThropies(int aValue)
+    public void AdjustThropies(int aValue, string opponentPlayfabId, string opponentDisplayName)
     {
         myData["Ranking"].Value = (int.Parse(myData["Ranking"].Value) + aValue).ToString();
 
         _PlayfabHelperFunctions.SubmitHighscore(int.Parse( myData["Ranking"].Value ));
 
         _PlayfabHelperFunctions.ChangeValueFor("Ranking", myData["Ranking"].Value);
-    }
 
+        if (opponentPlayfabId == "")
+            opponentPlayfabId = "AI";
+        string winnerId = opponentPlayfabId;
+        if (aValue > 0)
+            winnerId = MyPlayfabID ;
+
+        if (myData["StatsData"].Value.Length<=1)
+        {
+         
+            StatsData newData = new StatsData();
+            newData.FinishedGames.Add(new StatsGame(opponentPlayfabId, opponentDisplayName,winnerId));
+
+            UpdateStatsData(newData.GetJson());
+        }
+        else
+        {
+            StatsData newData = new StatsData(myData["StatsData"].Value);
+            newData.FinishedGames.Add(new StatsGame(opponentPlayfabId, opponentDisplayName, winnerId));
+            UpdateStatsData(newData.GetJson());
+        }
+
+
+    }
+    public void UpdateStatsData(string aStatsData)
+    {
+        myData["StatsData"].Value = aStatsData;
+
+        _PlayfabHelperFunctions.ChangeValueFor("StatsData", myData["StatsData"].Value);
+    }
+    public StatsData GetStatsData()
+    {
+        if (myData["StatsData"].Value.Length > 1)
+            return new StatsData(myData["StatsData"].Value);
+        else
+            return new StatsData();
+    }
 }

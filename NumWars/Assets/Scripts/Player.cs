@@ -84,6 +84,12 @@ public class Player : MonoBehaviour
     bool swapedLastTurn = false;
     IEnumerator AiSequence()
     {
+        if(Board.instance.GetTilesLeft().Count<=0)
+        {
+            GameManager.instance.NextTurn(true);
+            yield break;
+        }
+
         // Use this for making empty turns
         //yield return new WaitForSeconds(1.75f);
         //yield return new WaitForSeconds(4.5f);
@@ -93,25 +99,25 @@ public class Player : MonoBehaviour
         yield return new WaitForSeconds(3.0f);
 
         int placedTiles = 0;
-        
-        //for(int i = 0; i< myTiles.Count;i++ )
-        //{
-        //    for(int j = 0; j < Board.instance.BoardTiles.Count;j++)
-        //    {
-        //        if( Board.instance.BoardTiles[j].GetValue()==0)
-        //        {
-        //            if(Board.instance.CheckValid(Board.instance.BoardTiles[j], myTiles[i].GetValue()) == true )
-        //            {
-        //                placedTiles++;
-        //                Debug.Log("Valid:" + j + " Value: " + myTiles[i].GetValue());
-        //                Board.instance.Selection.transform.position = Board.instance.BoardTiles[j].transform.position;
-        //                myTiles[i].PlacedOnTile = Board.instance.BoardTiles[j];
-        //                myTiles[i].PlaceTileOnSelection();
-        //                break ;
-        //            }
-        //        }
-        //    }
-        //}
+
+        for (int i = 0; i < myTiles.Count; i++)
+        {
+            for (int j = 0; j < Board.instance.BoardTiles.Count; j++)
+            {
+                if (Board.instance.BoardTiles[j].GetValue() == 0)
+                {
+                    if (Board.instance.CheckValid(Board.instance.BoardTiles[j], myTiles[i].GetValue()) == true)
+                    {
+                        placedTiles++;
+                        Debug.Log("Valid:" + j + " Value: " + myTiles[i].GetValue());
+                        Board.instance.Selection.transform.position = Board.instance.BoardTiles[j].transform.position;
+                        myTiles[i].PlacedOnTile = Board.instance.BoardTiles[j];
+                        myTiles[i].PlaceTileOnSelection();
+                        break;
+                    }
+                }
+            }
+        }
 
         GameManager.instance.HideThinkingOverlay();
         yield return new WaitForSeconds(1.5f);

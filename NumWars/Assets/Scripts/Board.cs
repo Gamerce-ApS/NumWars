@@ -174,20 +174,33 @@ public class Board : MonoBehaviour
     public void Init()
     {
         // Add tiles to pool
-        for (int i = 1; i < 11; i++)
-        {
-            for (int j = 0; j < 7; j++)
-                AllTilesNumbers.Add(i);
-        }
-        for (int i = 11; i < 22; i++)
-        {
-            AllTilesNumbers.Add(i);
-        }
-        AllTilesNumbers.Add(24); AllTilesNumbers.Add(25); AllTilesNumbers.Add(27); AllTilesNumbers.Add(28); AllTilesNumbers.Add(30); AllTilesNumbers.Add(32); AllTilesNumbers.Add(35); AllTilesNumbers.Add(36);
-        AllTilesNumbers.Add(40); AllTilesNumbers.Add(42); AllTilesNumbers.Add(45); AllTilesNumbers.Add(48); AllTilesNumbers.Add(49); AllTilesNumbers.Add(50); AllTilesNumbers.Add(54); AllTilesNumbers.Add(56); AllTilesNumbers.Add(60);
-        AllTilesNumbers.Add(63); AllTilesNumbers.Add(64); AllTilesNumbers.Add(70); AllTilesNumbers.Add(72); AllTilesNumbers.Add(80); AllTilesNumbers.Add(81); AllTilesNumbers.Add(90);
+        //for (int i = 1; i < 11; i++)
+        //{
+        //    for (int j = 0; j < 7; j++)
+        //        AllTilesNumbers.Add(i);
+        //}
+        //for (int i = 11; i < 22; i++)
+        //{
+        //    AllTilesNumbers.Add(i);
+        //}
+        //AllTilesNumbers.Add(24); AllTilesNumbers.Add(25); AllTilesNumbers.Add(27); AllTilesNumbers.Add(28); AllTilesNumbers.Add(30); AllTilesNumbers.Add(32); AllTilesNumbers.Add(35); AllTilesNumbers.Add(36);
+        //AllTilesNumbers.Add(40); AllTilesNumbers.Add(42); AllTilesNumbers.Add(45); AllTilesNumbers.Add(48); AllTilesNumbers.Add(49); AllTilesNumbers.Add(50); AllTilesNumbers.Add(54); AllTilesNumbers.Add(56); AllTilesNumbers.Add(60);
+        //AllTilesNumbers.Add(63); AllTilesNumbers.Add(64); AllTilesNumbers.Add(70); AllTilesNumbers.Add(72); AllTilesNumbers.Add(80); AllTilesNumbers.Add(81); AllTilesNumbers.Add(90);
 
+        //AllTilesNumbers.Shuffle();
+
+
+
+        for (int i = 1; i < 15; i++)
+        {
+             AllTilesNumbers.Add(i);
+        }
         AllTilesNumbers.Shuffle();
+
+
+
+
+
 
 
         // Create board layout

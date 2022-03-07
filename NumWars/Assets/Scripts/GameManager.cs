@@ -347,6 +347,11 @@ public class GameManager : MonoBehaviour
                 else
                     updatedBoard.player2_score = thePlayers[0].Score.ToString();
 
+                if (Board.instance.GetTilesLeft().Count<=0)
+                {
+                    updatedBoard.EmptyTurns = "4";
+                } 
+
 
 
                 updateInProgress = true;
@@ -407,11 +412,17 @@ public class GameManager : MonoBehaviour
             updatedBoard.EmptyTurns = AIGAME_EMPTY_TURNS.ToString();
 
 
+            if (Board.instance.GetTilesLeft().Count <= 0)
+            {
+                updatedBoard.EmptyTurns = "4";
+            }
+
+
             PlayerPrefs.SetString("AIGame", updatedBoard.GetJson());
 
             WaitingOverlay.GetComponent<CanvasGroup>().DOFade(0, 0.5f).SetEase(Ease.InOutQuart).OnComplete(() => { WaitingOverlay.SetActive(false); });
 
-   
+        
 
 
             if (int.Parse(updatedBoard.EmptyTurns) >= 2)

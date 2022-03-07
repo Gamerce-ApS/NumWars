@@ -38,6 +38,10 @@ public class GameFinishedScreen : MonoBehaviour
     }
     public void Show(BoardData bf)
     {
+
+
+        
+
         PlayfabHelperFunctions.instance.AddAiGameToOldGames(CompressString.StringCompressor.CompressString(bf.GetJson()));
 
 
@@ -56,7 +60,7 @@ public class GameFinishedScreen : MonoBehaviour
         transform.GetChild(0).GetChild(0).GetComponent<Image>().color = new Color(0, 0, 0, 0);
         transform.GetChild(0).GetChild(0).GetComponent<Image>().DOFade(107f / 255f, 0.5f).SetEase(Ease.InOutQuart).SetDelay(0.1f);
 
-
+        string opponentPlayfabID = "";
         if (Startup._instance.MyPlayfabID == bf.player1_PlayfabId)
         {
             p1_name.text = bf.player1_displayName;
@@ -70,10 +74,12 @@ public class GameFinishedScreen : MonoBehaviour
             p2_wins.text = "-";
 
             if(int.Parse(bf.player1_score) > int.Parse(bf.player2_score))
-                Startup._instance.AdjustThropies(30);
+                Startup._instance.AdjustThropies(30, bf.player2_PlayfabId, bf.player2_displayName);
             else
-                Startup._instance.AdjustThropies(-15);
+                Startup._instance.AdjustThropies(-15, bf.player2_PlayfabId, bf.player2_displayName);
 
+
+            opponentPlayfabID = bf.player2_PlayfabId;
         }
         else
         {
@@ -88,10 +94,11 @@ public class GameFinishedScreen : MonoBehaviour
             p1_wins.text = "-";
 
             if (int.Parse(bf.player2_score) > int.Parse(bf.player1_score))
-                Startup._instance.AdjustThropies(30);
+                Startup._instance.AdjustThropies(30, bf.player1_PlayfabId, bf.player1_displayName);
             else
-                Startup._instance.AdjustThropies(-15);
+                Startup._instance.AdjustThropies(-15, bf.player1_PlayfabId, bf.player1_displayName);
 
+            opponentPlayfabID = bf.player1_PlayfabId;
         }
 
         if(int.Parse(p1_score.text) > int.Parse(p2_score.text))
@@ -104,6 +111,28 @@ public class GameFinishedScreen : MonoBehaviour
             p1_wins_go.SetActive(false);
             p2_wins_go.SetActive(true);
         }
+
+
+
+
+        if (opponentPlayfabID == "")
+            opponentPlayfabID = "AI";
+
+        StatsData _statsData = Startup._instance.GetStatsData();
+        int amountLost = 0;
+        int amountWin = 0;
+        for(int i = 0; i < _statsData.FinishedGames.Count;i++)
+        {
+            if ( _statsData.FinishedGames[i].PlayfabID == opponentPlayfabID)
+            {
+                if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
+                    amountWin++;
+                else
+                    amountLost++;
+            }
+        }
+        p1_wins.text = amountWin.ToString();
+        p2_wins.text = amountLost.ToString();
 
 
 
