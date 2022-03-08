@@ -28,6 +28,7 @@ public class MainMenuController : MonoBehaviour
     public Text nameSettingTextError;
     public Image ProfilePicture;
 
+    public GameObject FriendsWindow;
 
 
     // Start is called before the first frame update
@@ -90,6 +91,12 @@ public class MainMenuController : MonoBehaviour
 
         NewGameWindow.transform.GetChild(1).transform.position = new Vector3(_TextFlyInBoxoriginalPos.x-10, _TextFlyInBoxoriginalPos.y, _TextFlyInBoxoriginalPos.z);
         NewGameWindow.transform.GetChild(1).transform.DOMoveX(_TextFlyInBoxoriginalPos.x, 0.3f).SetEase(Ease.InOutQuart);
+
+    }
+    public void PressOpenFriendsWindow()
+    {
+        PressCloseNewGameWindow();
+        FriendsWindow.SetActive(true);
 
     }
     public void PressCloseNewGameWindow()

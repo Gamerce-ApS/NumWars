@@ -9,6 +9,10 @@ public class UserInfoWindow : MonoBehaviour
 {
 public PlayerProfileModel theProfile;
     public Text ChallengeButton;
+
+    public Text winT;
+    public Text LoseT;
+
     public void Init()
     {
         bool hasActiveGameAgainstPlayer = false;
@@ -30,6 +34,25 @@ public PlayerProfileModel theProfile;
             ChallengeButton.text = "Challenge";
         }
 
+
+
+
+
+        StatsData _statsData = Startup._instance.GetStatsData();
+        int amountLost = 0;
+        int amountWin = 0;
+        for (int i = 0; i < _statsData.FinishedGames.Count; i++)
+        {
+            if (_statsData.FinishedGames[i].PlayfabID == theProfile.PlayerId)
+            {
+                if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
+                    amountWin++;
+                else
+                    amountLost++;
+            }
+        }
+        winT.text = amountWin.ToString();
+        LoseT.text = amountLost.ToString();
 
 
     }
