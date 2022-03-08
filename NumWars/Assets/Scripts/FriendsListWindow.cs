@@ -50,6 +50,7 @@ public class FriendsListWindow : MonoBehaviour
         UserInfoWindow.transform.GetChild(1).transform.DOMoveX(_TextFlyInBoxoriginalPos.x, 0.3f).SetEase(Ease.InOutQuart);
 
         UserInfoWindow.GetComponent<UserInfoWindow>().theProfile = aProfile;
+        UserInfoWindow.GetComponent<UserInfoWindow>().Init();
 
     }
     void OnEnable()

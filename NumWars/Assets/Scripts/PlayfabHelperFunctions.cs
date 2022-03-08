@@ -191,6 +191,81 @@ result =>
         });
 
     }
+    public void ChallengePlayer(string playfabId, string playfabId2,string player2DisplayName, string roomName)
+    {
+
+
+        List<string> aUser = new List<string>();
+        aUser.Add(playfabId2);
+
+        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        {
+            FunctionName = "AddPlayerToSharedGroup",
+            FunctionParameter = new Dictionary<string, object>() {
+            { "PlayFabIds", aUser },
+            { "SharedGroupId", roomName }
+        }
+        }, result =>
+        {
+            Debug.Log(result.FunctionResult);
+        }, error =>
+        {
+            Debug.LogError(error.GenerateErrorReport());
+        }
+
+        );
+
+
+
+
+        PlayFabClientAPI.CreateSharedGroup(new CreateSharedGroupRequest()
+        {
+            SharedGroupId = roomName
+        }, result3 => {
+
+                                Board.instance.GenerateStartBoard();
+                                BoardData bd = new BoardData(playfabId, playfabId2, "0", Board.instance.BoardTiles, roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles);
+                                bd.player1_displayName = Startup._instance.displayName;
+                                bd.player2_displayName = player2DisplayName;
+                                bd.player1_score = "0";
+                                bd.player2_score = "0";
+                                bd.EmptyTurns = "0";
+
+                                PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
+                                {
+                                    SharedGroupId = roomName,
+                                    Data = new Dictionary<string, string>() {
+                                            {roomName, bd.GetJson()}
+
+                                }
+                                },
+                                result4 =>
+                                {
+                                    Debug.Log("Successfully updated user data with new player id's");
+
+
+
+
+
+
+                                    SendPushToUser(bd.player2_PlayfabId, "", "" + Startup._instance.displayName +" has challenged you!");
+
+                                },
+                                error =>
+                                {
+                                    Debug.Log("Got error setting user data Ancestor to Arthur");
+                                    Debug.Log(error.GenerateErrorReport());
+                                });
+
+
+        }, (error) => {
+            Debug.Log(error.GenerateErrorReport());
+        });
+
+    }
+
+    
+
 
     public void AddGameToSharedGroup(List<string> playfabId, string roomName)
     {
@@ -767,6 +842,24 @@ result =>
         }
         }, null, error => Debug.LogError(error.GenerateErrorReport()));
     }
+    public void AddGameToPlayerListCloudScript(string aId, string aRoomName)
+    {
+        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        {
+            FunctionName = "AddGameToPlayerList",
+            FunctionParameter = new Dictionary<string, object>() {
+            { "PlayFabId", aId },
+            { "RoomName", aRoomName }
+
+        }
+        }, result => {
+            Debug.Log(result.FunctionResult);
+
+        }, error => Debug.LogError(error.GenerateErrorReport()));
+    }
+
+
+    
     public void CreateAndAddToSharedGroup(string[] aPlayFabIds, string aSharedGroupId)
     {
         PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
@@ -992,6 +1085,7 @@ result =>
 
         // FB.API("me/picture?type=square&height=88&width=88", HttpMethod.GET, FbGetPicture);
 
+        if(GetComponent<Startup>().avatarURL != null)
         if (GetComponent<Startup>().avatarURL.Length > 0)
             LoadAvatarURL(GetComponent<Startup>().avatarURL);
 

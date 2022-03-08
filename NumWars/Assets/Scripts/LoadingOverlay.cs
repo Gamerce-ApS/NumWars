@@ -36,7 +36,7 @@ public class LoadingOverlay : MonoBehaviour
             if (timer < 0)
             {
                 timer = -1;
-               // transform.GetChild(0).gameObject.SetActive(false);
+                transform.GetChild(0).gameObject.SetActive(false);
                 LoadingGOList.SetActive(false);
 
             }
@@ -61,6 +61,13 @@ public class LoadingOverlay : MonoBehaviour
         }
         log.text = "Done:" + aFunction;
     }
-
+    public void ShowLoadingFullscreen(string function)
+    {
+        timer = -1;
+          transform.GetChild(0).gameObject.SetActive(true);
+        LoadingGOList.SetActive(true);
+        LoadingCall.Add(function);
+        log.text = "Start:" + function;
+    }
 
 }
