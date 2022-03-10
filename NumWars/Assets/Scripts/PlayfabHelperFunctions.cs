@@ -663,6 +663,9 @@ result =>
                     LoadingOverlay.instance.DoneLoading("GetSharedGroupData");
                     foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
                     {
+                        if (entry.Key == "Chat")
+                            continue;
+
                         BoardData bd = new BoardData(entry.Value.Value);
                         //GetComponent<Startup>()._roomListLabel.text += "" + bd.player1_PlayfabId + " vs " + bd.player2_PlayfabId + " turn: " + bd.playerTurn + "\n";
 
@@ -766,6 +769,8 @@ result =>
 
                     foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
                     {
+                        if (entry.Key == "Chat")
+                            continue;
                         BoardData bd = new BoardData(entry.Value.Value);
                         GetComponent<Startup>().GameToLoad = bd;
                     }
@@ -989,6 +994,8 @@ result =>
             LoadingOverlay.instance.DoneLoading("GetSharedGroupData");
             foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
             {
+                if (entry.Key == "Chat")
+                    continue;
                 BoardData bd = new BoardData(entry.Value.Value);
 
                 bd.SetPlayerAbandome();
