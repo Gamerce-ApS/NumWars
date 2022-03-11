@@ -20,6 +20,8 @@ public class Startup : MonoBehaviourPunCallbacks
     
 
     public Dictionary<string, UserDataRecord> myData;
+    public Dictionary<string, string> StaticServerData;
+
 
     public string displayName = "";
     public string MyPlayfabID = "";

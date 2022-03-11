@@ -191,14 +191,17 @@ public class Board : MonoBehaviour
 
 
 
-        for (int i = 1; i < 15; i++)
-        {
-             AllTilesNumbers.Add(i);
-        }
-        AllTilesNumbers.Shuffle();
+        //for (int i = 1; i < 15; i++)
+        //{
+        //     AllTilesNumbers.Add(i);
+        //}
+        //AllTilesNumbers.Shuffle();
 
+        int amount = -1;
+        if (Startup._instance.StaticServerData != null)
+            amount = int.Parse(Startup._instance.StaticServerData["TilesAmount"]);
 
-
+        GenerateStartBoard(amount);
 
 
 
@@ -312,7 +315,7 @@ public class Board : MonoBehaviour
     // Temp stuff for generating new game
     public List<string> p1_tiles = new List<string>();
     public List<string> p2_tiles = new List<string>();
-    public void GenerateStartBoard()
+    public void GenerateStartBoard(int amount)
     {
         AllTilesNumbers.Clear();
         p1_tiles.Clear();
@@ -330,6 +333,15 @@ public class Board : MonoBehaviour
         AllTilesNumbers.Add(40); AllTilesNumbers.Add(42); AllTilesNumbers.Add(45); AllTilesNumbers.Add(48); AllTilesNumbers.Add(49); AllTilesNumbers.Add(50); AllTilesNumbers.Add(54); AllTilesNumbers.Add(56); AllTilesNumbers.Add(60);
         AllTilesNumbers.Add(63); AllTilesNumbers.Add(64); AllTilesNumbers.Add(70); AllTilesNumbers.Add(72); AllTilesNumbers.Add(80); AllTilesNumbers.Add(81); AllTilesNumbers.Add(90);
 
+
+
+        if (amount != -1)
+        {
+            AllTilesNumbers.RemoveRange(amount, AllTilesNumbers.Count - amount);
+
+        }
+
+
         AllTilesNumbers.Shuffle();
 
         for(int i = 0; i < 6; i++)
@@ -338,8 +350,13 @@ public class Board : MonoBehaviour
             AllTilesNumbers.RemoveAt(0);
             p2_tiles.Add(AllTilesNumbers[0].ToString());
             AllTilesNumbers.RemoveAt(0);
-
         }
+
+        
+        //AllTilesNumbers.RemoveRange(int.Parse(Startup._instance.StaticServerData["TilesAmount"]), AllTilesNumbers.Count- int.Parse(Startup._instance.StaticServerData["TilesAmount"]));
+
+
+        
 
     }
 

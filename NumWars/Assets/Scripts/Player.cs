@@ -84,7 +84,8 @@ public class Player : MonoBehaviour
     bool swapedLastTurn = false;
     IEnumerator AiSequence()
     {
-        if(Board.instance.GetTilesLeft().Count<=0)
+
+        if (GetMyTiles().Count == 0)
         {
             GameManager.instance.NextTurn(true);
             yield break;

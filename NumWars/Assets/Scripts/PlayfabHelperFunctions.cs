@@ -88,6 +88,30 @@ result =>
     }
     public void LoginSucess(LoginResult result)
     {
+        
+                    LoadingOverlay.instance.ShowLoadingFullscreen("Loading data!");
+
+        PlayFabClientAPI.GetTitleData(new GetTitleDataRequest(),
+              result2 => {
+                  if (result2.Data == null || !result2.Data.ContainsKey("TilesAmount"))
+                      Debug.Log("No TilesAmount");
+                  else
+                  {
+                      Startup._instance.StaticServerData = result2.Data;
+                  }
+                  LoadingOverlay.instance.DoneLoading("Loading data!");
+              },
+              error => {
+                  Debug.Log("Got error getting titleData:");
+                  Debug.Log(error.GenerateErrorReport());
+              }
+          );
+
+
+
+
+
+
         LoadingOverlay.instance.DoneLoading("LoginWithCustomID");
         GetComponent<Startup>().MyPlayfabID = result.AuthenticationContext.PlayFabId;
 
@@ -223,7 +247,7 @@ result =>
             SharedGroupId = roomName
         }, result3 => {
 
-                                Board.instance.GenerateStartBoard();
+                                Board.instance.GenerateStartBoard(int.Parse(Startup._instance.StaticServerData["TilesAmount"]));
                                 BoardData bd = new BoardData(playfabId, playfabId2, "0", Board.instance.BoardTiles, roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles);
                                 bd.player1_displayName = Startup._instance.displayName;
                                 bd.player2_displayName = player2DisplayName;
@@ -452,7 +476,7 @@ result =>
     }
     public void SetSharedDataForNewGame(string player1_playfabID, string player2_playfabID,string player1_displayName, string roomName)
     {
-        Board.instance.GenerateStartBoard();
+        Board.instance.GenerateStartBoard(int.Parse(Startup._instance.StaticServerData["TilesAmount"]));
         BoardData bd = new BoardData(player1_playfabID, player2_playfabID, "0", Board.instance.BoardTiles,roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles);
         bd.player1_displayName = player1_displayName;
         bd.player2_displayName = Startup._instance.displayName;
@@ -770,7 +794,27 @@ result =>
                     foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
                     {
                         if (entry.Key == "Chat")
+                        {
+                            string chatViewed = PlayerPrefs.GetString(aGame + "_chat");
+
+                            if(chatViewed != entry.Value.Value)
+                            {
+                                string[] liveMessegaes = entry.Value.Value.Split('≤');
+                                string[] viewedMessegaes = chatViewed.Split('≤');
+
+                                GameManager.instance.ChatNotificationIcon.SetActive(true);
+                                float dif = Mathf.Abs(liveMessegaes.Length - viewedMessegaes.Length) / 2;
+                                GameManager.instance.ChatNotificationIcon.transform.GetChild(0).GetComponent<Text>().text = dif.ToString();
+                            }
+                            else
+                            {
+                                GameManager.instance.ChatNotificationIcon.SetActive(false);
+                            }
+                            
+                                
                             continue;
+                        }
+                         
                         BoardData bd = new BoardData(entry.Value.Value);
                         GetComponent<Startup>().GameToLoad = bd;
                     }
@@ -784,6 +828,49 @@ result =>
             
 
         
+    }
+    public void UpdateChatMessages(string aGame)
+    {
+        if (LoadingOverlay.instance != null)
+            LoadingOverlay.instance.ShowLoading("GetSharedGroupData");
+
+        PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
+        {
+            SharedGroupId = aGame
+        }, result =>
+        {
+            if (LoadingOverlay.instance != null)
+                LoadingOverlay.instance.DoneLoading("GetSharedGroupData");
+
+            foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
+            {
+                if (entry.Key == "Chat")
+                {
+                    string chatViewed = PlayerPrefs.GetString(aGame + "_chat");
+
+                    if (chatViewed != entry.Value.Value)
+                    {
+                        string[] liveMessegaes = entry.Value.Value.Split('≤');
+                        string[] viewedMessegaes = chatViewed.Split('≤');
+
+                        GameManager.instance.ChatNotificationIcon.SetActive(true);
+                        float dif = Mathf.Abs(liveMessegaes.Length - viewedMessegaes.Length) / 2;
+                        GameManager.instance.ChatNotificationIcon.transform.GetChild(0).GetComponent<Text>().text = dif.ToString();
+                    }
+                    else
+                    {
+                        GameManager.instance.ChatNotificationIcon.SetActive(false);
+                    }
+
+
+                    continue;
+                }
+            }
+
+        }, (error) =>
+        {
+            Debug.Log(error.GenerateErrorReport());
+        });
     }
     public void SendNextTurn(BoardData aBoarddata)
     {

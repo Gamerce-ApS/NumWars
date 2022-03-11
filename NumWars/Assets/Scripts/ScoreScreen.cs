@@ -101,11 +101,14 @@ public class ScoreScreen : MonoBehaviour
         }
         StartCoroutine(SummarizeAfterTime(0.5f + 0.5f + lastMoves.Count * 0.6f, lastMoves, GameManager.instance.thePlayers[1], totalScore));
 
+        
+
+
     }
     IEnumerator ShowScoreAfterTime(float aTime, FakeTileData aTile)
     {
         yield return new WaitForSeconds(0.01f );
-
+        GameManager.instance.MakeLastPlayedTilesColored();
         Transform st = Board.instance.BoardTiles[(int)(aTile.Position.x + aTile.Position.y * 14)].transform.GetChild(0).transform;
         Vector3 targetPos = st.transform.position;
         st.transform.position += new Vector3(0, 10, 0);
@@ -197,6 +200,8 @@ public class ScoreScreen : MonoBehaviour
         {
             GameFinishedScreen.instance.Show(Startup._instance.GameToLoad);
         }
+
+        GameManager.instance.MakeLastPlayedTilesColored();
     }
 
 

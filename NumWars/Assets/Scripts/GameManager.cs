@@ -42,6 +42,8 @@ public class GameManager : MonoBehaviour
 
     public int AIGAME_EMPTY_TURNS = 0;
 
+    public GameObject ChatNotificationIcon;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -262,6 +264,19 @@ public class GameManager : MonoBehaviour
 
                 }
             }
+            else
+            {
+                _refreshTimer += Time.deltaTime;
+                if (_refreshTimer > 10)
+                {
+             
+                    PlayfabHelperFunctions.instance.UpdateChatMessages(Startup._instance.GameToLoad.RoomName);
+                    Debug.Log("Refreshing chat");
+        
+                    _refreshTimer = 0;
+
+                }
+            }
         }
 
   
@@ -347,11 +362,14 @@ public class GameManager : MonoBehaviour
                 else
                     updatedBoard.player2_score = thePlayers[0].Score.ToString();
 
-                if (Board.instance.GetTilesLeft().Count<=0)
+                //if (Board.instance.GetTilesLeft().Count<=0)
+                //{
+                //    updatedBoard.EmptyTurns = "4";
+                //} 
+                if (thePlayers[0].GetMyTiles().Count == 0 && isEmptyTurn)
                 {
                     updatedBoard.EmptyTurns = "4";
-                } 
-
+                }
 
 
                 updateInProgress = true;
@@ -412,12 +430,18 @@ public class GameManager : MonoBehaviour
             updatedBoard.EmptyTurns = AIGAME_EMPTY_TURNS.ToString();
 
 
-            if (Board.instance.GetTilesLeft().Count <= 0)
+            //if (Board.instance.GetTilesLeft().Count <= 0)
+            //{
+            //    updatedBoard.EmptyTurns = "4";
+            //}
+            if (thePlayers[1].GetMyTiles().Count == 0 && isEmptyTurn)
             {
                 updatedBoard.EmptyTurns = "4";
             }
-
-
+            if (thePlayers[0].GetMyTiles().Count == 0)
+            {
+                updatedBoard.EmptyTurns = "4";
+            }
             PlayerPrefs.SetString("AIGame", updatedBoard.GetJson());
 
             WaitingOverlay.GetComponent<CanvasGroup>().DOFade(0, 0.5f).SetEase(Ease.InOutQuart).OnComplete(() => { WaitingOverlay.SetActive(false); });
@@ -453,7 +477,7 @@ public class GameManager : MonoBehaviour
              moveHistory = Startup._instance.GameToLoad.History;
 
         }
-
+        if(moveHistory != null)
         for (int i = moveHistory.Count - 1; i >= 0; i--)
         {
             string[] moveInfo = moveHistory[i].Split('#');
@@ -467,8 +491,8 @@ public class GameManager : MonoBehaviour
 
 
         }
-
-        for (int i = moveHistory.Count - 1; i >= 0; i--)
+        if (moveHistory != null)
+            for (int i = moveHistory.Count - 1; i >= 0; i--)
         {
             if( moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#")
             {

@@ -62,7 +62,7 @@ public class ChatWindow : MonoBehaviour
 
 
             currentChatData += Startup._instance.displayName+ "≤" + chatBox.text;
-
+            chatBox.text = "";
             PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
             {
                 SharedGroupId = Startup._instance.GameToLoad.RoomName,
@@ -101,6 +101,7 @@ public class ChatWindow : MonoBehaviour
             string[] messages = result.Data["Chat"].Value.Split('≤');
 
             LoadChat(messages);
+            PlayerPrefs.SetString(Startup._instance.GameToLoad.RoomName + "_chat", result.Data["Chat"].Value);
 
         }, (error) =>
         {
@@ -124,6 +125,9 @@ public class ChatWindow : MonoBehaviour
         }
         StartCoroutine(ScrollDown());
         chatBox.text = "";
+
+
+        
     }
 
     private IEnumerator ScrollDown()
