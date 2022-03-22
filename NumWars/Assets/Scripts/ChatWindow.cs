@@ -6,6 +6,13 @@ using PlayFab.ClientModels;
 using UnityEngine;
 using UnityEngine.UI;
 
+[System.Serializable]
+public class EmojiMap
+{
+    public string Name;
+    public Sprite theSprite;
+}
+
 public class ChatWindow : MonoBehaviour
 {
     public GameObject Window;
@@ -17,9 +24,16 @@ public class ChatWindow : MonoBehaviour
     public Transform _TextListParent;
     public GameObject TextPrefab;
 
+    public GameObject TextPrefabLeft;
+    public GameObject TextPrefabRight;
+
 
     public InputField chatBox;
     string currentChatData="";
+
+    public List<EmojiMap> Emojis = new List<EmojiMap>();
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -51,18 +65,18 @@ public class ChatWindow : MonoBehaviour
         Window.transform.GetChild(0).GetComponent<Image>().DOFade(0, 157f / 255f).SetEase(Ease.InOutQuart);
         Window.transform.GetChild(1).transform.DOMoveX(_TextFlyInBoxoriginalPos.x + 10, 0.3f).SetEase(Ease.InOutQuart).OnComplete(() => { Window.SetActive(false); });
     }
-    public void SendMessage()
+    public void SendFixedMessage(string aMessage)
     {
 
 
-        if ( chatBox.text.Length>0)
+        if (aMessage.Length>0)
         {
             if (currentChatData.Length > 0)
                 currentChatData += "≤";
 
 
-            currentChatData += Startup._instance.displayName+ "≤" + chatBox.text;
-            chatBox.text = "";
+            currentChatData += Startup._instance.displayName+ "≤" + aMessage;
+            //chatBox.text = "";
             PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
             {
                 SharedGroupId = Startup._instance.GameToLoad.RoomName,
@@ -117,10 +131,36 @@ public class ChatWindow : MonoBehaviour
 
         for (int i = 0; i < messages.Length;i+=2)
         {
-            GameObject go = GameObject.Instantiate(TextPrefab, _TextListParent);
 
-            go.transform.GetChild(0).GetComponent<Text>().text = messages[i];
-            go.transform.GetChild(1).GetComponent<Text>().text = messages[i+1];
+            if(messages[i] == Startup._instance.displayName)
+            {
+                GameObject go = GameObject.Instantiate(TextPrefabLeft, _TextListParent);
+                go.transform.GetChild(1).GetComponent<Text>().text = messages[i];
+                go.transform.GetChild(2).GetComponent<Text>().text = messages[i + 1];
+                if (messages[i + 1].Contains("<emoji"))
+                {
+                    go.transform.GetChild(3).gameObject.SetActive(true);
+                    go.transform.GetChild(2).GetComponent<Text>().text = "";
+                    go.transform.GetChild(3).GetComponent<Image>().sprite = GetEmoji(messages[i + 1]);
+
+                }
+
+
+            }
+            else
+            {
+                GameObject go = GameObject.Instantiate(TextPrefabRight, _TextListParent);
+                go.transform.GetChild(1).GetComponent<Text>().text = messages[i];
+                go.transform.GetChild(2).GetComponent<Text>().text = messages[i + 1];
+                if(messages[i + 1].Contains("<emoji"))
+                {
+                    go.transform.GetChild(3).gameObject.SetActive(true);
+                    go.transform.GetChild(2).GetComponent<Text>().text = "";
+                    go.transform.GetChild(3).GetComponent<Image>().sprite = GetEmoji(messages[i + 1]);
+
+                }
+            }
+
 
         }
         StartCoroutine(ScrollDown());
@@ -129,7 +169,17 @@ public class ChatWindow : MonoBehaviour
 
         
     }
-
+    public Sprite GetEmoji(string aName)
+    {
+        for(int i = 0; i < Emojis.Count;i++)
+        {
+            if( Emojis[i].Name == aName)
+            {
+                return Emojis[i].theSprite;
+            }
+        }
+        return null;
+    }
     private IEnumerator ScrollDown()
     {
         yield return new WaitForSeconds(0.25f);

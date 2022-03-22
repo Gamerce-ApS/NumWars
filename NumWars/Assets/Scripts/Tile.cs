@@ -98,14 +98,14 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
                 }
                 else
                 {
-                    transform.parent = TileParent;
+                    transform.SetParent( TileParent);
 
                 }
 
             }
             else
             {
-                transform.parent = TileParent;
+                transform.SetParent(TileParent);
             }
         }
      
@@ -185,6 +185,9 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
             PlacedOnTile.SetValue(0);
         PlacedOnTile = null;
         PlayerBoard.instance.UpdateAllTiles();
+
+        if(TutorialController.instance != null)
+        TutorialController.instance.BeginDragTile();
     }
     public void UpdateTile()
     {
@@ -263,8 +266,47 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
 
         GetComponent<Image>().color = new Color(1, 1, 1, 1);
         Debug.Log("EndDrag");
+        bool allowTutorialPlace = true;
+        if (TutorialController.instance != null)
+        {
+            
+            if (TutorialController.instance.myActions[TutorialController.instance.CurrentIndex].ID == 3)
+            {
+                if (PlacedOnTile != null && PlacedOnTile.GetBoardPosition().x == 8 && PlacedOnTile.GetBoardPosition().y == 7)
+                {
+                    allowTutorialPlace = true;
+                    TutorialController.instance.TapToContinue();
+                }
+                else
+                    allowTutorialPlace = false;
 
-        if (Board.instance.Selection.GetComponent<Image>().enabled)
+            }
+            else if (TutorialController.instance.myActions[TutorialController.instance.CurrentIndex].ID == 4)
+            {
+                if (PlacedOnTile != null && PlacedOnTile.GetBoardPosition().x == 7 && PlacedOnTile.GetBoardPosition().y == 8)
+                {
+                    allowTutorialPlace = true;
+                    TutorialController.instance.TapToContinue();
+                }
+                else
+                    allowTutorialPlace = false;
+
+            }
+            else if (TutorialController.instance.myActions[TutorialController.instance.CurrentIndex].ID == 6)
+            {
+                if (PlacedOnTile.GetBoardPosition().x == 9 && PlacedOnTile.GetBoardPosition().y == 7)
+                {
+                    allowTutorialPlace = true;
+                    TutorialController.instance.TapToContinue();
+                }
+                else
+                    allowTutorialPlace = false;
+
+            }
+        }
+
+
+        if (Board.instance.Selection.GetComponent<Image>().enabled && allowTutorialPlace)
         {
             PlaceTileOnSelection();
 
@@ -289,6 +331,11 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         _targetRotation = Quaternion.Euler(0, 0, 0);
 
         PlayerBoard.instance.UpdateAllTiles();
+        if (TutorialController.instance != null)
+            TutorialController.instance.EndDragTile();
+
+
+
     }
     public void PlaceTileOnSelection()
     {

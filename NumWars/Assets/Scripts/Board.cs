@@ -198,7 +198,7 @@ public class Board : MonoBehaviour
         //AllTilesNumbers.Shuffle();
 
         int amount = -1;
-        if (Startup._instance.StaticServerData != null)
+        if (Startup._instance != null && Startup._instance.StaticServerData != null)
             amount = int.Parse(Startup._instance.StaticServerData["TilesAmount"]);
 
         GenerateStartBoard(amount);
@@ -222,10 +222,22 @@ public class Board : MonoBehaviour
         startNumbers.Add(3);
         startNumbers.Add(4);
         startNumbers.Shuffle();
-        SetTile(6, 6, TileType.StartTile, startNumbers[0]);
-        SetTile(7, 6, TileType.StartTile, startNumbers[1]);
-        SetTile(6, 7, TileType.StartTile, startNumbers[2]);
-        SetTile(7, 7, TileType.StartTile, startNumbers[3]);
+
+        if (TutorialController.instance != null && TutorialController.instance.IsTutorial)
+        {
+            SetTile(6, 6, TileType.StartTile, 3);
+            SetTile(7, 6, TileType.StartTile, 4);
+            SetTile(6, 7, TileType.StartTile, 1);
+            SetTile(7, 7, TileType.StartTile, 2);
+        }
+        else
+        {
+            SetTile(6, 6, TileType.StartTile, startNumbers[0]);
+            SetTile(7, 6, TileType.StartTile, startNumbers[1]);
+            SetTile(6, 7, TileType.StartTile, startNumbers[2]);
+            SetTile(7, 7, TileType.StartTile, startNumbers[3]);
+        }
+
 
 
 
@@ -352,11 +364,39 @@ public class Board : MonoBehaviour
             AllTilesNumbers.RemoveAt(0);
         }
 
-        
+        if(TutorialController.instance != null && TutorialController.instance.IsTutorial)
+        {
+            AllTilesNumbers.Clear();
+            AllTilesNumbers.Add(3);
+            AllTilesNumbers.Add(2);
+            AllTilesNumbers.Add(6);
+            AllTilesNumbers.Add(12);
+            AllTilesNumbers.Add(36);
+
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+            AllTilesNumbers.Add(36);
+
+        }
+
+
         //AllTilesNumbers.RemoveRange(int.Parse(Startup._instance.StaticServerData["TilesAmount"]), AllTilesNumbers.Count- int.Parse(Startup._instance.StaticServerData["TilesAmount"]));
 
 
-        
+
 
     }
 
@@ -621,17 +661,20 @@ public class Board : MonoBehaviour
             ScoreScreen.instance.ShowScore(scoreTiles, PlayerBoard.instance.myPlayer);
 
 
+            if (TutorialController.instance != null)
+                if (TutorialController.instance.myActions[TutorialController.instance.CurrentIndex].ID == 8)
+            {
+                    TutorialController.instance.TapToContinue();
+            }
 
 
 
-
-
-            //for (int i = 0; i < PlayerBoard.instance.myTiles.Count; i++)
-            //{
-            //    PlayerBoard.instance.myTiles[i].Flip();
-            //}
-            //StartCoroutine(UpdateTilesAfterTime());
-        }
+                    //for (int i = 0; i < PlayerBoard.instance.myTiles.Count; i++)
+                    //{
+                    //    PlayerBoard.instance.myTiles[i].Flip();
+                    //}
+                    //StartCoroutine(UpdateTilesAfterTime());
+                }
 
         
 

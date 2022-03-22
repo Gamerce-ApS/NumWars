@@ -106,9 +106,12 @@ public PlayerProfileModel theProfile;
 
     public IEnumerator ChallengeProgress( )
     {
+      
         yield return new WaitForSeconds(3);
+  
         LoadingOverlay.instance.DoneLoading("Challenge in progress..");
-
+        gameObject.SetActive(false);
+        FriendsListWindow.instance.gameObject.SetActive(false);
         Startup._instance.Refresh();
         yield return new WaitForSeconds(2);
 

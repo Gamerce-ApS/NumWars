@@ -176,9 +176,10 @@ public class ScoreScreen : MonoBehaviour
             bingo.SetActive(false);
             bingo.SetActive(true);
             totalScore += 50;
+            AchivmentController.instance.Bingo();
 
         }
-
+        
         GameManager.instance.AddScore(thePlayer, totalScore);
         //for (int i = 0; i < score.Count; i++)
         //{
@@ -291,6 +292,7 @@ public class ScoreScreen : MonoBehaviour
             bingo.SetActive(false);
             bingo.SetActive(true);
             totalScore += 50;
+            AchivmentController.instance.Bingo();
             yield return new WaitForSeconds(0.4f);
             createdPoints[createdPoints.Count-1].transform.GetChild(0).Find("Text").GetComponent<Text>().text = totalScore.ToString();
             yield return new WaitForSeconds(0.4f);

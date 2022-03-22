@@ -43,18 +43,34 @@ public class GameManager : MonoBehaviour
     public int AIGAME_EMPTY_TURNS = 0;
 
     public GameObject ChatNotificationIcon;
-
+    public GameObject TutorailGO;
     // Start is called before the first frame update
     void Start()
     {
+        if (Startup._instance.isTutorialGame)
+        {
+            TutorailGO.SetActive(true);
+            Startup._instance.isTutorialGame = false;
+        }
+        else
+        {
+            TutorailGO.SetActive(false);
+        }
+
+
         float aspect = (float)Screen.height / (float)Screen.width;
         Debug.Log("aspect:"+aspect);
         if (aspect<1.4f)
         SetIpadScreen();
 
         Board.instance.Init();
-        
-        thePlayers.Add(new GameObject("Player1").AddComponent<Player>().Init(Startup._instance.displayName + ": ", 0, p1_score.gameObject));
+
+
+        string displayName = "";
+        if(Startup._instance !=null)
+            displayName = Startup._instance.displayName;
+
+        thePlayers.Add(new GameObject("Player1").AddComponent<Player>().Init(displayName + ": ", 0, p1_score.gameObject));
 
 
         if(Startup._instance != null && Startup._instance.GameToLoad != null)
@@ -97,7 +113,7 @@ public class GameManager : MonoBehaviour
             CurrentTurn = 0;
 
             string localAIgame = PlayerPrefs.GetString("AIGame", "");
-            if (localAIgame != "")
+            if (localAIgame != "" && TutorailGO.activeSelf == false)
             {
                 BoardData ai_bd = new BoardData(localAIgame);
 
@@ -190,6 +206,9 @@ public class GameManager : MonoBehaviour
         aPlayer.LastScore = aScore;
 
         aPlayer.Score += aScore;
+
+        if(aPlayer.ID == 0)
+        AchivmentController.instance.Scored(aScore);
 
         UpdateUI();
 
@@ -401,8 +420,16 @@ public class GameManager : MonoBehaviour
         }
         else
         {
+            if(TutorialController.instance != null)
+            if (TutorialController.instance.myActions[TutorialController.instance.CurrentIndex].ID == 9)
+            {
+                TutorialController.instance.TapToContinue();
+            }
+
+
+
             //Use this for testing win scenario
-           // AIGAME_EMPTY_TURNS = ((AIGAME_EMPTY_TURNS) + 1);
+            // AIGAME_EMPTY_TURNS = ((AIGAME_EMPTY_TURNS) + 1);
             if (isEmptyTurn)
             {
                 AIGAME_EMPTY_TURNS = ((AIGAME_EMPTY_TURNS) + 1);
@@ -442,7 +469,13 @@ public class GameManager : MonoBehaviour
             {
                 updatedBoard.EmptyTurns = "4";
             }
-            PlayerPrefs.SetString("AIGame", updatedBoard.GetJson());
+
+            bool shouldAddToAI = true;
+            if (TutorialController.instance != null)
+                shouldAddToAI = false;
+
+            if (shouldAddToAI)
+                PlayerPrefs.SetString("AIGame", updatedBoard.GetJson());
 
             WaitingOverlay.GetComponent<CanvasGroup>().DOFade(0, 0.5f).SetEase(Ease.InOutQuart).OnComplete(() => { WaitingOverlay.SetActive(false); });
 
@@ -471,7 +504,7 @@ public class GameManager : MonoBehaviour
 
         int myBackednTurn = GameManager.instance.CurrentTurn;
 
-        if(Startup._instance.GameToLoad != null)
+        if(Startup._instance != null && Startup._instance.GameToLoad != null)
         {
              myBackednTurn = Startup._instance.GameToLoad.GetPlayerTurn(GameManager.instance.CurrentTurn);
              moveHistory = Startup._instance.GameToLoad.History;

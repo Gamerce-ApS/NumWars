@@ -6,6 +6,7 @@ using PlayFab.ClientModels;
 using PlayFab.CloudScriptModels;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using LoginIdentityProvider = PlayFab.ClientModels.LoginIdentityProvider;
 using LoginResult = PlayFab.ClientModels.LoginResult;
@@ -32,7 +33,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
         else
             playerID = "asdafsfsdf2";
         instance = this;
-        LoadingOverlay.instance.ShowLoading("LoginWithCustomID");
+        LoadingOverlay.instance.ShowLoadingFullscreen("LoginWithCustomID");
 
 
 
@@ -248,7 +249,7 @@ result =>
         }, result3 => {
 
                                 Board.instance.GenerateStartBoard(int.Parse(Startup._instance.StaticServerData["TilesAmount"]));
-                                BoardData bd = new BoardData(playfabId, playfabId2, "0", Board.instance.BoardTiles, roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles);
+                                BoardData bd = new BoardData(playfabId, playfabId2, "1", Board.instance.BoardTiles, roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles);
                                 bd.player1_displayName = Startup._instance.displayName;
                                 bd.player2_displayName = player2DisplayName;
                                 bd.player1_score = "0";
@@ -548,7 +549,7 @@ result =>
 
     public void SetUserData()
     {
-        LoadingOverlay.instance.ShowLoading("UpdateUserData");
+        LoadingOverlay.instance.ShowLoadingFullscreen("UpdateUserData");
         PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
         {
             Data = new Dictionary<string, string>() {
@@ -557,8 +558,11 @@ result =>
             {"MyGames", ","},
             {"OldGames", "[splitter][splitter]"},
             {"StatsData", " "},
+            {"Achivments", Startup._instance.myAchivmentController.GetDefault()},
+
             
-        }
+
+    }
         },
         result =>
         {
@@ -607,13 +611,36 @@ result =>
             Keys = null
         }, result => {
 
-            LoadingOverlay.instance.DoneLoading("GetUserData");
+
+            if( SceneManager.GetActiveScene().name == "GameScene")
+            {
+                return;
+            }
+
+
+
+
+
+
+            if (LoadingOverlay.instance != null)
+                LoadingOverlay.instance.DoneLoading("GetUserData");
 
             Debug.Log("Done getting data");
 
             GetComponent<Startup>().myData = result.Data;
 
+            string achivmentsData = "";
+            if (result.Data.ContainsKey("Achivments") == true)
+            {
+                achivmentsData = result.Data["Achivments"].Value;
+            }
+            else
+            {
+                achivmentsData = Startup._instance.myAchivmentController.GetDefault();
+            }
+            
 
+            Startup._instance.myAchivmentController.Init(achivmentsData);
 
 
             //GetComponent<Startup>()._infoLabel.text = GetComponent<Startup>().displayName + "\nPicture: " + GetComponent<Startup>().myData["Picture"].Value + "\n" + "Ranking: " + GetComponent<Startup>().myData["Ranking"].Value;
@@ -651,7 +678,7 @@ result =>
             if(oldGameList[i].Length>2)
             {
 
-                Debug.Log(CompressString.StringCompressor.DecompressString(oldGameList[i]));
+               // Debug.Log(CompressString.StringCompressor.DecompressString(oldGameList[i]));
             }
              
         }
@@ -1149,6 +1176,7 @@ result =>
 
     public void FacebookInit()
     {
+        LoadingOverlay.instance.ShowLoadingFullscreen("Facebook init");
         FB.Init(OnFacebookInitialized);
     }
     public void FacebookLink()
@@ -1178,15 +1206,15 @@ result =>
 
 
         // FB.API("me/picture?type=square&height=88&width=88", HttpMethod.GET, FbGetPicture);
-
-        if(GetComponent<Startup>().avatarURL != null)
+        LoadingOverlay.instance.DoneLoading("Facebook init");
+        if (GetComponent<Startup>().avatarURL != null)
         if (GetComponent<Startup>().avatarURL.Length > 0)
             LoadAvatarURL(GetComponent<Startup>().avatarURL);
 
     }
     private void OnFacebookLoggedIn(ILoginResult result)
     {
-        
+        LoadingOverlay.instance.ShowLoadingFullscreen("Facebook login");
         // If result has no errors, it means we have authenticated in Facebook successfully
         if ((result == null || string.IsNullOrEmpty(result.Error) ) && result.Cancelled == false)
         {
@@ -1220,6 +1248,7 @@ result =>
                     LoadAvatarURL(GetComponent<Startup>().avatarURL);
                 }
                 MainMenuController.instance.SetFBLinked(true);
+                LoadingOverlay.instance.DoneLoading("Facebook login");
             }
 
 
@@ -1227,14 +1256,17 @@ result =>
         }
         else
         {
+            LoadingOverlay.instance.DoneLoading("Facebook login");
             // If Facebook authentication failed, we stop the cycle with the message
             Debug.Log("Facebook Auth Failed: " + result.Error + "\n" + result.RawResult);
         }
+
+ 
     }
     // When processing both results, we just set the message, explaining what's going on.
     private void OnPlayfabFacebookAuthComplete(LinkFacebookAccountResult result)
     {
-        
+        LoadingOverlay.instance.DoneLoading("Facebook login");
         Debug.Log("PlayFab Facebook Auth Complete. Session ticket: " + result.ToJson());
         string avatarURL = "https://graph.facebook.com/" + Facebook.Unity.AccessToken.CurrentAccessToken.UserId + "/picture?type=small";
 
@@ -1248,6 +1280,7 @@ result =>
 
     private void OnPlayfabFacebookAuthFailed(PlayFabError error)
     {
+        LoadingOverlay.instance.DoneLoading("Facebook login");
         Debug.Log("PlayFab Facebook Auth Failed: " + error.GenerateErrorReport());
     }
 

@@ -31,6 +31,13 @@ public class MainMenuController : MonoBehaviour
     public GameObject FriendsWindow;
 
 
+    public Button OnlinePlay;
+    public Button FriendPlay;
+    public Button PraticePlay;
+
+    public GameObject ProfileWindow;
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -84,6 +91,13 @@ public class MainMenuController : MonoBehaviour
         Startup._instance.GameToLoad = null;
         SceneManager.LoadScene(1);
     }
+    public void PressPlayTutorial()
+    {
+        PlayerPrefs.SetInt("HasDoneTutorial", 1);
+        Startup._instance.GameToLoad = null;
+        Startup._instance.isTutorialGame = true;
+        SceneManager.LoadScene(1);
+    }
     public void PressOpenNewGameWindow()
     {
         NewGameWindow.SetActive(true);
@@ -92,8 +106,26 @@ public class MainMenuController : MonoBehaviour
         NewGameWindow.transform.GetChild(1).transform.position = new Vector3(_TextFlyInBoxoriginalPos.x-10, _TextFlyInBoxoriginalPos.y, _TextFlyInBoxoriginalPos.z);
         NewGameWindow.transform.GetChild(1).transform.DOMoveX(_TextFlyInBoxoriginalPos.x, 0.3f).SetEase(Ease.InOutQuart);
 
-    }
-    public void PressOpenFriendsWindow()
+
+        int hasDoneTut = PlayerPrefs.GetInt("HasDoneTutorial",0);
+        if(hasDoneTut==1)
+        {
+            OnlinePlay.interactable = true;
+            FriendPlay.interactable = true;
+            PraticePlay.interactable = true;
+        }
+        else
+        {
+            OnlinePlay.interactable = false;
+            FriendPlay.interactable = false;
+            PraticePlay.interactable = false;
+        }
+ 
+
+
+
+}
+public void PressOpenFriendsWindow()
     {
         PressCloseNewGameWindow();
         FriendsWindow.SetActive(true);
@@ -115,6 +147,13 @@ public class MainMenuController : MonoBehaviour
         {
             setNameTextLabel.text = _Name.text;
         }
+    }
+    public void OpenProfileWindow()
+    {
+        ProfileWindow.SetActive(true);
+
+
+       
     }
     public void ClickSetName()
     {

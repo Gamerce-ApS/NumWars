@@ -34,15 +34,15 @@ public class Startup : MonoBehaviourPunCallbacks
     PlayfabHelperFunctions _PlayfabHelperFunctions;
 
 
-
+    public bool isTutorialGame = false;
     public BoardData GameToLoad = null;
 
     public static Startup _instance=null;
-
+    public AchivmentController myAchivmentController;
     // Start is called before the first frame update
     void Start()
     {
-       
+        myAchivmentController = new AchivmentController();
 
 
         if (Startup._instance != null)
@@ -58,7 +58,7 @@ public class Startup : MonoBehaviourPunCallbacks
         _PlayfabHelperFunctions = gameObject.GetComponent<PlayfabHelperFunctions>();
         Board.instance.Init();
 
-        LoadingOverlay.instance.ShowLoading("Connecting to photon");
+        LoadingOverlay.instance.ShowLoadingFullscreen("Connecting to photon");
 
         if (PhotonNetwork.IsConnected)
         {}else{
@@ -435,6 +435,8 @@ public class Startup : MonoBehaviourPunCallbacks
             UpdateStatsData(newData.GetJson());
         }
 
+        if(aValue>0)
+            AchivmentController.instance.WonGame();
 
     }
     public void UpdateStatsData(string aStatsData)
