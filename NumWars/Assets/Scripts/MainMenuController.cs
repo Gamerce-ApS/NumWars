@@ -93,10 +93,17 @@ public class MainMenuController : MonoBehaviour
     }
     public void PressPlayTutorial()
     {
+
+        if (!PlayerPrefs.HasKey("HasDoneTutorial"))
+            Startup._instance.AddXP(85);
+
+
         PlayerPrefs.SetInt("HasDoneTutorial", 1);
         Startup._instance.GameToLoad = null;
         Startup._instance.isTutorialGame = true;
         SceneManager.LoadScene(1);
+
+
     }
     public void PressOpenNewGameWindow()
     {
@@ -178,6 +185,8 @@ public void PressOpenFriendsWindow()
     {
         PlayerPrefs.DeleteAll();
         SceneManager.LoadScene(0);
+        Startup._instance.Refresh(0.1f);
+
     }
 
     public void ClickLoginWithFacebook()

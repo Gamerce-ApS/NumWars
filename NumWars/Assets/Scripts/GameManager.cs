@@ -44,17 +44,29 @@ public class GameManager : MonoBehaviour
 
     public GameObject ChatNotificationIcon;
     public GameObject TutorailGO;
+    public GameObject TutorailGO2;
+
+
+    public Text p1_level;
+    public Text p1_thropies;
+
+    public Text p2_level;
+    public Text p2_thropies;
+
+
     // Start is called before the first frame update
     void Start()
     {
         if (Startup._instance.isTutorialGame)
         {
             TutorailGO.SetActive(true);
+            TutorailGO2.SetActive(true);
             Startup._instance.isTutorialGame = false;
         }
         else
         {
             TutorailGO.SetActive(false);
+            TutorailGO2.SetActive(false);
         }
 
 
@@ -70,13 +82,13 @@ public class GameManager : MonoBehaviour
         if(Startup._instance !=null)
             displayName = Startup._instance.displayName;
 
-        thePlayers.Add(new GameObject("Player1").AddComponent<Player>().Init(displayName + ": ", 0, p1_score.gameObject));
+        thePlayers.Add(new GameObject("Player1").AddComponent<Player>().Init(displayName + "", 0, p1_score.gameObject));
 
 
         if(Startup._instance != null && Startup._instance.GameToLoad != null)
         {
                 Board.instance.LoadBoardData(Startup._instance.GameToLoad);
-                thePlayers.Add(new GameObject("Player2").AddComponent<Player>().Init(Startup._instance.GameToLoad.GetOtherPlayer()+": ", 1, p2_score.gameObject, false));
+                thePlayers.Add(new GameObject("Player2").AddComponent<Player>().Init(Startup._instance.GameToLoad.GetOtherPlayer()+"", 1, p2_score.gameObject, false));
                 CurrentTurn = Startup._instance.GameToLoad.GetPlayerTurn();
 
                 if(Startup._instance.GameToLoad.player1_PlayfabId == Startup._instance.MyPlayfabID)
@@ -102,7 +114,7 @@ public class GameManager : MonoBehaviour
 
 
 
-
+            PlayfabHelperFunctions.instance.GetOtherUserData(Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
 
 
         }
@@ -118,12 +130,12 @@ public class GameManager : MonoBehaviour
                 BoardData ai_bd = new BoardData(localAIgame);
 
                 Board.instance.LoadBoardData(ai_bd);
+                
 
-
-                thePlayers[0].Username = ai_bd.player1_displayName+": ";
+                thePlayers[0].Username = ai_bd.player1_displayName+"";
                 thePlayers[0].Score = int.Parse(ai_bd.player1_score);
 
-                thePlayers[1].Username = ai_bd.player2_displayName+": ";
+                thePlayers[1].Username = ai_bd.player2_displayName+"";
                 thePlayers[1].Score = int.Parse(ai_bd.player2_score);
 
               
@@ -154,6 +166,11 @@ public class GameManager : MonoBehaviour
         p2_score.text = thePlayers[1].Score.ToString();
         p1_lastScore.text = "";
         p2_lastScore.text = "";
+
+        p1_thropies.text = Startup._instance.myData["Ranking"].Value;
+        p1_level.text = HelperFunctions.XPtoLevel( Startup._instance.myData["XP"].Value).ToString();
+
+
         tileLeft.text = Board.instance.AllTilesNumbers.Count.ToString();
 
 
@@ -164,21 +181,31 @@ public class GameManager : MonoBehaviour
             WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
 
             if (int.Parse(Startup._instance.GameToLoad.EmptyTurns) >= 4)
-                ScoreScreen.instance.ShowScoreLastPlay(true);
+                ScoreScreen.instance.ShowScoreLastPlay(true,Startup._instance.GameToLoad);
         }
         else
         {
             if(thePlayers[1].isAI == false)
-                ScoreScreen.instance.ShowScoreLastPlay(true);
+            {
+                ScoreScreen.instance.ShowScoreLastPlay(true, Startup._instance.GameToLoad);
+            }
+            else
+            {
+                ScoreScreen.instance.ShowScoreLastPlay(true, Board.instance.boardData);
+            }
         }
 
 
-     
+        
 
 
 
     }
-
+    public void SetOpponentData(string xp, string rank)
+    {
+        p2_thropies.text = rank;
+        p2_level.text = HelperFunctions.XPtoLevel(xp).ToString();
+    }
     public void SetIpadScreen()
     {
         Board.instance.transform.GetComponent<RectTransform>().transform.localScale = new Vector3(0.82f, 0.82f, 0.82f);
@@ -200,7 +227,7 @@ public class GameManager : MonoBehaviour
         
     }
 
-    public void AddScore(Player aPlayer, int aScore, bool updateLast=true)
+    public void AddScore(Player aPlayer, int aScore, int amountOfTiles , bool updateLast=true)
     {
         if(updateLast)
         aPlayer.LastScore = aScore;
@@ -208,7 +235,7 @@ public class GameManager : MonoBehaviour
         aPlayer.Score += aScore;
 
         if(aPlayer.ID == 0)
-        AchivmentController.instance.Scored(aScore);
+        AchivmentController.instance.Scored(aScore, amountOfTiles);
 
         UpdateUI();
 
@@ -313,7 +340,7 @@ public class GameManager : MonoBehaviour
                 CurrentTurn = 0;
                 WaitingOverlay.GetComponent<CanvasGroup>().DOFade(0, 0.5f).SetEase(Ease.InOutQuart).OnComplete(() => { WaitingOverlay.SetActive(false); });
 
-                ScoreScreen.instance.ShowScoreLastPlay(false);
+                ScoreScreen.instance.ShowScoreLastPlay(false, Startup._instance.GameToLoad);
 
             }
         }
@@ -333,6 +360,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("Next Turn: " + CurrentTurn);
         if (CurrentTurn == 1)
         {
+            Startup._instance.AddXP(5);
             if (thePlayers[1].isAI)
             {
 
@@ -565,6 +593,17 @@ public class GameManager : MonoBehaviour
     }
     public void ClickBack()
     {
+
+
+        if(thePlayers[1].isAI)
+        {
+            if( CurrentTurn == 1 )
+            {
+                AlertText.instance.ShowAlert("Wait until end of AI turn!");
+
+                return;
+            }
+        }
         SceneManager.LoadScene(0);
         Startup._instance.Refresh(0.1f);
     }

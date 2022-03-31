@@ -93,7 +93,17 @@ public static class HelperFunctions
         return -(p2.Number).CompareTo((p1.Number));
     }
 
-
+    public static int XPtoLevel(string aXP)
+    {
+        for (int i = 0; i < PlayfabHelperFunctions.instance.LevelSettings.Count; i++)
+        {
+            if (int.Parse(aXP) < PlayfabHelperFunctions.instance.LevelSettings[i])
+            {
+                return (i + 1);
+            }
+        }
+        return 0;
+    }
 
 }
 

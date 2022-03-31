@@ -104,7 +104,9 @@ public class ChatWindow : MonoBehaviour
     }
     public void RequestChat()
     {
-        
+        if (Startup._instance.GameToLoad == null)
+            return;
+
         PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
         {
             SharedGroupId = Startup._instance.GameToLoad.RoomName

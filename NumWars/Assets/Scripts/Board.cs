@@ -93,6 +93,14 @@ public  class BoardData
             return player1_displayName;
 
     }
+    public string GetOtherPlayerPlayfab()
+    {
+        if (Startup._instance.MyPlayfabID == player1_PlayfabId)
+            return player2_PlayfabId;
+        else
+            return player1_PlayfabId;
+
+    }
     public int GetPlayerTurn()
     {
         // we need to check who owns the game, as "turn 0" is always the host
@@ -411,9 +419,10 @@ public class Board : MonoBehaviour
         return allT;
 
     }
+    public BoardData boardData;
     public void LoadBoardData(BoardData aBD)
     {
-
+        boardData = aBD;
         for (int i = 0; i < aBD.BoardTiles.Count; i++)
         {
             BoardTiles[i].LoadFromJson(aBD.BoardTiles[i]);
@@ -639,16 +648,26 @@ public class Board : MonoBehaviour
 
     public void PressContinue()
     {
+
+
+
         if (GameManager.instance.CheckIfMyTurn() == false)
             return;
-
+        int notPlaced = 0;
         bool allValid = true;
         for (int i = 0; i < PlayerBoard.instance.myPlayer.myTiles.Count; i++)
         {
             if (PlayerBoard.instance.myPlayer.myTiles[i].PlacedOnTile != null &&  PlayerBoard.instance.myPlayer.myTiles[i].isValidPlaced() == false)
                 allValid = false;
-        }
 
+            if (PlayerBoard.instance.myPlayer.myTiles[i].PlacedOnTile == null)
+                notPlaced++;
+        }
+        if(notPlaced == 6)
+        {
+            ValidationScreen.instance.OpenWindow();
+            return;
+        }
         if(allValid)
         {
             List<Tile> scoreTiles = new List<Tile>();

@@ -13,6 +13,13 @@ public PlayerProfileModel theProfile;
     public Text winT;
     public Text LoseT;
 
+    public Text amountCompletedText;
+    public Image AchivmenSlider;
+
+    public Text _level;
+
+    public List<StatsDataText> statsData = new List<StatsDataText>();
+
     public void Init()
     {
         bool hasActiveGameAgainstPlayer = false;
@@ -54,9 +61,36 @@ public PlayerProfileModel theProfile;
         winT.text = amountWin.ToString();
         LoseT.text = amountLost.ToString();
 
+        PlayfabHelperFunctions.instance.GetOtherUserDataProfile(theProfile.PlayerId,this);
 
     }
+    public void SetData(Dictionary<string,UserDataRecord> profileData)
+    {
 
+        _level.text = HelperFunctions.XPtoLevel(profileData["XP"].Value).ToString();
+
+
+        AchivmentController ac = new AchivmentController();
+        ac.Init(profileData["Achivments"].Value);
+
+        for (int i = 0; i< statsData.Count;i++)
+        {
+            statsData[i].SetFromData(ac);
+        }
+
+
+
+        int completed = 0;
+        for (int i = 0; i < ac.myAchivments.Count; i++)
+        {
+            if (ac.myAchivments[i].current >= ac.myAchivments[i].target)
+                completed++;
+        }
+
+        amountCompletedText.text = completed + "/" + ac.myAchivments.Count;
+        AchivmenSlider.fillAmount = (float)completed / (float)ac.myAchivments.Count;
+
+    }
     // Start is called before the first frame update
     void Start()
     {

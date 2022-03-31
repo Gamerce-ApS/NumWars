@@ -10,12 +10,26 @@ public enum AchivmentTypeEnum
     SCORE,
     MORE_THAN_100p,
     MORE_THAN_200p,
+    LOST,
+    TIE,
+    RESIGN,
+    TIMEOUT,
+    HGS,
+    HRS,
+    AGS,
+    ARS,
+    AMS,
+    TOTALBINGO,
+    AVREAGEBINGOGAME,
+    TOTAL_MOVES,
+    TOTAL_ROUNDS
+
 };
 
 [System.Serializable]
 public class Achivment
 {
-    public Achivment(int aID,string aTitle, string aDescription, int aCurrent, int aTarget, int aReward, AchivmentTypeEnum aAchivmentType,bool aIsCalimed)
+    public Achivment(int aID,string aTitle, string aDescription, float aCurrent, int aTarget, int aReward, AchivmentTypeEnum aAchivmentType,bool aIsCalimed)
     {
         myID = aID;
         title = aTitle;
@@ -32,7 +46,7 @@ public class Achivment
     public string title;
     public string description;
 
-    public int current;
+    public float current;
     public int target;
 
     public int reward;
@@ -45,32 +59,46 @@ public class Achivment
 [System.Serializable]
 public class AchivmentList
 {
-    public AchivmentList(List<Achivment> aList)
+    public AchivmentList(List<Achivment> aList, List<Achivment> aStats)
     {
         myAchivemnts = aList;
+        myStats = aStats;
     }
     public List<Achivment> myAchivemnts;
+    public List<Achivment> myStats;
 }
 [System.Serializable]
 public class AchivmentController
 {
 
     public List<Achivment> myAchivments = new List<Achivment>();
+    public List<Achivment> myStatistics = new List<Achivment>();
+
     public static AchivmentController instance;
 
     // Start is called before the first frame update
     public void Init(string achivmentsData)
     {
+        if(instance == null)
+            instance = this;
 
-        instance = this;
+        AchivmentList list = JsonUtility.FromJson<AchivmentList>(achivmentsData);
+        myAchivments = list.myAchivemnts;
+        myStatistics = list.myStats;
 
-        myAchivments = JsonUtility.FromJson<AchivmentList>(achivmentsData).myAchivemnts;
-
-
+    }
+    public float GetStats(AchivmentTypeEnum aStats)
+    {
+        for(int i = 0; i< myStatistics.Count;i++)
+        {
+            if (myStatistics[i].myAchivmentType == aStats)
+                return myStatistics[i].current;
+        }
+        return 0;
     }
     public void UpdatePlayfab()
     {
-        string data = JsonUtility.ToJson(new AchivmentList(myAchivments));
+        string data = JsonUtility.ToJson(new AchivmentList(myAchivments,myStatistics));
         PlayfabHelperFunctions.instance.ChangeValueFor("Achivments", data);
     }
     public string GetDefault()
@@ -102,7 +130,26 @@ public class AchivmentController
         emptyAchivemnts.Add(new Achivment(0, "Master scorer 3", "Score more than 200 points in a turn", 0, 25, 100, AchivmentTypeEnum.MORE_THAN_200p, false));
         emptyAchivemnts.Add(new Achivment(0, "Master scorer 4", "Score more than 200 points in a turn", 0, 50, 100, AchivmentTypeEnum.MORE_THAN_200p, false));
 
-        string data = JsonUtility.ToJson(new AchivmentList(emptyAchivemnts));
+        List<Achivment> emptyStats = new List<Achivment>();
+
+        emptyStats.Add(new Achivment(0, "Wins", "wins", 0, -1, 0, AchivmentTypeEnum.WIN, false)); // Done
+        emptyStats.Add(new Achivment(0, "Lost", "wins", 0, -1, 0, AchivmentTypeEnum.LOST, false)); // Done
+        emptyStats.Add(new Achivment(0, "Ties", "wins", 0, -1, 0, AchivmentTypeEnum.TIE, false));
+        emptyStats.Add(new Achivment(0, "Resigns", "wins", 0, -1, 0, AchivmentTypeEnum.RESIGN, false));
+        emptyStats.Add(new Achivment(0, "TimeOut", "wins", 0, -1, 0, AchivmentTypeEnum.TIMEOUT, false));
+        emptyStats.Add(new Achivment(0, "HighestGameScore", "wins", 0, -1, 0, AchivmentTypeEnum.HGS, false));// Done
+        emptyStats.Add(new Achivment(0, "HighestRoundScore", "wins", 0, -1, 0, AchivmentTypeEnum.HRS, false)); // Done
+        emptyStats.Add(new Achivment(0, "AvreageGameScore", "wins", 0, -1, 0, AchivmentTypeEnum.AGS, false)); // Done
+        emptyStats.Add(new Achivment(0, "AvreageRoundScore", "wins", 0, -1, 0, AchivmentTypeEnum.ARS, false)); // Done
+        emptyStats.Add(new Achivment(0, "AvreageMoveScore", "wins", 0, -1, 0, AchivmentTypeEnum.AMS, false)); // Done
+        emptyStats.Add(new Achivment(0, "TotalNumberOfBingos", "wins", 0, -1, 0, AchivmentTypeEnum.TOTALBINGO, false)); // Done
+        emptyStats.Add(new Achivment(0, "AvreagBingosGame", "wins", 0, -1, 0, AchivmentTypeEnum.AVREAGEBINGOGAME, false)); // Done
+        emptyStats.Add(new Achivment(0, "TotalMoves", "wins", 0, -1, 0, AchivmentTypeEnum.TOTAL_MOVES, false)); // Done
+        emptyStats.Add(new Achivment(0, "TotalRounds", "wins", 0, -1, 0, AchivmentTypeEnum.TOTAL_ROUNDS, false)); // Done
+        emptyStats.Add(new Achivment(0, "TotalScore", "wins", 0, -1, 0, AchivmentTypeEnum.SCORE, false)); // Done
+
+
+        string data = JsonUtility.ToJson(new AchivmentList(emptyAchivemnts, emptyStats));
         return data;
     }
 
@@ -111,13 +158,72 @@ public class AchivmentController
 
 
     // Game functions
-    public void WonGame()
+    public void WonGame( int score)
     {
         for(int i = 0; i < myAchivments.Count;i++)
         {
             if ( myAchivments[i].myAchivmentType == AchivmentTypeEnum.WIN)
             {
                 myAchivments[i].current++;
+            }
+        }
+
+        float totalGames = 0;
+        float totalScore = 0;
+        for (int i = 0; i < myStatistics.Count; i++)
+        {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.WIN)
+            {
+                myStatistics[i].current++;
+                totalGames += myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.HGS)
+            {
+                if(score > myStatistics[i].current )
+                {
+                    myStatistics[i].current = score;
+                }
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.TIE)
+            {
+                totalGames += myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.LOST)
+            {
+                totalGames += myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.SCORE)
+            {
+                totalScore = myStatistics[i].current;
+            }
+        }
+        for (int i = 0; i < myStatistics.Count; i++)
+        {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.AGS)
+            {
+                myStatistics[i].current = (int) (totalScore / totalGames);
+            }
+        }
+
+
+
+            UpdatePlayfab();
+    }
+    // Game functions
+    public void LostGame( int score)
+    {
+        for (int i = 0; i < myAchivments.Count; i++)
+        {
+            if (myAchivments[i].myAchivmentType == AchivmentTypeEnum.LOST)
+            {
+                myAchivments[i].current++;
+            }
+        }
+        for (int i = 0; i <myStatistics.Count; i++)
+        {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.LOST)
+            {
+                myStatistics[i].current++;
             }
         }
         UpdatePlayfab();
@@ -131,10 +237,39 @@ public class AchivmentController
                 myAchivments[i].current++;
             }
         }
+        float totalGames = 0;
+        float totalBingos = 0;
+        for (int i = 0; i < myStatistics.Count; i++)
+        {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.WIN)
+            {
+                totalGames += myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.TIE)
+            {
+                totalGames += myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.LOST)
+            {
+                totalGames += myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.TOTALBINGO)
+            {
+                myStatistics[i].current++;
+                totalBingos = myStatistics[i].current;
+            }
+        }
+        for (int i = 0; i < myStatistics.Count; i++)
+        {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.AVREAGEBINGOGAME)
+            {
+                myStatistics[i].current = totalBingos / totalGames;
+            }
+        }
         UpdatePlayfab();
 
     }
-    public void Scored(int aScore)
+    public void Scored(int aScore, int amountOfTiles)
     {
         for(int i = 0; i < myAchivments.Count; i++)
         {
@@ -153,6 +288,80 @@ public class AchivmentController
                     myAchivments[i].current += 1;
             }
         }
+        for (int i = 0; i < myStatistics.Count; i++)
+        {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.SCORE)
+            {
+                myStatistics[i].current+= aScore;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.TOTAL_ROUNDS)
+            {
+                myStatistics[i].current++;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.TOTAL_MOVES)
+            {
+                myStatistics[i].current+= amountOfTiles;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.HRS)
+            {
+                if(aScore > myStatistics[i].current)
+                {
+                    myStatistics[i].current = aScore;
+                }
+            }
+        }
+
+
+
+
+        float totalGames = 0;
+        float totalScore = 0;
+        float totalRounds = 0;
+        float totalMovess = 0;
+        for (int i = 0; i < myStatistics.Count; i++)
+        {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.WIN)
+            {
+                totalGames += myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.TIE)
+            {
+                totalGames += myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.LOST)
+            {
+                totalGames += myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.SCORE)
+            {
+                totalScore = myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.TOTAL_ROUNDS)
+            {
+                totalRounds = myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.TOTAL_MOVES)
+            {
+                totalMovess = myStatistics[i].current;
+            }
+        }
+        for (int i = 0; i < myStatistics.Count; i++)
+        {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.AMS)
+            {
+                myStatistics[i].current = (totalMovess / totalScore);
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.ARS)
+            {
+                myStatistics[i].current = (totalRounds / totalScore);
+            }
+        }
+
+
+
+
+
+
         UpdatePlayfab();
 
     }

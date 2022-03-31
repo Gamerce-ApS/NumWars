@@ -69,6 +69,14 @@ public class SwapScreen : MonoBehaviour
         if (GameManager.instance.CheckIfMyTurn() == false)
             return;
 
+
+        if(Board.instance.AllTilesNumbers.Count <=0)
+        {
+            AlertText.instance.ShowAlert("No tiles to swap!");
+            return;
+        }
+
+
         isOpen = true;
         bg.gameObject.SetActive(true);
         bg.GetComponent<Image>().color = new Color(0, 0, 0, 0);
@@ -96,6 +104,15 @@ public class SwapScreen : MonoBehaviour
     }
     public void SwapYes()
     {
+
+
+
+        if (SelectedTiles.Count > Board.instance.AllTilesNumbers.Count)
+        {
+            AlertText.instance.ShowAlert("You can only swap "+ Board.instance.AllTilesNumbers.Count+"!");
+            return;
+        }
+
 
         for (int i = SelectedTiles.Count - 1; i >= 0; i--)
         {

@@ -74,9 +74,9 @@ public class GameFinishedScreen : MonoBehaviour
             p2_wins.text = "-";
 
             if(int.Parse(bf.player1_score) > int.Parse(bf.player2_score))
-                Startup._instance.AdjustThropies(30, bf.player2_PlayfabId, bf.player2_displayName);
+                Startup._instance.AdjustThropies(30, bf.player2_PlayfabId, bf.player2_displayName, int.Parse(bf.player1_score));
             else
-                Startup._instance.AdjustThropies(-15, bf.player2_PlayfabId, bf.player2_displayName);
+                Startup._instance.AdjustThropies(-15, bf.player2_PlayfabId, bf.player2_displayName, int.Parse(bf.player1_score));
 
 
             opponentPlayfabID = bf.player2_PlayfabId;
@@ -94,9 +94,9 @@ public class GameFinishedScreen : MonoBehaviour
             p1_wins.text = "-";
 
             if (int.Parse(bf.player2_score) > int.Parse(bf.player1_score))
-                Startup._instance.AdjustThropies(30, bf.player1_PlayfabId, bf.player1_displayName);
+                Startup._instance.AdjustThropies(30, bf.player1_PlayfabId, bf.player1_displayName, int.Parse(bf.player2_score));
             else
-                Startup._instance.AdjustThropies(-15, bf.player1_PlayfabId, bf.player1_displayName);
+                Startup._instance.AdjustThropies(-15, bf.player1_PlayfabId, bf.player1_displayName, int.Parse(bf.player2_score));
 
             opponentPlayfabID = bf.player1_PlayfabId;
         }

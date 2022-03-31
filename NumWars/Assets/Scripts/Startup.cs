@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using Photon.Pun;
 using Photon.Realtime;
 using PlayFab;
@@ -39,6 +40,10 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public static Startup _instance=null;
     public AchivmentController myAchivmentController;
+
+
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -135,6 +140,8 @@ public class Startup : MonoBehaviourPunCallbacks
     }
     public void Refresh()
     {
+   
+
         _PlayfabHelperFunctions.Refresh();
     }
     public void Refresh(float aDelay)
@@ -406,7 +413,7 @@ public class Startup : MonoBehaviourPunCallbacks
     {
         return "";
     }
-    public void AdjustThropies(int aValue, string opponentPlayfabId, string opponentDisplayName)
+    public void AdjustThropies(int aValue, string opponentPlayfabId, string opponentDisplayName, int aTotalScore)
     {
         myData["Ranking"].Value = (int.Parse(myData["Ranking"].Value) + aValue).ToString();
 
@@ -436,8 +443,19 @@ public class Startup : MonoBehaviourPunCallbacks
         }
 
         if(aValue>0)
-            AchivmentController.instance.WonGame();
+            AchivmentController.instance.WonGame(aTotalScore);
+        else
+            AchivmentController.instance.LostGame(aTotalScore);
 
+
+        AddXP(85);
+
+    }
+    public void AddXP(int aValue)
+    {
+        myData["XP"].Value = (int.Parse(myData["XP"].Value) + aValue).ToString();
+
+        _PlayfabHelperFunctions.ChangeValueFor("XP", myData["XP"].Value);
     }
     public void UpdateStatsData(string aStatsData)
     {

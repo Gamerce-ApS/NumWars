@@ -122,8 +122,10 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
             go.transform.GetChild(2).GetComponent<Text>().text = result.Friends[i].Profile.DisplayName;
             go.transform.GetChild(4).GetComponent<Text>().text = "";
             go.transform.GetChild(1).GetComponent<Text>().text = "";
+         //   go.transform.GetChild(5).GetChild(0).GetComponent<Text>().text = HelperFunctions.XPtoLevel();
 
-            for(int j = 0; j< result2.Leaderboard.Count;j++)
+
+            for (int j = 0; j< result2.Leaderboard.Count;j++)
             {
                 if( result2.Leaderboard[j].PlayFabId == result.Friends[i].FriendPlayFabId)
                 {

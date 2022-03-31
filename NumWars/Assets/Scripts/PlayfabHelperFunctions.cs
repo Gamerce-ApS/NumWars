@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using Facebook.Unity;
 using PlayFab;
 using PlayFab.ClientModels;
@@ -21,6 +22,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
     public GameObject _FinishedTitleListItem;
     public GameObject SearchingForGamePrefab;
 
+    public List<int> LevelSettings = new List<int>();
 
     public static PlayfabHelperFunctions instance;
 
@@ -107,6 +109,13 @@ result =>
                   Debug.Log(error.GenerateErrorReport());
               }
           );
+
+
+       for(int i = 0; i< 200;i++)
+        {
+            LevelSettings.Add((500*i) +(i*30));
+
+        }
 
 
 
@@ -549,9 +558,11 @@ result =>
 
     public void SetUserData()
     {
+
+
         LoadingOverlay.instance.ShowLoadingFullscreen("UpdateUserData");
         PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
-        {
+        { 
             Data = new Dictionary<string, string>() {
             {"Ranking", "0"},
             {"Picture", "0"},
@@ -559,10 +570,9 @@ result =>
             {"OldGames", "[splitter][splitter]"},
             {"StatsData", " "},
             {"Achivments", Startup._instance.myAchivmentController.GetDefault()},
+            {"XP", "0"} },
+            Permission = UserDataPermission.Public,
 
-            
-
-    }
         },
         result =>
         {
@@ -586,7 +596,8 @@ result =>
             Data = new Dictionary<string, string>() {
                 {aEntry, aValue}
 
-            }
+            },
+            Permission = UserDataPermission.Public,
         },
        result =>
        {
@@ -617,7 +628,7 @@ result =>
                 return;
             }
 
-
+ 
 
 
 
@@ -644,8 +655,21 @@ result =>
 
 
             //GetComponent<Startup>()._infoLabel.text = GetComponent<Startup>().displayName + "\nPicture: " + GetComponent<Startup>().myData["Picture"].Value + "\n" + "Ranking: " + GetComponent<Startup>().myData["Ranking"].Value;
-            MainMenuController.instance._Name.text = GetComponent<Startup>().displayName;
-            MainMenuController.instance._Thropies.text = GetComponent<Startup>().myData["Ranking"].Value;
+            //MainMenuController.instance._Name.text = GetComponent<Startup>().displayName;
+            //MainMenuController.instance._Thropies.text = GetComponent<Startup>().myData["Ranking"].Value;
+            string xp = "0";
+            if (result.Data.ContainsKey("XP") == true)
+            {
+                xp = result.Data["XP"].Value;
+                
+            }
+            else
+                ChangeValueFor("XP", "0");
+
+            ProfileButton.instance.Init(GetComponent<Startup>().displayName, GetComponent<Startup>().myData["Ranking"].Value, xp);
+
+    
+
 
             UpdateGameList();
 
@@ -1022,6 +1046,9 @@ result =>
 
     public void Refresh()
     {
+
+
+
         LoadingOverlay.instance.ShowLoading("GetPlayerProfile");
 
         PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
@@ -1034,6 +1061,7 @@ result =>
         },
         result =>
         {
+            if(LoadingOverlay.instance != null)
             LoadingOverlay.instance.DoneLoading("GetPlayerProfile");
 
             GetComponent<Startup>().displayName = result.PlayerProfile.DisplayName;
@@ -1181,7 +1209,9 @@ result =>
     }
     public void FacebookLink()
     {
-        FB.LogInWithReadPermissions(null, OnFacebookLoggedIn);
+
+        
+        FB.LogInWithReadPermissions(new List<string>() { "public_profile", "gaming_user_picture" }, OnFacebookLoggedIn);
     }
     public void FacebookUnLink()
     {
@@ -1326,5 +1356,68 @@ result =>
     {
     }
 
+    public void GetOtherUserData(string aPlayfabId)
+    {
 
+
+        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+        {
+            PlayFabId = aPlayfabId,
+            Keys = null
+        }, result => {
+
+        Debug.Log("Done getting data");
+
+
+        string xp = "0";
+        if (result.Data.ContainsKey("XP") == true)
+        {
+            xp = result.Data["XP"].Value;
+        }
+
+        string rank = result.Data["Ranking"].Value;
+
+
+            GameManager.instance.SetOpponentData(xp, rank);
+ 
+
+        }, (error) => {
+            Debug.Log("Got error retrieving user data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
+
+    }
+    public void GetOtherUserDataProfile(string aPlayfabId, UserInfoWindow theWidnow)
+    {
+
+
+        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+        {
+            PlayFabId = aPlayfabId,
+            Keys = null
+        }, result => {
+
+
+            theWidnow.SetData(result.Data);
+    
+
+
+        }, (error) => {
+            Debug.Log("Got error retrieving user data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
+
+    }
+
+    //public void UploadPhoto()
+    //{
+
+
+    //    var request = new PlayFab.DataModels.InitiateFileUploadsRequest
+    //    {
+    //        Entity = new PlayFab.DataModels.EntityKey { Id = "fileName", Type =  },
+    //        FileNames = new List<string> { ActiveUploadFileName },
+    //    };
+    //    PlayFabDataAPI.InitiateFileUploads(request, OnInitFileUpload, OnInitFailed);
+    //}
 }

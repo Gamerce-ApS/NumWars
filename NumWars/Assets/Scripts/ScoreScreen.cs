@@ -37,13 +37,14 @@ public class ScoreScreen : MonoBehaviour
         
     }
     // Replay functions
-    public void ShowScoreLastPlay(bool isFromStart)
+    public void ShowScoreLastPlay(bool isFromStart, BoardData _bd)
     {
-        List<string> moveHistory = Startup._instance.GameToLoad.History;
+        List<string> moveHistory = _bd.History;
         List<FakeTileData> lastMoves = new List<FakeTileData>();
 
-        int myBackednTurn = Startup._instance.GameToLoad.GetPlayerTurn(GameManager.instance.CurrentTurn);
+        int myBackednTurn = _bd.GetPlayerTurn(GameManager.instance.CurrentTurn);
 
+        if(moveHistory != null)
         if(moveHistory.Count>0)
         if(moveHistory[moveHistory.Count-1]== "#SWAP#")
         {
@@ -90,7 +91,7 @@ public class ScoreScreen : MonoBehaviour
 
         // if we come from start the score needs to be removed as it has not been updated
         if(isFromStart)
-        GameManager.instance.AddScore(GameManager.instance.thePlayers[1], -totalScore,false);
+        GameManager.instance.AddScore(GameManager.instance.thePlayers[1], -totalScore, lastMoves.Count, false);
 
         lastMoves.Sort(HelperFunctions.SortByScoreInverse);
 
@@ -180,7 +181,7 @@ public class ScoreScreen : MonoBehaviour
 
         }
         
-        GameManager.instance.AddScore(thePlayer, totalScore);
+        GameManager.instance.AddScore(thePlayer, totalScore , createdPoints.Count);
         //for (int i = 0; i < score.Count; i++)
         //{
         //    score[i].Flip();
@@ -196,7 +197,7 @@ public class ScoreScreen : MonoBehaviour
 
 
 
-        
+        if(Startup._instance.GameToLoad != null)
         if (int.Parse(Startup._instance.GameToLoad.EmptyTurns) >= 4)
         {
             GameFinishedScreen.instance.Show(Startup._instance.GameToLoad);
@@ -312,7 +313,7 @@ public class ScoreScreen : MonoBehaviour
 
        
 
-        GameManager.instance.AddScore(thePlayer, totalScore);
+        GameManager.instance.AddScore(thePlayer, totalScore, createdPoints.Count);
         for (int i = 0; i < score.Count; i++)
         {
             score[i].Flip();

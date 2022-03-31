@@ -8,6 +8,10 @@ public class ProfileWindow : MonoBehaviour
     public Image AchivmenSlider;
     public Text amountCompletedText;
 
+    public ProfileButton infoProfileButton;
+
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -30,6 +34,16 @@ public class ProfileWindow : MonoBehaviour
 
         amountCompletedText.text = completed + "/" + AchivmentController.instance.myAchivments.Count;
         AchivmenSlider.fillAmount = (float)completed / (float)AchivmentController.instance.myAchivments.Count;
+
+        infoProfileButton.Init(Startup._instance.displayName, Startup._instance.myData["Ranking"].Value, Startup._instance.myData["XP"].Value);
+
+
+
+
+
+
+
+
 
     }
 }
