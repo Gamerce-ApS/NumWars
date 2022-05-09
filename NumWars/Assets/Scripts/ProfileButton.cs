@@ -41,7 +41,9 @@ public class ProfileButton : MonoBehaviour
     }
     void SetXP(string aXP)
     {
-        for(int i = 0; i < PlayfabHelperFunctions.instance.LevelSettings.Count;i++)
+        if (aXP == "0")
+            aXP = "1";
+        for (int i = 0; i < PlayfabHelperFunctions.instance.LevelSettings.Count;i++)
         {
             if(int.Parse(aXP) <= PlayfabHelperFunctions.instance.LevelSettings[i])
             {
@@ -77,9 +79,12 @@ public class ProfileButton : MonoBehaviour
     void Start()
     {
         if(instance == null)
+        {
             instance = this;
 
-        gameObject.SetActive(false);
+            gameObject.SetActive(false);
+        }
+
     }
 
     // Update is called once per frame

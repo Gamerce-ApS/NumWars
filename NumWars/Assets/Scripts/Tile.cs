@@ -120,9 +120,20 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
     {
         if(PlacedOnTile != null)
         {
-           return (PlacedOnTile.GetScoreMultiplier(int.Parse(textLabel.text))).ToString(); 
+
+            int scoreV = int.Parse(textLabel.text) ;
+
+
+           return (PlacedOnTile.GetScoreMultiplier(scoreV) * GetMultipleValidPositions()).ToString();
+
+
         }
         return textLabel.text;
+    }
+    public int GetMultipleValidPositions()
+    {
+        int amountValid = Board.instance.CheckAmountValid(PlacedOnTile, textLabel.text);
+        return amountValid;
     }
     public void SetWhiteTile()
     {
@@ -172,6 +183,7 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         if (GameManager.instance.CheckIfMyTurn() == false)
             return;
 
+        Startup._instance.PlaySoundEffect(0);
 
         myTileStatus = TileStatus.Dragging;
 
@@ -263,6 +275,8 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
             return;
         if (GameManager.instance.CheckIfMyTurn() == false)
             return;
+
+        Startup._instance.PlaySoundEffect(0);
 
         GetComponent<Image>().color = new Color(1, 1, 1, 1);
         Debug.Log("EndDrag");

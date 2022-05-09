@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using VoxelBusters.EssentialKit;
 
 public class SettingsWindow : MonoBehaviour
 {
@@ -41,6 +42,7 @@ public class SettingsWindow : MonoBehaviour
 
 
     }
+
     public void GoBack()
     {
         if(gameObject.transform.GetChild(2).gameObject.activeSelf)
@@ -70,7 +72,7 @@ public class SettingsWindow : MonoBehaviour
     public void ResignGame()
     {
         if(GameManager.instance.thePlayers[1].isAI)
-            PlayerPrefs.DeleteAll();
+            PlayerPrefs.DeleteKey("AIGame");
 
         GameManager.instance.ClickBack();
     }

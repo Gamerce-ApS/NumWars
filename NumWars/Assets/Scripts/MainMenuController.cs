@@ -10,6 +10,8 @@ using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
 using LoginResult = PlayFab.ClientModels.LoginResult;
+using VoxelBusters.EssentialKit;
+using VoxelBusters.CoreLibrary;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -27,6 +29,9 @@ public class MainMenuController : MonoBehaviour
 
     public Text nameSettingTextError;
     public Image ProfilePicture;
+    public Image ProfilePicture2;
+
+    
 
     public GameObject FriendsWindow;
 
@@ -36,6 +41,8 @@ public class MainMenuController : MonoBehaviour
     public Button PraticePlay;
 
     public GameObject ProfileWindow;
+
+    public GameObject MerginWindow;
 
 
     // Start is called before the first frame update
@@ -53,7 +60,8 @@ public class MainMenuController : MonoBehaviour
 
 
         if (SetNameGO.activeSelf ||
-            NewGameWindow.activeSelf)
+            NewGameWindow.activeSelf||
+            Startup._instance.DontAutoRefresh)
         {
             UpdateTimer = 0;
             return;
@@ -63,12 +71,14 @@ public class MainMenuController : MonoBehaviour
 
         if(UpdateTimer>10)
         {
-            Startup._instance.Refresh();
+            if(LoadingOverlay.instance.LoadingCall.Count<=0)
+                Startup._instance.Refresh();
             UpdateTimer = 0;
         }
     }
     public void PressPlayOnline()
     {
+        Startup._instance.PlaySoundEffect(0);
         PressCloseNewGameWindow();
         if (Startup._instance.GetHasActiveGameSearch()) // if you have a searching entry you need to wait
         {
@@ -83,17 +93,17 @@ public class MainMenuController : MonoBehaviour
     }
     public void PressPlayAI()
     {
-
+        Startup._instance.PlaySoundEffect(0);
     }
     public void PressPlayPratice()
     {
-      
+        Startup._instance.PlaySoundEffect(0);
         Startup._instance.GameToLoad = null;
         SceneManager.LoadScene(1);
     }
     public void PressPlayTutorial()
     {
-
+        Startup._instance.PlaySoundEffect(0);
         if (!PlayerPrefs.HasKey("HasDoneTutorial"))
             Startup._instance.AddXP(85);
 
@@ -107,6 +117,7 @@ public class MainMenuController : MonoBehaviour
     }
     public void PressOpenNewGameWindow()
     {
+        Startup._instance.PlaySoundEffect(0);
         NewGameWindow.SetActive(true);
         NewGameWindow.transform.GetChild(0).GetComponent<Image>().DOFade(157f / 255f,0 ).SetEase(Ease.InOutQuart);
 
@@ -134,17 +145,20 @@ public class MainMenuController : MonoBehaviour
 }
 public void PressOpenFriendsWindow()
     {
+        Startup._instance.PlaySoundEffect(0);
         PressCloseNewGameWindow();
         FriendsWindow.SetActive(true);
 
     }
     public void PressCloseNewGameWindow()
     {
+        Startup._instance.PlaySoundEffect(0);
         NewGameWindow.transform.GetChild(0).GetComponent<Image>().DOFade(0, 157f / 255f).SetEase(Ease.InOutQuart);
         NewGameWindow.transform.GetChild(1).transform.DOMoveX(_TextFlyInBoxoriginalPos.x + 10, 0.3f).SetEase(Ease.InOutQuart).OnComplete( ()=> { NewGameWindow.SetActive(false); } );
     }
     public void OpenSetNameWidnow(bool isAnewAccount = false)
     {
+        Startup._instance.PlaySoundEffect(0);
         SetNameGO.SetActive(true);
         
 
@@ -157,6 +171,7 @@ public void PressOpenFriendsWindow()
     }
     public void OpenProfileWindow()
     {
+        Startup._instance.PlaySoundEffect(0);
         ProfileWindow.SetActive(true);
 
 
@@ -164,6 +179,7 @@ public void PressOpenFriendsWindow()
     }
     public void ClickSetName()
     {
+        Startup._instance.PlaySoundEffect(0);
         if (setNameTextLabel.text == "What's your name?" || setNameTextLabel.text.Length<3)
         {
             nameSettingTextError.text = "Invalid name";
@@ -183,6 +199,7 @@ public void PressOpenFriendsWindow()
 
     public void ClearData()
     {
+        Startup._instance.PlaySoundEffect(0);
         PlayerPrefs.DeleteAll();
         SceneManager.LoadScene(0);
         Startup._instance.Refresh(0.1f);
@@ -191,10 +208,50 @@ public void PressOpenFriendsWindow()
 
     public void ClickLoginWithFacebook()
     {
+        Startup._instance.PlaySoundEffect(0);
         PlayfabHelperFunctions.instance.FacebookLink();
     }
+    public void ShowMerginAlert()
+    {
+        MerginWindow.SetActive(true);
+    }
+    public void ClickRecoveAccount()
+    {
+        Startup._instance.PlaySoundEffect(0);
+        PlayerPrefs.SetInt("FacebookLink", 1);
+        SceneManager.LoadScene(0);
+        // Startup._instance.Refresh(0.1f);
+        PlayfabHelperFunctions.instance.ReLogin();
+
+    }
+    public void IgnoreOldAccountAndLinkNew()
+    {
+        Startup._instance.PlaySoundEffect(0);
+        LoadingOverlay.instance.ShowLoading("Facebook login");
+
+
+        PlayFabClientAPI.LinkFacebookAccount(new LinkFacebookAccountRequest { AccessToken = AccessToken.CurrentAccessToken.TokenString,ForceLink = true }, OnCompleteForceLink, OnPlayfabFacebookAuthFailed);
+
+
+    }
+
+    private void OnPlayfabFacebookAuthFailed(PlayFabError error)
+    {
+        LoadingOverlay.instance.DoneLoading("Facebook login");
+        Debug.Log("PlayFab Facebook Auth Failed: " + error.GenerateErrorReport());
+    }
+
+    private void OnCompleteForceLink(LinkFacebookAccountResult result)
+    {
+        PlayerPrefs.SetInt("FacebookLink", 1);
+        SceneManager.LoadScene(0);
+        // Startup._instance.Refresh(0.1f);
+        PlayfabHelperFunctions.instance.ReLogin();
+    }
+
     public void ClickUnlinkWithFacebook()
     {
+        Startup._instance.PlaySoundEffect(0);
         PlayfabHelperFunctions.instance.FacebookUnLink();
     }
     public GameObject LinkFBButton;
@@ -215,5 +272,128 @@ public void PressOpenFriendsWindow()
         }
 
     }
+    public void Share()
+    {
+        Startup._instance.PlaySoundEffect(0);
+        ShareSheet shareSheet = ShareSheet.CreateInstance();
+        shareSheet.AddText("Hey, test out Outnumbered on appstore or google play! It's a great game!");
+        VoxelBusters.CoreLibrary.URLString url = new VoxelBusters.CoreLibrary.URLString();
 
+        shareSheet.AddURL(URLString.URLWithPath("https://itunes.apple.com/us/app/keynote/id1610303402?mt=8"));
+
+        shareSheet.SetCompletionCallback((result, error) => {
+            Debug.Log("Share Sheet was closed. Result code: " + result.ResultCode);
+        });
+        shareSheet.Show();
+
+
+    }
+
+    //public void GlobalReset()
+    //{
+    //    GameObject[] go = FindObjectsOfType<GameObject>();
+    //    for(int i = 0; i< go.Length;i++)
+    //    {
+    //        if(go[i].name != "CallbackDispatcher" && go[i].name != "EssentialKitManager" && go[i].name != "UnityFacebookSDKPlugin")
+    //        Destroy(go[i]);
+    //    }
+
+    //    SceneManager.LoadScene(0);
+    //}
+
+    public void OpenLeaderboard()
+    {
+        Startup._instance.PlaySoundEffect(0);
+    }
+    public void CloseLeaderboard()
+    {
+        Startup._instance.PlaySoundEffect(0);
+    }
+    public void OpenFriends()
+    {
+        Startup._instance.PlaySoundEffect(0);
+    }
+    public void CloseFriends()
+    {
+        Startup._instance.PlaySoundEffect(0);
+    }
+    public void OpenSettings()
+    {
+        Startup._instance.PlaySoundEffect(0);
+    }
+    public void CloseSettings()
+    {
+        Startup._instance.PlaySoundEffect(0);
+    }
+    public Text MusicText;
+    public void ToggleMusic()
+    {
+
+        if (Startup._instance.GetComponent<AudioSource>().volume == 0.3f)
+        {
+            PlayerPrefs.SetInt("Music", 0);
+            Startup._instance.GetComponent<AudioSource>().volume = 0;
+        }
+   
+        else
+        {
+            PlayerPrefs.SetInt("Music", 1);
+            Startup._instance.GetComponent<AudioSource>().volume = 0.3f;
+        }
+           
+
+
+
+
+        if (Startup._instance.GetComponent<AudioSource>().volume == 0.3f)
+            MusicText.text = "Music: ON";
+        else
+            MusicText.text = "Music: OFF";
+    }
+   
+    public Text SoundText;
+    public void ToggleSound()
+    {
+        int sound = PlayerPrefs.GetInt("Sound",1);
+
+       // Startup._instance.GetComponent<AudioSource>().enabled = !Startup._instance.GetComponent<AudioSource>().enabled;
+
+        if (sound == 1)
+        {
+            SoundText.text = "Sound: OFF";
+            PlayerPrefs.SetInt("Sound", 0);
+        }
+        else
+        {
+            PlayerPrefs.SetInt("Sound", 1);
+            SoundText.text = "Sound: ON";
+        }
+
+    }
+    public Image LayoutButton1;
+    public Image LayoutButton2;
+
+    public void SetBoardLayout(int aVersion)
+    {
+        PlayerPrefs.SetInt("BoardLayout", aVersion);
+        Color col;
+        ColorUtility.TryParseHtmlString("#ADFCFD", out col);
+
+
+        if (aVersion == 0)
+        {
+            // Standard
+            LayoutButton1.color = Color.white;
+            LayoutButton2.color = col;
+
+
+        }
+        if (aVersion == 1)
+        {
+            // Random
+            LayoutButton2.color = Color.white;
+            LayoutButton1.color = col;
+        }
+
+    }
 }

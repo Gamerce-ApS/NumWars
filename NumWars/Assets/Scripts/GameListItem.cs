@@ -80,6 +80,7 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     public void Init(BoardData aBd,bool hasFinished= false,bool aIsAiGame=false)
     {
+        aBd.hasFinished = hasFinished;
         isAiGame = aIsAiGame;
         bd = aBd;
         if ( Startup._instance.MyPlayfabID == bd.player1_PlayfabId)
@@ -177,6 +178,9 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     public void ClickLoadGame()
     {
+
+
+
         if (_lockUntilRelease)
             return;
 
@@ -188,6 +192,7 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
          Startup._instance.GameToLoad = null;
 
         SceneManager.LoadScene(1);
+        Startup._instance.PlaySoundEffect(1);
     }
     public void ClickDeleteGame()
     {

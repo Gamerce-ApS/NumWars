@@ -7,9 +7,23 @@ using UnityEngine.SceneManagement;
 
 public class GameFinishedScreen : MonoBehaviour
 {
-    public static GameFinishedScreen instance;
+    public static GameFinishedScreen _instance = null;
+    public static GameFinishedScreen instance
+    {
+        get
+        {
+            if(_instance == null)
+            {
+                _instance = GameObject.FindObjectOfType<GameFinishedScreen>();
+            }
 
-    public Text p1_name;
+            return _instance;
+
+        }
+
+    }
+
+public Text p1_name;
     public Text p1_thropies;
     public Text p1_score;
     public Text p1_wins;
@@ -28,7 +42,7 @@ public class GameFinishedScreen : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        instance = this;
+
     }
 
     // Update is called once per frame
@@ -41,13 +55,14 @@ public class GameFinishedScreen : MonoBehaviour
 
 
         
-
+        if(bf.hasFinished == false && bf.player2_displayName == "AI")
         PlayfabHelperFunctions.instance.AddAiGameToOldGames(CompressString.StringCompressor.CompressString(bf.GetJson()));
 
 
 
         for (int i = 0; i< ElementsToMoveOut.Count;i++)
         {
+            if(ElementsToMoveOut[i] != null)
             ElementsToMoveOut[i].transform.DOMoveX(10, 0.5f).SetEase(Ease.InOutQuart);
         }
 
@@ -73,10 +88,14 @@ public class GameFinishedScreen : MonoBehaviour
             p2_score.text = bf.player2_score;
             p2_wins.text = "-";
 
-            if(int.Parse(bf.player1_score) > int.Parse(bf.player2_score))
-                Startup._instance.AdjustThropies(30, bf.player2_PlayfabId, bf.player2_displayName, int.Parse(bf.player1_score));
-            else
-                Startup._instance.AdjustThropies(-15, bf.player2_PlayfabId, bf.player2_displayName, int.Parse(bf.player1_score));
+            if (bf.hasFinished == false)
+            {
+                if (int.Parse(bf.player1_score) > int.Parse(bf.player2_score))
+                    Startup._instance.AdjustThropies(30, bf.player2_PlayfabId, bf.player2_displayName, int.Parse(bf.player1_score));
+                else
+                    Startup._instance.AdjustThropies(-15, bf.player2_PlayfabId, bf.player2_displayName, int.Parse(bf.player1_score));
+            }
+
 
 
             opponentPlayfabID = bf.player2_PlayfabId;
@@ -93,10 +112,14 @@ public class GameFinishedScreen : MonoBehaviour
             p1_score.text = bf.player2_score;
             p1_wins.text = "-";
 
-            if (int.Parse(bf.player2_score) > int.Parse(bf.player1_score))
-                Startup._instance.AdjustThropies(30, bf.player1_PlayfabId, bf.player1_displayName, int.Parse(bf.player2_score));
-            else
-                Startup._instance.AdjustThropies(-15, bf.player1_PlayfabId, bf.player1_displayName, int.Parse(bf.player2_score));
+            if (bf.hasFinished == false)
+            {
+                if (int.Parse(bf.player2_score) > int.Parse(bf.player1_score))
+                    Startup._instance.AdjustThropies(30, bf.player1_PlayfabId, bf.player1_displayName, int.Parse(bf.player2_score));
+                else
+                    Startup._instance.AdjustThropies(-15, bf.player1_PlayfabId, bf.player1_displayName, int.Parse(bf.player2_score));
+            }
+
 
             opponentPlayfabID = bf.player1_PlayfabId;
         }
@@ -143,5 +166,10 @@ public class GameFinishedScreen : MonoBehaviour
 
         SceneManager.LoadScene(0);
         Startup._instance.Refresh(0.1f);
+        if(Startup._instance.avatarURL != null)
+        if (Startup._instance.avatarURL.Length > 0)
+        {
+            PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+        }
     }
 }

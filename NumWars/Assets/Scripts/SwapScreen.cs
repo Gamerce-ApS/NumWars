@@ -134,7 +134,7 @@ public class SwapScreen : MonoBehaviour
         PlayerBoard.instance.RefreshLayout();
         CloseWindow();
 
-        if (Startup._instance.GameToLoad != null)
+        if (Startup._instance.GameToLoad != null && Startup._instance.GameToLoad.BoardTiles != null)
         {
             Startup._instance.GameToLoad.History.Add("#SWAP#");
         }

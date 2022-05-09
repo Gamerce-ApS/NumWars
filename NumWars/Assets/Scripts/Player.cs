@@ -140,8 +140,17 @@ public class Player : MonoBehaviour
                     swapedLastTurn = true;
                 }
                 AddNewPlayerTiles();
-                Board.instance.History.Add("#SWAP#");
-                AlertText.instance.ShowAlert("Ai swapped!", 0.5f);
+                if(isEmptyTurn == false)
+                {
+                    Board.instance.History.Add("#SWAP#");
+                    AlertText.instance.ShowAlert("Ai swapped!", 0.5f);
+                }
+                else
+                {
+                    Board.instance.History.Add("#EMPTY#");
+                    AlertText.instance.ShowAlert("Placed no tiles!", 0.25f);
+                }
+
                 GameManager.instance.MakeLastPlayedTilesColored();
 
 
@@ -149,6 +158,7 @@ public class Player : MonoBehaviour
             else
             {
                 isEmptyTurn = true;
+                AlertText.instance.ShowAlert("Placed no tiles!", 0.25f);
             }
 
             GameManager.instance.NextTurn(isEmptyTurn);
@@ -201,7 +211,11 @@ public class Player : MonoBehaviour
 
             }
             GameManager.instance.tileLeft.text = Board.instance.AllTilesNumbers.Count.ToString();
-        
+
+        if(PlayerBoard.instance.myPlayer == this)
+            Board.instance.LoadLastUsedTiles(PlayerBoard.instance.myPlayer.myTiles);
+
+
     }
 
 }

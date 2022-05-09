@@ -66,6 +66,9 @@ public class PlayerBoard : MonoBehaviour
         {
             myPlayer.myTiles[i].ResetStartPosition();
         }
+
+
+        
     }
     //public void AddNewPlayerTiles()
     //{

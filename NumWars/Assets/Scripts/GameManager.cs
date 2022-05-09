@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using PlayFab;
+using PlayFab.ClientModels;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -39,6 +41,7 @@ public class GameManager : MonoBehaviour
     public int CurrentTurn = -1;
 
     public GameObject WaitingOverlay;
+    public GameObject GameEndedOverlay;
 
     public int AIGAME_EMPTY_TURNS = 0;
 
@@ -52,6 +55,7 @@ public class GameManager : MonoBehaviour
 
     public Text p2_level;
     public Text p2_thropies;
+
 
 
     // Start is called before the first frame update
@@ -85,7 +89,7 @@ public class GameManager : MonoBehaviour
         thePlayers.Add(new GameObject("Player1").AddComponent<Player>().Init(displayName + "", 0, p1_score.gameObject));
 
 
-        if(Startup._instance != null && Startup._instance.GameToLoad != null)
+        if(Startup._instance != null && Startup._instance.GameToLoad != null && Startup._instance.GameToLoad.BoardTiles != null)
         {
                 Board.instance.LoadBoardData(Startup._instance.GameToLoad);
                 thePlayers.Add(new GameObject("Player2").AddComponent<Player>().Init(Startup._instance.GameToLoad.GetOtherPlayer()+"", 1, p2_score.gameObject, false));
@@ -115,6 +119,15 @@ public class GameManager : MonoBehaviour
 
 
             PlayfabHelperFunctions.instance.GetOtherUserData(Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
+
+
+            if(Startup._instance.GameToLoad.GetHasTimeout())
+            {
+                GameEndedOverlay.SetActive(true);
+                GameEndedOverlay.GetComponent<CanvasGroup>().alpha = 0;
+                GameEndedOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
+            }
+
 
 
         }
@@ -196,7 +209,8 @@ public class GameManager : MonoBehaviour
         }
 
 
-        
+
+        Board.instance.LoadLastUsedTiles(PlayerBoard.instance.myPlayer.myTiles);
 
 
 
@@ -227,7 +241,7 @@ public class GameManager : MonoBehaviour
         
     }
 
-    public void AddScore(Player aPlayer, int aScore, int amountOfTiles , bool updateLast=true)
+    public void AddScore(Player aPlayer, int aScore, int amountOfTiles , bool updateLast=true,bool isReplay = false)
     {
         if(updateLast)
         aPlayer.LastScore = aScore;
@@ -236,6 +250,10 @@ public class GameManager : MonoBehaviour
 
         if(aPlayer.ID == 0)
         AchivmentController.instance.Scored(aScore, amountOfTiles);
+
+        if (aPlayer.ID == 1 && aPlayer.isAI && isReplay== false)
+            AchivmentController.instance.Scored(aScore, amountOfTiles, true);
+
 
         UpdateUI();
 
@@ -369,8 +387,11 @@ public class GameManager : MonoBehaviour
                 if (isEmptyTurn) // you ended your turn with an empty move, it will not be stored until AI makes his move
                 {
                     Board.instance.History.Add("#EMPTY#");
+                    AIGAME_EMPTY_TURNS = ((AIGAME_EMPTY_TURNS) + 1);
                     GameManager.instance.MakeLastPlayedTilesColored();
                 }
+                else
+                    AIGAME_EMPTY_TURNS = 0;
             }
             else
             {
@@ -385,7 +406,7 @@ public class GameManager : MonoBehaviour
                     p2_tiles = thePlayers[0].GetMyTiles();
                 }
 
-                BoardData updatedBoard = new BoardData(Startup._instance.GameToLoad.player1_PlayfabId, Startup._instance.GameToLoad.player2_PlayfabId, Startup._instance.GameToLoad.GetPlayerTurn(CurrentTurn).ToString(), Board.instance.BoardTiles, Startup._instance.GameToLoad.RoomName, Startup._instance.GameToLoad.History, Board.instance.GetTilesLeft(), Startup._instance.GameToLoad.EmptyTurns, p1_tiles, p2_tiles);
+                BoardData updatedBoard = new BoardData(Startup._instance.GameToLoad.player1_PlayfabId, Startup._instance.GameToLoad.player2_PlayfabId, Startup._instance.GameToLoad.GetPlayerTurn(CurrentTurn).ToString(), Board.instance.BoardTiles, Startup._instance.GameToLoad.RoomName, Startup._instance.GameToLoad.History, Board.instance.GetTilesLeft(), Startup._instance.GameToLoad.EmptyTurns, p1_tiles, p2_tiles, System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
                 updatedBoard.player1_displayName = Startup._instance.GameToLoad.player1_displayName;
                 updatedBoard.player2_displayName = Startup._instance.GameToLoad.player2_displayName;
                 updatedBoard.player1_score = Startup._instance.GameToLoad.player1_score;
@@ -474,7 +495,7 @@ public class GameManager : MonoBehaviour
 
 
 
-            BoardData updatedBoard = new BoardData(Startup._instance.MyPlayfabID, "", "1", Board.instance.BoardTiles, "AI_GAME", Board.instance.History, Board.instance.GetTilesLeft(), "0",thePlayers[0].GetMyTiles(), thePlayers[1].GetMyTiles());
+            BoardData updatedBoard = new BoardData(Startup._instance.MyPlayfabID, "", "1", Board.instance.BoardTiles, "AI_GAME", Board.instance.History, Board.instance.GetTilesLeft(), "0",thePlayers[0].GetMyTiles(), thePlayers[1].GetMyTiles(), System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
 
             updatedBoard.player1_displayName = Startup._instance.displayName;
             updatedBoard.player2_displayName = "AI";
@@ -489,13 +510,15 @@ public class GameManager : MonoBehaviour
             //{
             //    updatedBoard.EmptyTurns = "4";
             //}
-            if (thePlayers[1].GetMyTiles().Count == 0 && isEmptyTurn)
+            if (thePlayers[1].GetMyTiles().Count == 0)
             {
                 updatedBoard.EmptyTurns = "4";
+                AIGAME_EMPTY_TURNS = 4;
             }
             if (thePlayers[0].GetMyTiles().Count == 0)
             {
                 updatedBoard.EmptyTurns = "4";
+                AIGAME_EMPTY_TURNS = 4;
             }
 
             bool shouldAddToAI = true;
@@ -503,14 +526,17 @@ public class GameManager : MonoBehaviour
                 shouldAddToAI = false;
 
             if (shouldAddToAI)
+            {
                 PlayerPrefs.SetString("AIGame", updatedBoard.GetJson());
+                Board.instance.boardData = updatedBoard;
+            }
 
             WaitingOverlay.GetComponent<CanvasGroup>().DOFade(0, 0.5f).SetEase(Ease.InOutQuart).OnComplete(() => { WaitingOverlay.SetActive(false); });
 
         
 
 
-            if (int.Parse(updatedBoard.EmptyTurns) >= 2)
+            if (int.Parse(updatedBoard.EmptyTurns) >= 4 && AIGAME_EMPTY_TURNS >= 4)
             {
                 EndGameAfterPasses(updatedBoard);
             }
@@ -520,6 +546,19 @@ public class GameManager : MonoBehaviour
     public void HideThinkingOverlay()
     {
         WaitingOverlay.GetComponent<CanvasGroup>().DOFade(0, 0.5f).SetEase(Ease.InOutQuart).OnComplete(() => { WaitingOverlay.SetActive(false); });
+
+    }
+    public UserInfoWindow _userInfoWindow;
+    public void ClickProfile(int aUserId)
+    {
+        _userInfoWindow.gameObject.SetActive(true);
+
+        _userInfoWindow.InitUser(aUserId);
+
+
+   
+
+
 
     }
     public void MakeLastPlayedTilesColored()
@@ -532,7 +571,7 @@ public class GameManager : MonoBehaviour
 
         int myBackednTurn = GameManager.instance.CurrentTurn;
 
-        if(Startup._instance != null && Startup._instance.GameToLoad != null)
+        if(Startup._instance != null && Startup._instance.GameToLoad != null && Startup._instance.GameToLoad.BoardTiles != null)
         {
              myBackednTurn = Startup._instance.GameToLoad.GetPlayerTurn(GameManager.instance.CurrentTurn);
              moveHistory = Startup._instance.GameToLoad.History;
@@ -543,7 +582,7 @@ public class GameManager : MonoBehaviour
         {
             string[] moveInfo = moveHistory[i].Split('#');
 
-            if( moveHistory[i] != "#SWAP#" && moveHistory[i] != "#EMPTY#")
+            if( moveHistory[i] != "#SWAP#" && moveHistory[i] != "#EMPTY#" && !moveHistory[i].Contains("#TILESONHAND"))
             {
                 Vector2 v2 = ScoreScreen.StringToVector2(moveInfo[0]);
                 Board.instance.SetTileColor((int)(v2.x), (int)(v2.y), Color.white);
@@ -555,7 +594,7 @@ public class GameManager : MonoBehaviour
         if (moveHistory != null)
             for (int i = moveHistory.Count - 1; i >= 0; i--)
         {
-            if( moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#")
+            if( moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#"  || moveHistory[i].Contains("#TILESONHAND"))
             {
                 break;
             }
@@ -584,7 +623,7 @@ public class GameManager : MonoBehaviour
 
         }
 
-
+        
 
     }
     public void EndGameAfterPasses(BoardData bd)
@@ -606,6 +645,11 @@ public class GameManager : MonoBehaviour
         }
         SceneManager.LoadScene(0);
         Startup._instance.Refresh(0.1f);
+
+        if (Startup._instance.avatarURL != null && Startup._instance.avatarURL.Length > 0)
+        {
+            PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+        }
     }
     public void StartGameFirstFrame()
     {

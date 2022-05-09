@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -9,13 +10,14 @@ using static StaticTile;
 [Serializable]
 public  class BoardData
 {
-    public BoardData(string p1, string p2, string turn, List<StaticTile> tileData,string aRoomName,List<string> aHistory, List<string> tilesLeft,string aEmptyTurns, List<string> ap1_tiles, List<string> ap2_tiles)
+    public BoardData(string p1, string p2, string turn, List<StaticTile> tileData,string aRoomName,List<string> aHistory, List<string> tilesLeft,string aEmptyTurns, List<string> ap1_tiles, List<string> ap2_tiles, string aLastMoveTimeStamp)
     {
         player1_PlayfabId = p1;
         player2_PlayfabId = p2;
         playerTurn = turn;
         RoomName = aRoomName;
         EmptyTurns = aEmptyTurns;
+        LastMoveTimeStamp = aLastMoveTimeStamp;
         for (int i = 0; i < tileData.Count;i++)
         {
             BoardTiles.Add(tileData[i].GetJsonObject());
@@ -56,6 +58,11 @@ public  class BoardData
     public string EmptyTurns = "";
     public List<string> TilesLeft = new List<string>();
 
+    public string LastMoveTimeStamp = "";
+
+    [NonSerialized]
+    public bool hasFinished = false;
+
     public string GetJson()
     {
         return JsonUtility.ToJson(this);
@@ -81,10 +88,31 @@ public  class BoardData
         TilesLeft = bd.TilesLeft;
         p1_tiles = bd.p1_tiles;
         p2_tiles = bd.p2_tiles;
-
+        LastMoveTimeStamp = bd.LastMoveTimeStamp;
     }
 
+    public bool GetHasTimeout()
+    {
+        long timeToDeadline = 0;
+        if (LastMoveTimeStamp != null)
+        {
+            long a = System.DateTimeOffset.Now.ToUnixTimeSeconds();
 
+            long b = long.Parse(LastMoveTimeStamp);
+            //  long Future = b + 60 * 60 * 24 * 2;
+            long Future = b + Startup.TIMEOUT;
+            timeToDeadline = Future - a;
+
+            if (timeToDeadline < 0)
+                return true;
+            else
+                return false;
+        }
+
+        return false;
+
+
+    }
     public string GetOtherPlayer()
     {
         if (Startup._instance.MyPlayfabID == player1_PlayfabId)
@@ -156,6 +184,7 @@ public class Board : MonoBehaviour
 
     public List<StaticTile> BoardTiles = new List<StaticTile>();
     public List<string> History = new List<string>();
+    public string LastMoveTimeStamp = "";
     public static Board _instance=null;
     public static Board instance
     {
@@ -209,7 +238,6 @@ public class Board : MonoBehaviour
         if (Startup._instance != null && Startup._instance.StaticServerData != null)
             amount = int.Parse(Startup._instance.StaticServerData["TilesAmount"]);
 
-        GenerateStartBoard(amount);
 
 
 
@@ -222,6 +250,10 @@ public class Board : MonoBehaviour
             st.BoardPosition = new Vector2(i - ((int)i / 14) * 14, (int)i / 14);
             BoardTiles.Add(st);
         }
+
+        GenerateStartBoard(amount, PlayerPrefs.GetInt("BoardLayout", 0).ToString());
+
+
 
 
         List<int> startNumbers = new List<int>();
@@ -240,16 +272,29 @@ public class Board : MonoBehaviour
         }
         else
         {
-            SetTile(6, 6, TileType.StartTile, startNumbers[0]);
-            SetTile(7, 6, TileType.StartTile, startNumbers[1]);
-            SetTile(6, 7, TileType.StartTile, startNumbers[2]);
-            SetTile(7, 7, TileType.StartTile, startNumbers[3]);
+       
+                SetTile(6, 6, TileType.StartTile, 1);
+                SetTile(7, 6, TileType.StartTile, 2);
+                SetTile(6, 7, TileType.StartTile, 3);
+                SetTile(7, 7, TileType.StartTile, 4);
+       
         }
 
 
 
+    
 
 
+
+
+
+
+
+     //   PlayerPrefs.SetString("PlayerBoard", new BoardData("id1","id2","0",BoardTiles).GetJson());
+
+    }
+    void SetStandardLayout()
+    {
         SetTile(5, 0, TileType.MultiplierX3, 0);
         SetTile(8, 0, TileType.MultiplierX3, 0);
         SetTile(6, 1, TileType.MultiplierX2, 0);
@@ -326,16 +371,97 @@ public class Board : MonoBehaviour
         SetTile(8, 5, TileType.MultiplierX2, 0);
         SetTile(5, 8, TileType.MultiplierX2, 0);
         SetTile(8, 8, TileType.MultiplierX2, 0);
+    }
+    void SetRandomLayout()
+    {
+        List<TileType> allTypes = new List<TileType>();
+        allTypes.Add(TileType.MultiplierX3);
+        allTypes.Add(TileType.MultiplierX3);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX3);
+        allTypes.Add(TileType.MultiplierX3);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX3);
+        allTypes.Add(TileType.MultiplierX3);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX3);
+        allTypes.Add(TileType.MultiplierX3);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX4);
+        allTypes.Add(TileType.MultiplierX4);
+        allTypes.Add(TileType.MultiplierX4);
+        allTypes.Add(TileType.MultiplierX4);
+        allTypes.Add(TileType.MultiplierX4);
+        allTypes.Add(TileType.MultiplierX4);
+        allTypes.Add(TileType.MultiplierX4);
+        allTypes.Add(TileType.MultiplierX4);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.SubtractionTile);
+        allTypes.Add(TileType.SubtractionTile);
+        allTypes.Add(TileType.SubtractionTile);
+        allTypes.Add(TileType.SubtractionTile);
+        allTypes.Add(TileType.DivisionTile);
+        allTypes.Add(TileType.DivisionTile);
+        allTypes.Add(TileType.DivisionTile);
+        allTypes.Add(TileType.DivisionTile);
+        allTypes.Add(TileType.DivisionTile);
+        allTypes.Add(TileType.DivisionTile);
+        allTypes.Add(TileType.SubtractionTile);
+        allTypes.Add(TileType.SubtractionTile);
+        allTypes.Add(TileType.DivisionTile);
+        allTypes.Add(TileType.DivisionTile);
+        allTypes.Add(TileType.SubtractionTile);
+        allTypes.Add(TileType.SubtractionTile);
+        allTypes.Add(TileType.MultiplicationTile);
+        allTypes.Add(TileType.AdditionTile);
+        allTypes.Add(TileType.AdditionTile);
+        allTypes.Add(TileType.MultiplicationTile);
+        allTypes.Add(TileType.MultiplicationTile);
+        allTypes.Add(TileType.AdditionTile);
+        allTypes.Add(TileType.AdditionTile);
+        allTypes.Add(TileType.MultiplicationTile);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
+        allTypes.Add(TileType.MultiplierX2);
 
 
-     //   PlayerPrefs.SetString("PlayerBoard", new BoardData("id1","id2","0",BoardTiles).GetJson());
+        List<Vector2> posList = new List<Vector2>();
+        for (int i = 0; i < 14; i++)
+        {
+            for (int j = 0; j < 14; j++)
+            {
+                posList.Add(new Vector2(i, j));
+            }
+        }
+        posList.Shuffle();
+
+        for (int i = 0; i < allTypes.Count;i++)
+        {
+            if(posList[i].x != 6 && posList[i].x != 6 &&
+                posList[i].x != 6 && posList[i].x != 7 &&
+                posList[i].x != 7 && posList[i].x != 6 &&
+                posList[i].x != 7 && posList[i].x != 7)
+            SetTile((int)posList[i].x, (int)posList[i].y, allTypes[i], 0); 
+        }
+
 
     }
-
     // Temp stuff for generating new game
     public List<string> p1_tiles = new List<string>();
     public List<string> p2_tiles = new List<string>();
-    public void GenerateStartBoard(int amount)
+    public void GenerateStartBoard(int amount, string layout)
     {
         AllTilesNumbers.Clear();
         p1_tiles.Clear();
@@ -355,16 +481,18 @@ public class Board : MonoBehaviour
 
 
 
+        
+
+
+        AllTilesNumbers.Shuffle();
+
         if (amount != -1)
         {
             AllTilesNumbers.RemoveRange(amount, AllTilesNumbers.Count - amount);
 
         }
 
-
-        AllTilesNumbers.Shuffle();
-
-        for(int i = 0; i < 6; i++)
+        for (int i = 0; i < 6; i++)
         {
             p1_tiles.Add(AllTilesNumbers[0].ToString());
             AllTilesNumbers.RemoveAt(0);
@@ -404,7 +532,15 @@ public class Board : MonoBehaviour
         //AllTilesNumbers.RemoveRange(int.Parse(Startup._instance.StaticServerData["TilesAmount"]), AllTilesNumbers.Count- int.Parse(Startup._instance.StaticServerData["TilesAmount"]));
 
 
-
+  
+        if (layout == "0" || (TutorialController.instance != null && TutorialController.instance.IsTutorial))
+        {
+            SetStandardLayout();
+        }
+        else
+        {
+            SetRandomLayout();
+        }
 
     }
 
@@ -430,15 +566,300 @@ public class Board : MonoBehaviour
         }
 
         History = aBD.History;
+        LastMoveTimeStamp = aBD.LastMoveTimeStamp;
         AllTilesNumbers.Clear();
         for (int i = 0; i < aBD.TilesLeft.Count; i++)
         {
             AllTilesNumbers.Add(int.Parse( aBD.TilesLeft[i] ));
         }
 
-        
+      
 
 
+    }
+    public void LoadLastUsedTiles(List<Tile> myTiles)
+    {
+        List<List<string>> tilesOnHandHistory = new List<List<string>>();
+        for (int i = History.Count - 1; i >= 0; i--)
+        {
+            if (History[i].Contains("#TILESONHAND_"+Startup._instance.MyPlayfabID+"#"))
+            {
+                ListContainer tileList = JsonUtility.FromJson<ListContainer>(History[i].Replace("#TILESONHAND_" + Startup._instance.MyPlayfabID + "#", ""));
+                tilesOnHandHistory.Add(tileList.Data);
+            }
+
+        }
+
+        if(tilesOnHandHistory.Count >0)
+        {
+            List<string> newTiles = ComparDif(PlayerBoard.instance.myPlayer.GetMyTiles(), tilesOnHandHistory[0]);
+
+
+
+            for (int i = 0; i < newTiles.Count; i++)
+            {
+                for (int j = 0; j < myTiles.Count; j++)
+                {
+                    string a = newTiles[i];
+                    string b = myTiles[j].GetValue();
+                    if (a == b)
+                    {
+                        Color col;
+                        ColorUtility.TryParseHtmlString("#6EFFB0", out col);
+                       // myTiles[j].GetComponent<Image>().color = col;
+
+
+
+                        //myTiles[j].GetComponent<Image>().DOColor(Color.white,1).SetDelay(2f);
+
+
+
+
+                        Sequence mySequence = DOTween.Sequence();
+                        mySequence
+                          .Append(myTiles[j].GetComponent<Image>().DOColor(col, 0.5f))
+                          .PrependInterval(1)
+                          .Append(myTiles[j].GetComponent<Image>().DOColor(Color.white, 0.5f));
+
+
+                        continue;
+                    }
+                }
+            }
+        }
+
+
+
+    }
+    List<string> ComparDif (List<string> newL, List<string> oldl )
+    {
+        List<string> dif = new List<string>();
+
+        for(int i = 0; i < newL.Count;i++)
+        {
+            if(oldl.Contains( newL[i] ) == false)
+            {
+                dif.Add(newL[i]);
+            }
+        }
+        return dif;
+    }
+    public int CheckAmountValid(StaticTile aTile, string aStringNumber)
+    {
+        int aNumber = int.Parse(aStringNumber);
+   
+        int up = 0;
+        int down = 0;
+        int right = 0;
+        int left = 0;
+
+        try
+        {
+
+            if (aTile.myTileType != TileType.MultiplicationTile && aTile.myTileType != TileType.SubtractionTile && aTile.myTileType != TileType.DivisionTile)
+            {
+                //Up
+                if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() +
+                              BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
+                              aNumber)
+                            up++;
+                //Down
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() +
+                            BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
+                            aNumber)
+                            down++;
+                //Left
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() +
+                            BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                            aNumber)
+                            left++;
+                //Right
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() +
+                            BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                            aNumber)
+                            right++;
+            }
+
+
+            if (aTile.myTileType != TileType.AdditionTile && aTile.myTileType != TileType.SubtractionTile && aTile.myTileType != TileType.DivisionTile)
+            {
+                //Up
+                if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() *
+                        BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
+                        aNumber)
+                            up++;
+                //Down
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() *
+                        BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
+                        aNumber)
+                            down++;
+                //Left
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() *
+                        BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                        aNumber)
+                            left++;
+                //Right
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() *
+                        BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                        aNumber)
+                            right++;
+            }
+
+            if (aTile.myTileType != TileType.AdditionTile && aTile.myTileType != TileType.MultiplicationTile && aTile.myTileType != TileType.DivisionTile)
+            {
+                //Up
+                if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() -
+                        BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
+                        aNumber)
+                            up++;
+                //Down
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() -
+                        BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
+                        aNumber)
+                            down++;
+                //Left
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
+                        BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                        aNumber)
+                            left++;
+                //Right
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
+                        BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                        aNumber)
+                            right++;
+
+                //Up
+                if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() -
+                        BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() ==
+                        aNumber)
+                            up++;
+                //Down
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() -
+                        BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() ==
+                        aNumber)
+                            down++;
+                //Left
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
+                        BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                        aNumber)
+                            left++;
+                //Right
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
+                        BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                        aNumber)
+                            right++;
+            }
+
+            if (aTile.myTileType != TileType.AdditionTile && aTile.myTileType != TileType.MultiplicationTile && aTile.myTileType != TileType.SubtractionTile)
+            {
+                //Up
+                if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() /
+                        BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
+                        aNumber)
+                            up++;
+                //Down
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() /
+                        BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
+                        aNumber)
+                            down++;
+                //Left
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
+                        BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                        aNumber)
+                            left++;
+                //Right
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
+                        BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                        aNumber)
+                            right++;
+
+                //Up
+                if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() /
+                        BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() ==
+                        aNumber)
+                            up++;
+                //Down
+                if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
+                    if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() /
+                        BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() ==
+                        aNumber)
+                            down++;
+                //Left
+                if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
+                        BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                        aNumber)
+                            left++;
+                //Right
+                if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
+                    if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
+                        if (BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
+                        BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
+                        aNumber)
+                            right++;
+            }
+            // BoardTiles[(int)aTile.BoardPosition.x + (int)aTile.BoardPosition.y * 14].GetValue()
+
+        }
+        catch
+        {
+
+        }
+        int tot = 0;
+        if (down > 0)
+            tot++;
+        if (up > 0)
+            tot++;
+        if (left > 0)
+            tot++;
+        if (right > 0)
+            tot++;
+
+        return tot;
     }
     public bool CheckValid(StaticTile aTile,string aStringNumber)
     {
@@ -663,7 +1084,7 @@ public class Board : MonoBehaviour
             if (PlayerBoard.instance.myPlayer.myTiles[i].PlacedOnTile == null)
                 notPlaced++;
         }
-        if(notPlaced == 6)
+        if(notPlaced == 6 || notPlaced == PlayerBoard.instance.myPlayer.myTiles.Count)
         {
             ValidationScreen.instance.OpenWindow();
             return;
@@ -724,6 +1145,10 @@ public class Board : MonoBehaviour
     private float initialDistance;
     private Vector3 initialScale;
     private Vector3 initialPosition;
+
+    Vector3 LastFrameSelectionPosition;
+    float _timerSoudn = 0;
+
     // Update is called once per frame
     void Update()
     {
@@ -738,10 +1163,25 @@ public class Board : MonoBehaviour
 
         if (Board.instance.Selection.GetComponent<Image>().enabled || GetIsDraginTile())
         {
+
+
+            //if(_timerSoudn>0.2f)
+            //{
+            //    if (LastFrameSelectionPosition != Board.instance.Selection.transform.position)
+            //        Startup._instance.PlaySoundEffect(0);
+            //    LastFrameSelectionPosition = Board.instance.Selection.transform.position;
+            //    _timerSoudn = 0;
+                
+            //}
+            //_timerSoudn += Time.deltaTime;
+
+
+
             dragCooldownTimer = 0.1f;
             return;
         }
-  
+
+
 
         if (dragCooldownTimer > 0)
         {

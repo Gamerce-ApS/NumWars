@@ -186,6 +186,8 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
         errorText.text = "Could not add friend";
         Debug.LogWarning("Cant Add Friend");
         Debug.LogError(error.GenerateErrorReport());
+
+        MainMenuController.instance.Share();
     }
 
 

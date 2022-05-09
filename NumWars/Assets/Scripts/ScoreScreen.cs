@@ -11,6 +11,13 @@ public class FakeTileData
     public int ScoreValue;
     public int Player;
 };
+
+public class ListContainer
+{
+    public List<string> Data = new List<string>();
+    public string timestamp = "";
+}
+
 public class ScoreScreen : MonoBehaviour
 {
     public static ScoreScreen instance;
@@ -54,10 +61,11 @@ public class ScoreScreen : MonoBehaviour
 
 
 
-
+        if (moveHistory == null)
+            return;
         for (int i = moveHistory.Count-1; i>=0 ;i--)
         {
-            if (moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#")
+            if (moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#" || moveHistory[i].Contains("#TILESONHAND"))
             {
                 break;
             }
@@ -91,16 +99,16 @@ public class ScoreScreen : MonoBehaviour
 
         // if we come from start the score needs to be removed as it has not been updated
         if(isFromStart)
-        GameManager.instance.AddScore(GameManager.instance.thePlayers[1], -totalScore, lastMoves.Count, false);
+        GameManager.instance.AddScore(GameManager.instance.thePlayers[1], -totalScore, lastMoves.Count, false,true);
 
         lastMoves.Sort(HelperFunctions.SortByScoreInverse);
 
 
         for (int i = 0; i < lastMoves.Count; i++)
         {
-            StartCoroutine(ShowScoreAfterTime(1.75f+0.25f + i * 0.6f, lastMoves[i]));
+            StartCoroutine(ShowScoreAfterTime(0.4f + 1.75f +0.25f + i * 0.6f, lastMoves[i]));
         }
-        StartCoroutine(SummarizeAfterTime(0.5f + 0.5f + lastMoves.Count * 0.6f, lastMoves, GameManager.instance.thePlayers[1], totalScore));
+        StartCoroutine(SummarizeAfterTime(0.4f + 0.5f + 0.5f + lastMoves.Count * 0.6f, lastMoves, GameManager.instance.thePlayers[1], totalScore));
 
         
 
@@ -108,6 +116,7 @@ public class ScoreScreen : MonoBehaviour
     }
     IEnumerator ShowScoreAfterTime(float aTime, FakeTileData aTile)
     {
+        
         yield return new WaitForSeconds(0.01f );
         GameManager.instance.MakeLastPlayedTilesColored();
         Transform st = Board.instance.BoardTiles[(int)(aTile.Position.x + aTile.Position.y * 14)].transform.GetChild(0).transform;
@@ -116,7 +125,7 @@ public class ScoreScreen : MonoBehaviour
         st.transform.DOMove(targetPos, 0.75f+ (float)Random.Range(50, 100) / 100f).SetEase(Ease.InOutQuart);
 
         yield return new WaitForSeconds(aTime);
-
+        Startup._instance.PlaySoundEffect(4);
 
 
         GameObject go = GameObject.Instantiate(ScorePrefab, bg.transform);
@@ -128,9 +137,11 @@ public class ScoreScreen : MonoBehaviour
     {
         if(score.Count==0)
         {
+            if(Startup._instance.GameToLoad != null && Startup._instance.GameToLoad.BoardTiles != null)
             if (int.Parse(Startup._instance.GameToLoad.EmptyTurns) >= 4)
             {
-                GameFinishedScreen.instance.Show(Startup._instance.GameToLoad);
+                    if(Startup._instance.GameToLoad != null && Startup._instance.GameToLoad.BoardTiles != null)
+                        GameFinishedScreen.instance.Show(Startup._instance.GameToLoad);
             }
             yield break;
         }
@@ -150,8 +161,11 @@ public class ScoreScreen : MonoBehaviour
                 createdPoints[i].GetComponent<RectTransform>().DOMove(avgPos, 0.5f).SetEase(Ease.InOutQuart);
             }
         }
-        yield return new WaitForSeconds(0.3f);
-     
+        yield return new WaitForSeconds(0.15f);
+        Startup._instance.PlaySoundEffect(2);
+        //Startup._instance.PlaySoundEffect(4);
+        yield return new WaitForSeconds(0.15f);
+
         for (int i = 0; i < createdPoints.Count; i++)
         {
             createdPoints[i].transform.GetChild(0).Find("Text").GetComponent<Text>().text = totalScore.ToString();
@@ -181,7 +195,7 @@ public class ScoreScreen : MonoBehaviour
 
         }
         
-        GameManager.instance.AddScore(thePlayer, totalScore , createdPoints.Count);
+        GameManager.instance.AddScore(thePlayer, totalScore , createdPoints.Count, true, true);
         //for (int i = 0; i < score.Count; i++)
         //{
         //    score[i].Flip();
@@ -192,22 +206,27 @@ public class ScoreScreen : MonoBehaviour
             Destroy(createdPoints[i]);
         }
         createdPoints.Clear();
+        Board.instance.LoadLastUsedTiles(PlayerBoard.instance.myPlayer.myTiles);
+
         yield return new WaitForSeconds(1.0f);
         bg.SetActive(false);
 
 
 
-        if(Startup._instance.GameToLoad != null)
+        if(Startup._instance.GameToLoad != null && Startup._instance.GameToLoad.EmptyTurns!= null)
         if (int.Parse(Startup._instance.GameToLoad.EmptyTurns) >= 4)
         {
             GameFinishedScreen.instance.Show(Startup._instance.GameToLoad);
         }
 
         GameManager.instance.MakeLastPlayedTilesColored();
+
+
     }
 
 
 
+    public List<string> test = new List<string>();
 
     // Scooring in when yor turn
     public void ShowScore(List<Tile> score,Player aPlayer)
@@ -218,20 +237,50 @@ public class ScoreScreen : MonoBehaviour
 
         score.Sort(HelperFunctions.SortByScoreInverse);
 
+
+        ListContainer l = new ListContainer();
+        l.timestamp = System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString();
+
+        l.Data = aPlayer.GetMyTiles();
+        string test2 = JsonUtility.ToJson(l);
+
+        if (GameManager.instance.thePlayers[1].isAI)
+        {
+            if (Board.instance.History == null)
+                Board.instance.History = new List<string>();
+
+
+            string playfabID = Startup._instance.MyPlayfabID;
+            if (aPlayer.isAI)
+                playfabID = "AI";
+            Board.instance.History.Add("#TILESONHAND_" + playfabID + "#" + test2);
+
+        }
+        else
+        {
+            Startup._instance.GameToLoad.History.Add("#TILESONHAND_" + Startup._instance.MyPlayfabID + "#" + test2);
+
+        }
+
+
+
         for (int i = 0; i < score.Count;i++)
         {
-            StartCoroutine(ShowScoreAfterTime (0.25f+ i * 0.6f, score[i] ));
+            StartCoroutine(ShowScoreAfterTime (0.4f+0.25f+ i * 0.6f, score[i] ));
         }
-        StartCoroutine(SummarizeAfterTime(0.5f + score.Count * 0.6f, score, aPlayer));
+        StartCoroutine(SummarizeAfterTime(0.4f + 0.5f + score.Count * 0.6f, score, aPlayer));
 
 
-
+        Startup._instance.PlaySoundEffect(3);
 
     }
 
     IEnumerator ShowScoreAfterTime(float aTime, Tile aTile, bool shouldAddToHistory = true)
     {
         yield return new WaitForSeconds(aTime);
+        if(0.25f != aTime)
+            Startup._instance.PlaySoundEffect(4);
+
         GameObject go = GameObject.Instantiate(ScorePrefab, bg.transform);
         go.transform.position = aTile.transform.position;
         go.transform.GetChild(0).Find("Text").GetComponent<Text>().text = aTile.GetValue();
@@ -265,7 +314,8 @@ public class ScoreScreen : MonoBehaviour
     IEnumerator SummarizeAfterTime(float aTime, List<Tile> score,Player thePlayer)
     {
         yield return new WaitForSeconds(aTime);
-        if(createdPoints.Count>1)
+        
+        if (createdPoints.Count>1)
         {
             Vector2 avgPos = GetAvgPos();
             for (int i = 0; i < createdPoints.Count; i++)
@@ -273,7 +323,12 @@ public class ScoreScreen : MonoBehaviour
                 createdPoints[i].GetComponent<RectTransform>().DOMove(avgPos, 0.5f).SetEase(Ease.InOutQuart);
             }
         }
-        yield return new WaitForSeconds(0.3f);
+        Startup._instance.PlaySoundEffect(2);
+        yield return new WaitForSeconds(0.15f);
+        
+        //Startup._instance.PlaySoundEffect(4);
+        yield return new WaitForSeconds(0.15f);
+
         int totalScore = 0;
         for (int i = 0; i < score.Count; i++)
         {
@@ -285,6 +340,7 @@ public class ScoreScreen : MonoBehaviour
             if (createdPoints.Count > 1)
                 createdPoints[i].GetComponent<RectTransform>().DOScale(createdPoints[i].transform.localScale*1.3f, 0.1f).SetEase(Ease.InOutQuart);
         }
+        
         yield return new WaitForSeconds(.95f);
 
 
@@ -308,10 +364,12 @@ public class ScoreScreen : MonoBehaviour
         }
         bg.GetComponent<Image>().DOFade(0, 1.5f).SetEase(Ease.InOutQuart); ;
 
+        //Startup._instance.PlaySoundEffect(2);
 
         yield return new WaitForSeconds(0.7f);
 
-       
+
+
 
         GameManager.instance.AddScore(thePlayer, totalScore, createdPoints.Count);
         for (int i = 0; i < score.Count; i++)
@@ -325,7 +383,7 @@ public class ScoreScreen : MonoBehaviour
         }
         createdPoints.Clear();
 
-
+        Board.instance.LoadLastUsedTiles(PlayerBoard.instance.myPlayer.myTiles);
         yield return new WaitForSeconds(1.0f);
 
 
@@ -344,6 +402,10 @@ public class ScoreScreen : MonoBehaviour
 
         yield return new WaitForSeconds(0.03f);
         GameManager.instance.MakeLastPlayedTilesColored();
+
+
+
+
 
     }
     public static Vector2 StringToVector2(string sVector)

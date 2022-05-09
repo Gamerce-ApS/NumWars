@@ -78,6 +78,11 @@ public class TutorialAction
         {
             SceneManager.LoadScene(0);
             Startup._instance.Refresh(0.1f);
+
+            if (Startup._instance.avatarURL != null && Startup._instance.avatarURL.Length > 0)
+            {
+                PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+            }
             return;
         }
 
@@ -135,13 +140,13 @@ public class TutorialController : MonoBehaviour
         myActions.Add(new TutorialAction("Here are your tiles", 1, myHighlights[1], myHighlightsSecond[1]));
         myActions.Add(new TutorialAction("Let's try to place some of them", 1, myHighlights[1], myHighlightsSecond[1]));
 
-        myActions.Add(new TutorialAction("A tile needs to be placed beside 2 other tiles", 2, myHighlights[2], myHighlightsSecond[2]));
+        myActions.Add(new TutorialAction("A tile needs to be placed beside two other tiles", 2, myHighlights[2], myHighlightsSecond[2]));
         myActions.Add(new TutorialAction("You need to use + - / * to try and get the result to match you number.", 2, myHighlights[2], myHighlightsSecond[2]));
         myActions.Add(new TutorialAction("Let's try to place our number 3 on the board, 1+2=3 so let's place it here!", 3, myHighlights[3], myHighlightsSecond[3]));
         myActions.Add(new TutorialAction("Great work! Let's place our number 2 here! (4/2=2)", 4, myHighlights[4], myHighlightsSecond[4]));
         myActions.Add(new TutorialAction("Be sure to plan your moves as you can also use the tiles you just placed", 5, myHighlights[0], myHighlightsSecond[0]));
         myActions.Add(new TutorialAction("Let's use our previus numbers to put down number 6. This is a special tile that requires multiplication", 6, myHighlights[5], myHighlightsSecond[5]));
-        myActions.Add(new TutorialAction("Greate! These special tiles will give you 10 extra points!", 7, myHighlights[6], myHighlightsSecond[6]));
+        myActions.Add(new TutorialAction("Great! These special tiles will give you 10 extra points!", 7, myHighlights[6], myHighlightsSecond[6]));
         myActions.Add(new TutorialAction("The higher number you place the more points you get", 7, myHighlights[0], myHighlightsSecond[0]));
         // myActions.Add(new TutorialAction("3*4=12 and then 3*12 = 36", 7));
         myActions.Add(new TutorialAction("If you place all tiles you get BINGO and score 50 extra points!", 7, myHighlights[0], myHighlightsSecond[0]));

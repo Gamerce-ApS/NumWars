@@ -20,6 +20,135 @@ public PlayerProfileModel theProfile;
 
     public List<StatsDataText> statsData = new List<StatsDataText>();
 
+    public Image _profilePic;
+
+    public Text _name;
+    public Text _thropies;
+
+    public bool isAIInfo = false;
+
+    public void InitUser(int aUserId)
+    {
+        if(aUserId == 1 && GameManager.instance.thePlayers[1].isAI == false)
+        {
+            PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+            {
+                PlayFabId = Startup._instance.GameToLoad.GetOtherPlayerPlayfab(),
+                 ProfileConstraints = new PlayerProfileViewConstraints()
+                 {
+                     ShowDisplayName = true,
+                     ShowAvatarUrl = true
+                 }
+            }, result => {
+
+                theProfile = result.PlayerProfile;
+                InitUserAfterDataSet(aUserId);
+
+            }, (error) => {
+                Debug.Log("Got error retrieving user data:");
+                Debug.Log(error.GenerateErrorReport());
+            });
+        }
+        else
+        {
+            InitUserAfterDataSet(aUserId);
+        }
+    }
+
+    public void InitUserAfterDataSet(int aUserId)
+    {
+
+     
+
+
+
+
+
+
+
+
+
+ 
+        isAIInfo = false;
+            StatsData _statsData = Startup._instance.GetStatsData();
+        int amountLost = 0;
+        int amountWin = 0;
+        for (int i = 0; i < _statsData.FinishedGames.Count; i++)
+        {
+            if (_statsData.FinishedGames[i].PlayfabID == theProfile.PlayerId)
+            {
+                if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
+                    amountWin++;
+                else
+                    amountLost++;
+            }
+        }
+        winT.text = amountWin.ToString();
+        LoseT.text = amountLost.ToString();
+
+
+        if(aUserId ==1)
+        {
+            if( GameManager.instance.thePlayers[1].isAI )
+            {
+                _profilePic.enabled = false;
+                _name.text = "AI";
+                _thropies.text = "";
+                SetAiStats();
+                isAIInfo = true;
+            }
+            else
+            {
+                PlayfabHelperFunctions.instance.GetOtherUserDataProfile(theProfile.PlayerId, this);
+                LoadAvatarURL(theProfile.AvatarUrl, _profilePic);
+                _name.text = theProfile.DisplayName;
+            }
+        }
+        else
+        {
+            PlayfabHelperFunctions.instance.GetOtherUserDataProfile(Startup._instance.MyPlayfabID, this);
+            LoadAvatarURL(Startup._instance.avatarURL, _profilePic);
+            _name.text = Startup._instance.displayName;
+        }
+
+
+    }
+    public void SetAiStats()
+    {
+
+
+
+        for (int i = 0; i < statsData.Count; i++)
+        {
+            statsData[i].SetFromData(AchivmentController.instance, true);
+        }
+
+    }
+    public void LoadAvatarURL(string aURL,Image img)
+    {
+        StartCoroutine(GetFBProfilePicture(aURL, img));
+    }
+    Sprite ProfilePictureSprite = null;
+    public static IEnumerator GetFBProfilePicture(string aURL, Image img)
+    {
+
+        //string url = "https" + "://graph.facebook.com/10159330728290589/picture";
+        WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
+        yield return www;
+        Texture2D profilePic = www.texture;
+
+        img.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+        img.rectTransform.sizeDelta = new Vector2(88, 88);
+        img.enabled = true;
+
+
+
+
+
+    }
+
+
+
     public void Init()
     {
         bool hasActiveGameAgainstPlayer = false;
@@ -75,7 +204,7 @@ public PlayerProfileModel theProfile;
 
         for (int i = 0; i< statsData.Count;i++)
         {
-            statsData[i].SetFromData(ac);
+            statsData[i].SetFromData(ac,isAIInfo);
         }
 
 
@@ -89,6 +218,10 @@ public PlayerProfileModel theProfile;
 
         amountCompletedText.text = completed + "/" + ac.myAchivments.Count;
         AchivmenSlider.fillAmount = (float)completed / (float)ac.myAchivments.Count;
+
+
+        if(_thropies != null)
+        _thropies.text = profileData["Ranking"].Value;
 
     }
     // Start is called before the first frame update

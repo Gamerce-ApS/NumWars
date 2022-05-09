@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using Photon.Pun;
 using Photon.Realtime;
@@ -8,6 +9,7 @@ using PlayFab.ClientModels;
 using PlayFab.CloudScriptModels;
 using Unity.Notifications.iOS;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 
@@ -40,13 +42,17 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public static Startup _instance=null;
     public AchivmentController myAchivmentController;
+    public bool DontAutoRefresh = true;
 
-
-
+    public static long TIMEOUT = 60 * 60 * 24 * 2;
+   // public static long TIMEOUT = 60+60+60;
 
     // Start is called before the first frame update
     void Start()
     {
+        Application.runInBackground = false;
+        GameToLoad = null;
+        DontAutoRefresh = true;
         myAchivmentController = new AchivmentController();
 
 
@@ -82,6 +88,39 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
     }
+    void OnApplicationPause(bool pauseStatus)
+    {
+        if(!pauseStatus)
+        {
+            if (PhotonNetwork.IsConnected)
+            { }
+            else
+            {
+                // #Critical, we must first and foremost connect to Photon Online Server.
+                PhotonNetwork.ConnectUsingSettings();
+                PhotonNetwork.GameVersion = "1";
+
+                if(Startup._instance != null)
+                {
+                    Startup._instance.Refresh(0.1f);
+                    if (Startup._instance.avatarURL != null)
+                        if (Startup._instance.avatarURL.Length > 0)
+                        {
+                            PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+                        }
+                    SceneManager.LoadScene(0);
+                }
+   
+            }
+
+        }
+
+    }
+    //void OnApplicationFocus(bool hasFocus)
+    //{
+    //    if (hasFocus)
+    //        SceneManager.LoadScene(0);
+    //}
 
     IEnumerator RegisterPush()
     {
@@ -212,7 +251,7 @@ public class Startup : MonoBehaviourPunCallbacks
         ro.PlayerTtl = int.MaxValue;
         ro.IsVisible = true;
         ro.IsOpen = true;
-        ro.CustomRoomPropertiesForLobby = new string[] { MyPlayfabID, displayName, newRoomName };
+        ro.CustomRoomPropertiesForLobby = new string[] { MyPlayfabID, displayName, newRoomName, PlayerPrefs.GetInt("BoardLayout", 0).ToString() };
         PhotonNetwork.CreateRoom(newRoomName, ro, tl);
         
     }
@@ -257,6 +296,7 @@ public class Startup : MonoBehaviourPunCallbacks
                 SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
                 SearchingForGameObject.transform.SetAsFirstSibling();
                 SearchingForGameObject.SetActive(true);
+                Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = PhotonNetwork.CurrentRoom.Name;
             }
             else
             {
@@ -267,7 +307,7 @@ public class Startup : MonoBehaviourPunCallbacks
         }
         else
         {
-            SetPlayfabSecondPlayerInRoom(PhotonNetwork.CurrentRoom.PropertiesListedInLobby[0],MyPlayfabID, PhotonNetwork.CurrentRoom.PropertiesListedInLobby[1],  PhotonNetwork.CurrentRoom.PropertiesListedInLobby[2]);
+            SetPlayfabSecondPlayerInRoom(PhotonNetwork.CurrentRoom.PropertiesListedInLobby[0],MyPlayfabID, PhotonNetwork.CurrentRoom.PropertiesListedInLobby[1], PhotonNetwork.CurrentRoom.PropertiesListedInLobby[2], PhotonNetwork.CurrentRoom.PropertiesListedInLobby[3]);
         }
     }
     public override void OnJoinRoomFailed(short returnCode, string message)
@@ -309,17 +349,62 @@ public class Startup : MonoBehaviourPunCallbacks
             PhotonNetwork.LeaveRoom();
         }
 
+        for(int i = 0; i < MainMenuController.instance._GameListParent.childCount;i++)
+        {
+            GameListItem it = MainMenuController.instance._GameListParent.GetChild(i).GetComponent<GameListItem>();
+
+            if(it != null)
+            {
+                string Gname = "";
+                if (it.YourTurnGO.activeSelf)
+                    Gname = "0_";
+                else
+                    Gname = "1_";
+                Gname += it.bd.RoomName;
+
+                MainMenuController.instance._GameListParent.GetChild(i).name = Gname;
+            }
+ 
+
+        }
+
+
+
+
+        List<Transform> children = new List<Transform>();
+        foreach (Transform child in MainMenuController.instance._GameListParent)
+            children.Add(child);
+        children = children.OrderBy(o => o.name).ToList();
+
+        foreach (Transform child in children)
+        {
+            child.parent = null;
+        }
+
+        foreach (Transform child in children)
+        {
+            child.parent = MainMenuController.instance._GameListParent;
+        }
+    
+
+
+
+
+
+
+
 
         //If no loading in progress we know it's the last call.
-        if(LoadingOverlay.instance.LoadingCall.Count== 0)
+        if (LoadingOverlay.instance.LoadingCall.Count== 0)
         {
             GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent);
 
             string[] stringSeparators = new string[] { "[splitter]" };
             string[] oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
-            for (int i = 0; i < oldGameList.Length; i++)
+            for (int i = oldGameList.Length-1; i > oldGameList.Length-10; i--)
             {
-                if (oldGameList[i].Length > 2)
+
+                if (i>=0 && oldGameList[i].Length > 2)
                 {
                     BoardData bd = new BoardData(CompressString.StringCompressor.DecompressString(oldGameList[i]));
                     GameObject obj2 = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._GameListItem, MainMenuController.instance._GameListParent);
@@ -339,7 +424,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
     }
 
-    public void SetPlayfabSecondPlayerInRoom(string player1_playfabID,string player2_playfabID,string player1_displayName, string roomName)
+    public void SetPlayfabSecondPlayerInRoom(string player1_playfabID,string player2_playfabID,string player1_displayName, string roomName, string boardLayout)
     {
         // The game can start
         //1. Remove room
@@ -362,7 +447,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
         // Add SharedGroup
-        _PlayfabHelperFunctions.AddPlayerToSharedGroup(player1_playfabID, player2_playfabID, player1_displayName, roomName);
+        _PlayfabHelperFunctions.AddPlayerToSharedGroup(player1_playfabID, player2_playfabID, player1_displayName, roomName,boardLayout);
 
 
 
@@ -427,7 +512,7 @@ public class Startup : MonoBehaviourPunCallbacks
         if (aValue > 0)
             winnerId = MyPlayfabID ;
 
-        if (myData["StatsData"].Value.Length<=1)
+        if (myData.ContainsKey("StatsData")  == false || myData["StatsData"].Value.Length<=1)
         {
          
             StatsData newData = new StatsData();
@@ -465,9 +550,27 @@ public class Startup : MonoBehaviourPunCallbacks
     }
     public StatsData GetStatsData()
     {
-        if (myData["StatsData"].Value.Length > 1)
+        if (myData.ContainsKey("StatsData") && myData["StatsData"].Value.Length > 1)
             return new StatsData(myData["StatsData"].Value);
         else
             return new StatsData();
     }
+    public List<AudioClip> myClips;
+    public void PlaySoundEffect(int aType)
+    {
+        if (PlayerPrefs.GetInt("Sound", 1) == 0)
+            return;
+
+
+        GameObject go = new GameObject(myClips[aType].name);
+        AudioSource _as = go.AddComponent<AudioSource>();
+        _as.clip = myClips[aType];
+        _as.Play();
+        _as.loop = false;
+        go.AddComponent<DestroyAfterTime>();
+        DontDestroyOnLoad(go);
+
+    }
+
+ 
 }

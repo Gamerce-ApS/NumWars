@@ -83,6 +83,14 @@ public static class HelperFunctions
     {
         return (p2.Number).CompareTo((p1.Number));
     }
+    public static int SortGameList(GameObject p1, GameObject p2)
+    {
+        GameListItem g1 = p1.GetComponent<GameListItem>();
+        GameListItem g2 = p2.GetComponent<GameListItem>();
+
+        return (g1.YourTurnGO.activeSelf).CompareTo((g2.YourTurnGO.activeSelf));
+    }
+
 
     public static int SortByScoreInverse(Tile p1, Tile p2)
     {
@@ -99,7 +107,7 @@ public static class HelperFunctions
         {
             if (int.Parse(aXP) < PlayfabHelperFunctions.instance.LevelSettings[i])
             {
-                return (i + 1);
+                return (i);
             }
         }
         return 0;

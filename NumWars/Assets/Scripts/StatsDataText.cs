@@ -17,7 +17,7 @@ public class StatsDataText : MonoBehaviour
     {
         if (ac == null)
         {
-            float v = AchivmentController.instance.GetStats(myStatsType);
+            float v = Mathf.RoundToInt(AchivmentController.instance.GetStats(myStatsType));
             string value = "";
             if (Mathf.Approximately(v, Mathf.RoundToInt(v)) == false)
                 value = "F2";
@@ -31,10 +31,10 @@ public class StatsDataText : MonoBehaviour
     {
         
     }
-    public void SetFromData(AchivmentController _ac)
+    public void SetFromData(AchivmentController _ac, bool isAI = false)
     {
         ac = _ac;
-        float v = ac.GetStats(myStatsType);
+        float v = Mathf.RoundToInt(ac.GetStats(myStatsType, isAI));
         string value = "";
         if (Mathf.Approximately(v, Mathf.RoundToInt(v)) == false)
             value = "F2";

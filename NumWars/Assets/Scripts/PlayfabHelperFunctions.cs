@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using DG.Tweening;
 using Facebook.Unity;
+using Photon.Pun;
 using PlayFab;
 using PlayFab.ClientModels;
 using PlayFab.CloudScriptModels;
@@ -26,6 +27,12 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
     public static PlayfabHelperFunctions instance;
 
+    public void ReLogin()
+    {
+
+
+        OnFacebookInitialized();
+    }
 
     public void Login()
     {
@@ -34,8 +41,30 @@ public class PlayfabHelperFunctions : MonoBehaviour
             playerID = "asdafsfsdf";
         else
             playerID = "asdafsfsdf2";
+
+        //playerID = "asdafsfsdf3";
         instance = this;
         LoadingOverlay.instance.ShowLoadingFullscreen("LoginWithCustomID");
+
+        
+        if (FB.IsInitialized)
+            OnFacebookInitialized();
+        else
+            FB.Init(OnFacebookInitialized);
+
+        if (PlayerPrefs.HasKey("FacebookLink") )
+        {
+            return;
+        }
+
+
+
+
+
+
+
+
+
 
 
 
@@ -55,12 +84,6 @@ public class PlayfabHelperFunctions : MonoBehaviour
             LoginSucess(result);
         },
         error => Debug.LogError(error.GenerateErrorReport()));
-
-
-
-
-
-
 
 
 
@@ -150,6 +173,12 @@ result =>
                 MainMenuController.instance.SetFBLinked(false);
             }
 
+
+            if (GetComponent<Startup>().avatarURL != null)
+                if (GetComponent<Startup>().avatarURL.Length > 0)
+                    LoadAvatarURL(GetComponent<Startup>().avatarURL);
+
+
             //for (int i = 0; i < Startup._instance.PlayerProfile.LinkedAccounts.Count; i++)
             //{
             //    if (Startup._instance.PlayerProfile.LinkedAccounts[i].Platform == LoginIdentityProvider.Facebook)
@@ -159,9 +188,9 @@ result =>
             //    }
             //}
 
-         //   if(isLinked)
+            //   if(isLinked)
             {
-                FacebookInit();
+                //FacebookInit();
 
 
             }
@@ -257,8 +286,8 @@ result =>
             SharedGroupId = roomName
         }, result3 => {
 
-                                Board.instance.GenerateStartBoard(int.Parse(Startup._instance.StaticServerData["TilesAmount"]));
-                                BoardData bd = new BoardData(playfabId, playfabId2, "1", Board.instance.BoardTiles, roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles);
+                                Board.instance.GenerateStartBoard(int.Parse(Startup._instance.StaticServerData["TilesAmount"]), PlayerPrefs.GetInt("BoardLayout", 0).ToString());
+                                BoardData bd = new BoardData(playfabId, playfabId2, "1", Board.instance.BoardTiles, roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles, System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
                                 bd.player1_displayName = Startup._instance.displayName;
                                 bd.player2_displayName = player2DisplayName;
                                 bd.player1_score = "0";
@@ -308,7 +337,7 @@ result =>
         if (playfabId.Count > 1)
             secondPlayer = playfabId[1];
 
-        BoardData bd = new BoardData(playfabId[0], secondPlayer, "0", Board.instance.BoardTiles, roomName,new List<string>(), new List<string>(), "0", new List<string>(), new List<string>());
+        BoardData bd = new BoardData(playfabId[0], secondPlayer, "0", Board.instance.BoardTiles, roomName,new List<string>(), new List<string>(), "0", new List<string>(), new List<string>(), System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
         bd.player1_displayName = Startup._instance.displayName;
         LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
 
@@ -331,10 +360,10 @@ result =>
         });
     }
 
-    public void AddPlayerToSharedGroup(string player1_playfabID, string player2_playfabID,string player1_displayName, string roomName)
+    public void AddPlayerToSharedGroup(string player1_playfabID, string player2_playfabID,string player1_displayName, string roomName,string boardLayout)
     {
 
-        LoadingOverlay.instance.ShowLoading("PlayFabCloudScriptAPI.ExecuteFunction");
+        //LoadingOverlay.instance.ShowLoading("PlayFabCloudScriptAPI.ExecuteFunction");
 
         //PlayFabCloudScriptAPI.ExecuteFunction(new ExecuteFunctionRequest()
         //{
@@ -379,7 +408,7 @@ result =>
         }
         }, result => {
             Debug.Log(result.FunctionResult);
-            SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName);
+            SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName,boardLayout);
         }, error =>
         {
             Debug.LogError(error.GenerateErrorReport());
@@ -484,10 +513,10 @@ result =>
             Debug.Log(error.GenerateErrorReport());
         });
     }
-    public void SetSharedDataForNewGame(string player1_playfabID, string player2_playfabID,string player1_displayName, string roomName)
+    public void SetSharedDataForNewGame(string player1_playfabID, string player2_playfabID,string player1_displayName, string roomName, string boardLayout)
     {
-        Board.instance.GenerateStartBoard(int.Parse(Startup._instance.StaticServerData["TilesAmount"]));
-        BoardData bd = new BoardData(player1_playfabID, player2_playfabID, "0", Board.instance.BoardTiles,roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles);
+        Board.instance.GenerateStartBoard(int.Parse(Startup._instance.StaticServerData["TilesAmount"]),boardLayout);
+        BoardData bd = new BoardData(player1_playfabID, player2_playfabID, "0", Board.instance.BoardTiles,roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles, System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
         bd.player1_displayName = player1_displayName;
         bd.player2_displayName = Startup._instance.displayName;
         bd.player1_score = "0";
@@ -690,6 +719,10 @@ result =>
             {
                 GameObject.Destroy(child.gameObject);
             }
+            else
+            {
+
+            }
 
         }
         Startup._instance.openGamesList.Clear();
@@ -720,7 +753,9 @@ result =>
 
         }
 
-
+        //if((Startup._instance.SearchingForGameObject != null && PhotonNetwork.InRoom && PhotonNetwork.CountOfPlayersInRooms >= 2 ) ||
+        //    (Startup._instance.SearchingForGameObject != null && PhotonNetwork.InRoom == false))
+        //Destroy(Startup._instance.SearchingForGameObject);
 
 
         bool shouldAddOldGamesNow = true;
@@ -730,6 +765,7 @@ result =>
             {
                 LoadingOverlay.instance.ShowLoading("GetSharedGroupData");
                 shouldAddOldGamesNow = false;
+                Debug.Log("Getting game data: " + i + " : " + gameList[i]);
                 PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
                 {
                     SharedGroupId = gameList[i]
@@ -743,6 +779,17 @@ result =>
 
                         BoardData bd = new BoardData(entry.Value.Value);
                         //GetComponent<Startup>()._roomListLabel.text += "" + bd.player1_PlayfabId + " vs " + bd.player2_PlayfabId + " turn: " + bd.playerTurn + "\n";
+
+
+                        if(Startup._instance.SearchingForGameObject != null)
+                        {
+                            if( Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID == bd.RoomName)
+                            {
+                                if(bd.player2_PlayfabId != "")
+                                Destroy(Startup._instance.SearchingForGameObject);
+                            }
+                        }
+
 
                         if(bd.player1_abandon == "1" || bd.player2_abandon == "1")
                         {
@@ -760,10 +807,12 @@ result =>
                                 Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
                                 Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
                                 Startup._instance.SearchingForGameObject.SetActive(true);
+                                Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = bd.RoomName;
                             }
                             else
                             {
                                 Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+
                             }
       
                         }
@@ -974,6 +1023,11 @@ result =>
     }
     public void SendPushToUser(string aId,string title, string message)
     {
+        if (title == "")
+            title = "Outnumbered";
+        if (message == "")
+            message = "Outnumbered";
+
         PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
         {
             FunctionName = "ChallengePlayer",
@@ -983,7 +1037,10 @@ result =>
             { "Message", message },
 
         }
-        }, null, error => Debug.LogError(error.GenerateErrorReport()));
+        }, result => {
+            Debug.Log(result.FunctionResult);
+
+        }, error => Debug.LogError(error.GenerateErrorReport()));
     }
     public void AddGameToPlayerListCloudScript(string aId, string aRoomName)
     {
@@ -1046,7 +1103,10 @@ result =>
 
     public void Refresh()
     {
+        //if (LoadingOverlay.instance.LoadingCall.Count > 0)
+        //    return;
 
+        Startup._instance.DontAutoRefresh = false;
 
 
         LoadingOverlay.instance.ShowLoading("GetPlayerProfile");
@@ -1106,7 +1166,23 @@ result =>
 
         for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
         {
-            if (Startup._instance.openGamesList[i].player1_abandon == "1" || Startup._instance.openGamesList[i].player2_abandon == "1" || int.Parse(Startup._instance.openGamesList[i].EmptyTurns) >= 4)
+            long timeToDeadline = 0;
+            if(Startup._instance.openGamesList[i].LastMoveTimeStamp != null)
+            {
+                long a = System.DateTimeOffset.Now.ToUnixTimeSeconds();
+                
+                long b = long.Parse(Startup._instance.openGamesList[i].LastMoveTimeStamp);
+              //  long Future = b + 60 * 60 * 24 * 2;
+                long Future = b + Startup.TIMEOUT;
+                timeToDeadline = Future - a;
+            }
+
+
+
+
+  
+
+            if (Startup._instance.openGamesList[i].player1_abandon == "1" || Startup._instance.openGamesList[i].player2_abandon == "1" || int.Parse(Startup._instance.openGamesList[i].EmptyTurns) >= 4 || timeToDeadline<0)
             {
                 RemoveRoomFromList(Startup._instance.openGamesList[i].RoomName, Startup._instance.openGamesList[i].GetJson(), RemoveAbandonedGamesCO);
                 Startup._instance.openGamesList.RemoveAt(i);
@@ -1204,7 +1280,7 @@ result =>
 
     public void FacebookInit()
     {
-        LoadingOverlay.instance.ShowLoadingFullscreen("Facebook init");
+        //LoadingOverlay.instance.ShowLoadingFullscreen("Facebook init");
         FB.Init(OnFacebookInitialized);
     }
     public void FacebookLink()
@@ -1217,9 +1293,11 @@ result =>
     {
         PlayFabClientAPI.UnlinkFacebookAccount(new UnlinkFacebookAccountRequest {  }, OnUnlinked, null);
 
+
     }
     private void OnUnlinked( UnlinkFacebookAccountResult result)
     {
+        PlayerPrefs.DeleteKey("FacebookLink");
         Debug.Log("unlinked facebook");
         MainMenuController.instance.SetFBLinked(false);
     }
@@ -1241,6 +1319,19 @@ result =>
         if (GetComponent<Startup>().avatarURL.Length > 0)
             LoadAvatarURL(GetComponent<Startup>().avatarURL);
 
+
+        if (PlayerPrefs.HasKey("FacebookLink"))
+        {
+            if(FB.IsLoggedIn == false)
+                FB.LogInWithReadPermissions(new List<string>() { "public_profile", "gaming_user_picture" }, OnFacebookStartupLogin);
+            else
+            {
+                FacebookLogin();
+
+            }
+
+        }
+
     }
     private void OnFacebookLoggedIn(ILoginResult result)
     {
@@ -1259,7 +1350,8 @@ result =>
             
 
             bool isLinked = false;
-            if (GetComponent<Startup>().UserAccount.FacebookInfo != null && GetComponent<Startup>().UserAccount.FacebookInfo.FacebookId.Length > 0)
+            UserFacebookInfo info = GetComponent<Startup>().UserAccount.FacebookInfo;
+            if (info != null && info.FacebookId  != null && info.FacebookId.Length > 0)
             {
                 isLinked = true;
                 
@@ -1293,9 +1385,55 @@ result =>
 
  
     }
+    public void FacebookLogin()
+    {
+        Debug.Log("Facebook Auth Complete! Access Token: " + AccessToken.CurrentAccessToken.TokenString + "\nLogging into PlayFab...");
+        PlayFabClientAPI.LoginWithFacebook(new LoginWithFacebookRequest()
+        {
+
+            TitleId = PlayFabSettings.TitleId,
+            AccessToken = AccessToken.CurrentAccessToken.TokenString,
+            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+            {
+                GetUserAccountInfo = true,
+                GetPlayerProfile = true
+            }
+        },
+        result2 =>
+        {
+            LoginSucess(result2);
+        },
+        error => Debug.LogError(error.GenerateErrorReport())); ;
+        LoadingOverlay.instance.DoneLoading("Facebook login");
+    }
+
+    private void OnFacebookStartupLogin(ILoginResult result)
+    {
+        LoadingOverlay.instance.ShowLoadingFullscreen("Facebook login");
+        // If result has no errors, it means we have authenticated in Facebook successfully
+        if ((result == null || string.IsNullOrEmpty(result.Error)) && result.Cancelled == false)
+        {
+            FacebookLogin();
+
+
+        }
+        else
+        {
+            LoadingOverlay.instance.DoneLoading("Facebook login");
+            // If Facebook authentication failed, we stop the cycle with the message
+            Debug.Log("Facebook Auth Failed: " + result.Error + "\n" + result.RawResult);
+        }
+
+
+    }
+
+    
+
     // When processing both results, we just set the message, explaining what's going on.
     private void OnPlayfabFacebookAuthComplete(LinkFacebookAccountResult result)
     {
+        PlayerPrefs.SetInt("FacebookLink", 1);
+
         LoadingOverlay.instance.DoneLoading("Facebook login");
         Debug.Log("PlayFab Facebook Auth Complete. Session ticket: " + result.ToJson());
         string avatarURL = "https://graph.facebook.com/" + Facebook.Unity.AccessToken.CurrentAccessToken.UserId + "/picture?type=small";
@@ -1310,6 +1448,11 @@ result =>
 
     private void OnPlayfabFacebookAuthFailed(PlayFabError error)
     {
+        if(error.Error == PlayFabErrorCode.LinkedAccountAlreadyClaimed)
+        {
+            Debug.Log("Should we merge?");
+            MainMenuController.instance.ShowMerginAlert();
+        }
         LoadingOverlay.instance.DoneLoading("Facebook login");
         Debug.Log("PlayFab Facebook Auth Failed: " + error.GenerateErrorReport());
     }
@@ -1332,7 +1475,7 @@ result =>
 
         StartCoroutine(GetFBProfilePicture(aURL));
     }
-
+     Sprite ProfilePictureSprite = null;
     public static IEnumerator GetFBProfilePicture(string aURL)
     {
 
@@ -1344,10 +1487,12 @@ result =>
         MainMenuController.instance.ProfilePicture.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
         MainMenuController.instance.ProfilePicture.rectTransform.sizeDelta = new Vector2(88, 88);
         MainMenuController.instance.ProfilePicture.enabled = true;
-        
 
+        MainMenuController.instance.ProfilePicture2.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+        MainMenuController.instance.ProfilePicture2.rectTransform.sizeDelta = new Vector2(88, 88);
+        MainMenuController.instance.ProfilePicture2.enabled = true;
 
-
+        PlayfabHelperFunctions.instance.ProfilePictureSprite = MainMenuController.instance.ProfilePicture2.sprite;
 
     }
 
@@ -1375,7 +1520,9 @@ result =>
             xp = result.Data["XP"].Value;
         }
 
-        string rank = result.Data["Ranking"].Value;
+            string rank = "0";
+            if(result.Data.ContainsKey("Ranking"))
+                rank = result.Data["Ranking"].Value;
 
 
             GameManager.instance.SetOpponentData(xp, rank);
