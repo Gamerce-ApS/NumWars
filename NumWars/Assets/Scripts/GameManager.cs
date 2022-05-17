@@ -6,7 +6,8 @@ using PlayFab.ClientModels;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-
+using AppodealAds.Unity.Api;
+using AppodealAds.Unity.Common;
 
 
 
@@ -361,6 +362,7 @@ public class GameManager : MonoBehaviour
                 ScoreScreen.instance.ShowScoreLastPlay(false, Startup._instance.GameToLoad);
 
             }
+            Board.instance.boardData.LastMoveTimeStamp = Startup._instance.GameToLoad.LastMoveTimeStamp;
         }
         updateInProgress = false;
         _refreshTimer = 0;
@@ -455,6 +457,7 @@ public class GameManager : MonoBehaviour
                     WaitingOverlay.SetActive(true);
                     WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
                     WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
+                    Appodeal.show(Appodeal.INTERSTITIAL);
                 }
             }
 
@@ -463,6 +466,7 @@ public class GameManager : MonoBehaviour
                 WaitingOverlay.SetActive(true);
                 WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
                 WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
+                Appodeal.show(Appodeal.INTERSTITIAL);
             }
                 
 

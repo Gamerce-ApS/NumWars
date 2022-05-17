@@ -126,26 +126,38 @@ public PlayerProfileModel theProfile;
     }
     public void LoadAvatarURL(string aURL,Image img)
     {
-        StartCoroutine(GetFBProfilePicture(aURL, img));
+    //    StartCoroutine(GetFBProfilePicture(aURL, img));
+
+
+        if(aURL != null && aURL.Length>3)
+        {
+            ProfilePictureManager.instance.SetPicture(aURL, img);
+            img.enabled = true;
+        }
+
+    
+
+
+
     }
     Sprite ProfilePictureSprite = null;
-    public static IEnumerator GetFBProfilePicture(string aURL, Image img)
-    {
+    //public static IEnumerator GetFBProfilePicture(string aURL, Image img)
+    //{
 
-        //string url = "https" + "://graph.facebook.com/10159330728290589/picture";
-        WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
-        yield return www;
-        Texture2D profilePic = www.texture;
+    //    //string url = "https" + "://graph.facebook.com/10159330728290589/picture";
+    //    WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
+    //    yield return www;
+    //    Texture2D profilePic = www.texture;
 
-        img.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
-        img.rectTransform.sizeDelta = new Vector2(88, 88);
-        img.enabled = true;
-
-
+    //    img.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+    //    img.rectTransform.sizeDelta = new Vector2(88, 88);
+    //    img.enabled = true;
 
 
 
-    }
+
+
+    //}
 
 
 

@@ -11,7 +11,8 @@ using Unity.Notifications.iOS;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-
+using AppodealAds.Unity.Api;
+using AppodealAds.Unity.Common;
 
 
 
@@ -45,12 +46,20 @@ public class Startup : MonoBehaviourPunCallbacks
     public bool DontAutoRefresh = true;
 
     public static long TIMEOUT = 60 * 60 * 24 * 2;
+
+    public static string LIVE_VERSION = "2";
+
    // public static long TIMEOUT = 60+60+60;
 
     // Start is called before the first frame update
     void Start()
     {
-        Application.runInBackground = false;
+
+        
+        Appodeal.initialize("91f0aae11c6d5b4fe09000ad17edf290d41803497b6ff82f", Appodeal.INTERSTITIAL | Appodeal.REWARDED_VIDEO, true);
+
+
+        Application.runInBackground = true;
         GameToLoad = null;
         DontAutoRefresh = true;
         myAchivmentController = new AchivmentController();
@@ -85,6 +94,16 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
         StartCoroutine(RegisterPush());
+
+
+        if (PlayerPrefs.GetInt("Music", 0) == 0)
+        {
+
+            Startup._instance.GetComponent<AudioSource>().volume = 0;
+        }
+        else
+            Startup._instance.GetComponent<AudioSource>().volume = 0.3f;
+
 
 
     }
@@ -296,12 +315,17 @@ public class Startup : MonoBehaviourPunCallbacks
                 SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
                 SearchingForGameObject.transform.SetAsFirstSibling();
                 SearchingForGameObject.SetActive(true);
+                Vector3 rc = SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+
                 Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = PhotonNetwork.CurrentRoom.Name;
             }
             else
             {
                 Startup._instance.SearchingForGameObject.SetActive(true);
                 SearchingForGameObject.transform.SetAsFirstSibling();
+                Vector3 rc = SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
             }
             _PlayfabHelperFunctions.RemoveAbandonedGames();
         }
@@ -337,8 +361,11 @@ public class Startup : MonoBehaviourPunCallbacks
             if (openGamesList[i].player1_PlayfabId == MyPlayfabID && openGamesList[i].player2_PlayfabId == "")
             {
                 if(PhotonNetwork.InRoom == false)
+                {
                     PhotonNetwork.JoinRoom(openGamesList[i].RoomName);
-                return;
+                    return;
+                }
+                 
             }
         }
 
@@ -384,6 +411,9 @@ public class Startup : MonoBehaviourPunCallbacks
         foreach (Transform child in children)
         {
             child.parent = MainMenuController.instance._GameListParent;
+
+            Vector3 rc = child.GetComponent<RectTransform>().localPosition;
+            child.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
         }
     
 
@@ -411,6 +441,12 @@ public class Startup : MonoBehaviourPunCallbacks
                     obj2.GetComponent<GameListItem>().Init(bd, true);
                 }
 
+            }
+            ScrollListBasedOnItems[] list = GameObject.FindObjectsOfType<ScrollListBasedOnItems>();
+            for(int i = 0; i< list.Length;i++)
+            {
+                if(list[i].gameObject.activeSelf)
+                    list[i].RefreshLayout();
             }
         }
 
@@ -503,7 +539,8 @@ public class Startup : MonoBehaviourPunCallbacks
         myData["Ranking"].Value = (int.Parse(myData["Ranking"].Value) + aValue).ToString();
 
         _PlayfabHelperFunctions.SubmitHighscore(int.Parse( myData["Ranking"].Value ));
-
+        
+        
         _PlayfabHelperFunctions.ChangeValueFor("Ranking", myData["Ranking"].Value);
 
         if (opponentPlayfabId == "")
@@ -541,6 +578,8 @@ public class Startup : MonoBehaviourPunCallbacks
         myData["XP"].Value = (int.Parse(myData["XP"].Value) + aValue).ToString();
 
         _PlayfabHelperFunctions.ChangeValueFor("XP", myData["XP"].Value);
+
+        _PlayfabHelperFunctions.SubmitExperience(int.Parse(myData["XP"].Value));
     }
     public void UpdateStatsData(string aStatsData)
     {

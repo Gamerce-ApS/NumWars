@@ -98,13 +98,15 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
                 }
                 else
                 {
-                    transform.SetParent( TileParent);
+                    if (transform.parent != TileParent)
+                        transform.SetParent( TileParent);
 
                 }
 
             }
             else
             {
+                if(transform.parent != TileParent)
                 transform.SetParent(TileParent);
             }
         }

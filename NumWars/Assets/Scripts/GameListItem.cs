@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using PlayFab;
+using PlayFab.ClientModels;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -25,10 +27,12 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     public GameObject lost;
 
     public bool isAiGame = false;
+
+    RectTransform rc;
     // Start is called before the first frame update
     void Start()
     {
-        
+        rc = GetComponent<RectTransform>();
     }
 
     // Update is called once per frame
@@ -59,6 +63,11 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                 _pressed = false;
             }
         }
+
+
+        if( !System.Single.IsNaN(rc.localPosition.x) )
+            rc.localPosition = new Vector3(rc.localPosition.x, rc.localPosition.y, 0);
+
     }
     public IEnumerator unlockClick( )
     {
@@ -83,15 +92,18 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         aBd.hasFinished = hasFinished;
         isAiGame = aIsAiGame;
         bd = aBd;
+        string otherPlayerID = "";
         if ( Startup._instance.MyPlayfabID == bd.player1_PlayfabId)
         {
             _NameOfChallenger.text = bd.player2_displayName;
             _Score.text = bd.player1_score+" vs "+bd.player2_score;
+            otherPlayerID = bd.player2_PlayfabId;
         }
         else
         {
             _NameOfChallenger.text = bd.player1_displayName;
             _Score.text = bd.player2_score + " vs " + bd.player1_score;
+            otherPlayerID = bd.player1_PlayfabId;
         }
 
         
@@ -174,7 +186,94 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
         }
 
 
+
+
+        if(!isAiGame)
+        {
+            PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+            {
+                PlayFabId = otherPlayerID,
+                ProfileConstraints = new PlayerProfileViewConstraints()
+                {
+                    ShowDisplayName = true,
+                    ShowAvatarUrl = true
+                }
+            }, result => {
+
+                LoadAvatarURL(result.PlayerProfile.AvatarUrl);
+
+
+            }, (error) => {
+                Debug.Log("Got error retrieving user data:");
+                Debug.Log(error.GenerateErrorReport());
+            });
+        }
+
+
+
+        // Set pending and accept challenge text
+        if(bd.player1_score == "0" && bd.player2_score=="0" && isAiGame == false &&( bd.player1_abandon == "0"|| bd.player1_abandon == "") && (bd.player2_abandon == "0"|| bd.player2_abandon == ""))
+        {
+            if (bd.playerTurn == "1" && Startup._instance.MyPlayfabID == bd.player1_PlayfabId)
+            {
+                OtherTurnGO.transform.GetChild(1).GetComponent<Text>().text = "PENDING";
+            }
+            else if (bd.playerTurn == "1" && Startup._instance.MyPlayfabID == bd.player2_PlayfabId)
+            {
+               // YourTurnGO.transform.GetChild(0).GetComponent<Text>().text = "ACCEPT \nCHALLENGE";
+               // YourTurnGO.transform.GetChild(0).GetComponent<Text>().fontSize = 23;
+
+                ChallengeWindow.instance.AddChallengeGame(this);
+            }
+            
+        }
+     
+
+
+
     }
+
+    public void LoadAvatarURL(string aURL)
+    {
+        if(this != null)
+        {
+            if (aURL != null)
+            {
+                ProfilePictureManager.instance.SetPicture(aURL, img);
+                img.enabled = true;
+            }
+
+            //StartCoroutine(GetFBProfilePicture(aURL, this));
+        }
+
+    }
+    public Image img;
+    //public static IEnumerator GetFBProfilePicture(string aURL, GameListItem chWin)
+    //{
+
+    //    //string url = "https" + "://graph.facebook.com/10159330728290589/picture";
+    //    if (aURL != null)
+    //    {
+    //        WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
+    //        yield return www;
+    //        Texture2D profilePic = www.texture;
+
+
+    //        chWin.img.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+    //        chWin.img.rectTransform.sizeDelta = new Vector2(88, 88);
+    //        chWin.img.enabled = true;
+    //    }
+
+
+    //    //aSprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+    //    //img.rectTransform.sizeDelta = new Vector2(88, 88);
+    //    //img.enabled = true;
+
+
+
+
+
+    //}
 
     public void ClickLoadGame()
     {

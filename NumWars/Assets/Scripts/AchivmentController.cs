@@ -301,6 +301,9 @@ public class AchivmentController
         {
             if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.AVREAGEBINGOGAME)
             {
+                if (totalBingos == 0 || totalGames == 0)
+                    myStatistics[i].current = totalBingos;
+                else
                 myStatistics[i].current = totalBingos / totalGames;
             }
         }

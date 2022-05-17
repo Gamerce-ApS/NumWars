@@ -30,7 +30,7 @@ public class MainMenuController : MonoBehaviour
     public Text nameSettingTextError;
     public Image ProfilePicture;
     public Image ProfilePicture2;
-
+    public GameObject FacebookButton;
     
 
     public GameObject FriendsWindow;
@@ -44,6 +44,7 @@ public class MainMenuController : MonoBehaviour
 
     public GameObject MerginWindow;
 
+    public GameObject UpdateWindow;
 
     // Start is called before the first frame update
     void Start()
@@ -90,6 +91,10 @@ public class MainMenuController : MonoBehaviour
             Startup._instance.JoinRandomRoom();
         }
 
+    }
+    public void PressUpdate()
+    {
+        Application.OpenURL(Startup._instance.StaticServerData["LIVE_VERSION"]);
     }
     public void PressPlayAI()
     {
@@ -163,10 +168,14 @@ public void PressOpenFriendsWindow()
         
 
         if (isAnewAccount)
-            setNameTextLabel.text = "What's your name?";
+        {
+            // setNameTextLabel.text = "What's your name?";
+            FacebookButton.SetActive(true);
+        }
         else
         {
             setNameTextLabel.text = _Name.text;
+            FacebookButton.SetActive(false);
         }
     }
     public void OpenProfileWindow()
@@ -276,7 +285,7 @@ public void PressOpenFriendsWindow()
     {
         Startup._instance.PlaySoundEffect(0);
         ShareSheet shareSheet = ShareSheet.CreateInstance();
-        shareSheet.AddText("Hey, test out Outnumbered on appstore or google play! It's a great game!");
+        shareSheet.AddText("Hey, test out Outnumber on appstore or google play! It's a great game!");
         VoxelBusters.CoreLibrary.URLString url = new VoxelBusters.CoreLibrary.URLString();
 
         shareSheet.AddURL(URLString.URLWithPath("https://itunes.apple.com/us/app/keynote/id1610303402?mt=8"));
@@ -320,6 +329,27 @@ public void PressOpenFriendsWindow()
     public void OpenSettings()
     {
         Startup._instance.PlaySoundEffect(0);
+
+
+        if (PlayerPrefs.GetInt("Music", 1) ==1)
+            MusicText.text = "Music: ON";
+        else
+            MusicText.text = "Music: OFF";
+
+
+
+        if (PlayerPrefs.GetInt("Sound", 1) == 1)
+        {
+            SoundText.text = "Sound: ON";
+        }
+        else
+        {
+            SoundText.text = "Sound: OFF";
+        }
+
+
+
+
     }
     public void CloseSettings()
     {
@@ -394,6 +424,31 @@ public void PressOpenFriendsWindow()
             LayoutButton2.color = Color.white;
             LayoutButton1.color = col;
         }
+
+    }
+
+    public void Contactus()
+    {
+      
+
+            string email = "info@gamerce.net";
+
+            string subject = MyEscapeURL("Feedback / Ideas for Outnumber");
+
+            string body = MyEscapeURL("Hey!\r\nI love the game but have some comments/ideas/feedback: \r\n");
+
+
+            Application.OpenURL("mailto:" + email + "?subject=" + subject + "&body=" + body);
+
+        
+
+        
+    }
+    string MyEscapeURL(string url)
+
+    {
+
+        return WWW.EscapeURL(url).Replace("+", "%20");
 
     }
 }

@@ -256,12 +256,12 @@ public class Board : MonoBehaviour
 
 
 
-        List<int> startNumbers = new List<int>();
-        startNumbers.Add(1);
-        startNumbers.Add(2);
-        startNumbers.Add(3);
-        startNumbers.Add(4);
-        startNumbers.Shuffle();
+        //List<int> startNumbers = new List<int>();
+        //startNumbers.Add(1);
+        //startNumbers.Add(2);
+        //startNumbers.Add(3);
+        //startNumbers.Add(4);
+        //startNumbers.Shuffle();
 
         if (TutorialController.instance != null && TutorialController.instance.IsTutorial)
         {
@@ -532,15 +532,18 @@ public class Board : MonoBehaviour
         //AllTilesNumbers.RemoveRange(int.Parse(Startup._instance.StaticServerData["TilesAmount"]), AllTilesNumbers.Count- int.Parse(Startup._instance.StaticServerData["TilesAmount"]));
 
 
-  
-        if (layout == "0" || (TutorialController.instance != null && TutorialController.instance.IsTutorial))
+  if(GetSpecialTiles() <=5 && BoardTiles.Count>5)
         {
-            SetStandardLayout();
+            if (layout == "0" || (TutorialController.instance != null && TutorialController.instance.IsTutorial))
+            {
+                SetStandardLayout();
+            }
+            else
+            {
+                SetRandomLayout();
+            }
         }
-        else
-        {
-            SetRandomLayout();
-        }
+      
 
     }
 
@@ -1066,7 +1069,19 @@ public class Board : MonoBehaviour
 
         return false;
     }
+    public int GetSpecialTiles()
+    {
+        int amount = 0;
+        for(int i = 0; i < BoardTiles.Count;i++)
+        {
+            if( BoardTiles[i].myTileType != TileType.EmptyTile && BoardTiles[i].myTileType != TileType.NormalTile && BoardTiles[i].myTileType != TileType.StartTile)
+            {
+                amount++;
+            }
+        }
+        return amount;
 
+    }
     public void PressContinue()
     {
 

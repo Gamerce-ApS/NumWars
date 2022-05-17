@@ -42,17 +42,17 @@ public class PlayfabHelperFunctions : MonoBehaviour
         else
             playerID = "asdafsfsdf2";
 
-        //playerID = "asdafsfsdf3";
+          // playerID = "asdafsfsdf11";
         instance = this;
         LoadingOverlay.instance.ShowLoadingFullscreen("LoginWithCustomID");
 
-        
+
         if (FB.IsInitialized)
             OnFacebookInitialized();
         else
             FB.Init(OnFacebookInitialized);
 
-        if (PlayerPrefs.HasKey("FacebookLink") )
+        if (PlayerPrefs.HasKey("FacebookLink"))
         {
             return;
         }
@@ -74,17 +74,20 @@ public class PlayfabHelperFunctions : MonoBehaviour
             CreateAccount = true,
             CustomId = playerID,
             InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
-            { GetUserAccountInfo =true,
+            {
+                GetUserAccountInfo = true,
                 GetPlayerProfile = true,
-               
+
             }
         },
         result =>
         {
             LoginSucess(result);
         },
-        error => Debug.LogError(error.GenerateErrorReport()));
-
+        error =>
+        {
+            Debug.LogError(error.GenerateErrorReport());
+        });
 
 
 #elif UNITY_IOS
@@ -126,6 +129,13 @@ result =>
                       Startup._instance.StaticServerData = result2.Data;
                   }
                   LoadingOverlay.instance.DoneLoading("Loading data!");
+
+
+                  if( int.Parse(Startup.LIVE_VERSION) < int.Parse(Startup._instance.StaticServerData["LIVE_VERSION"]))
+                  {
+                      MainMenuController.instance.UpdateWindow.SetActive(true);
+                  }
+
               },
               error => {
                   Debug.Log("Got error getting titleData:");
@@ -479,11 +489,18 @@ result =>
        
           
                string st = (aDBjson);
-          
-        
 
+
+        BoardData bd = new BoardData(CompressString.StringCompressor.DecompressString(aDBjson));
+        // Adding this if challenge is rejected dont add to old games
+        bool addToOld = true;
+        if ((bd.player1_score == "" || bd.player1_score == "0") && (bd.player2_score == "" || bd.player2_score == "0"))
+            addToOld = false;
+
+        if(addToOld)
         GetComponent<Startup>().myData["OldGames"].Value += "[splitter]" + st;
-        LoadingOverlay.instance.ShowLoading("UpdateUserData");
+        if (LoadingOverlay.instance != null)
+            LoadingOverlay.instance.ShowLoading("UpdateUserData");
 
         PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
         {
@@ -494,7 +511,8 @@ result =>
         },
         result =>
         {
-            LoadingOverlay.instance.DoneLoading("UpdateUserData");
+            if (LoadingOverlay.instance != null)
+                LoadingOverlay.instance.DoneLoading("UpdateUserData");
 
             // This is for if we find a abandoned game we want to remove a potentail next one
             if (onComplete ==null)
@@ -643,7 +661,8 @@ result =>
     }
     public void GetUserData()
     {
-        LoadingOverlay.instance.ShowLoading("GetUserData");
+        if (LoadingOverlay.instance != null)
+            LoadingOverlay.instance.ShowLoading("GetUserData");
 
         PlayFabClientAPI.GetUserData(new GetUserDataRequest()
         {
@@ -696,8 +715,12 @@ result =>
                 ChangeValueFor("XP", "0");
 
             ProfileButton.instance.Init(GetComponent<Startup>().displayName, GetComponent<Startup>().myData["Ranking"].Value, xp);
+            if(!updateHighscoreOnce)
+            {
+                SubmitHighscore(int.Parse(GetComponent<Startup>().myData["Ranking"].Value));
+                updateHighscoreOnce = true;
+            }
 
-    
 
 
             UpdateGameList();
@@ -710,12 +733,13 @@ result =>
         });
 
     }
+    bool updateHighscoreOnce = false;
     public void UpdateGameList()
     {
         foreach (Transform child in MainMenuController.instance._GameListParent.transform)
         {
 
-            if(child.gameObject.name.Contains("SerachingForGame") == false)
+            if(child.gameObject.name.Contains("_SerachingForGame") == false)
             {
                 GameObject.Destroy(child.gameObject);
             }
@@ -748,7 +772,9 @@ result =>
 
            
                 GameObject obj2 = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent);
-                obj2.GetComponent<GameListItem>().Init(aiGameBoard, false, true);
+            Vector3 rc = obj2.GetComponent<RectTransform>().localPosition;
+            obj2.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+            obj2.GetComponent<GameListItem>().Init(aiGameBoard, false, true);
             
 
         }
@@ -763,7 +789,7 @@ result =>
         {
             if(gameList[i].Length>1)
             {
-                LoadingOverlay.instance.ShowLoading("GetSharedGroupData");
+                LoadingOverlay.instance.ShowLoading("GetSharedGroupData0");
                 shouldAddOldGamesNow = false;
                 Debug.Log("Getting game data: " + i + " : " + gameList[i]);
                 PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
@@ -771,7 +797,8 @@ result =>
                     SharedGroupId = gameList[i]
                 }, result =>
                 {
-                    LoadingOverlay.instance.DoneLoading("GetSharedGroupData");
+                    if(LoadingOverlay.instance != null)
+                    LoadingOverlay.instance.DoneLoading("GetSharedGroupData0");
                     foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
                     {
                         if (entry.Key == "Chat")
@@ -798,6 +825,8 @@ result =>
                         else if(bd.player2_PlayfabId != "")
                         {
                             GameObject obj = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent);
+                            Vector3 rc = obj.GetComponent<RectTransform>().localPosition;
+                            obj.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
                             obj.GetComponent<GameListItem>().Init(bd);
 
                         }else
@@ -807,11 +836,15 @@ result =>
                                 Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
                                 Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
                                 Startup._instance.SearchingForGameObject.SetActive(true);
+                                Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                                Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
                                 Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = bd.RoomName;
                             }
                             else
                             {
                                 Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+                                Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                                Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
 
                             }
       
@@ -843,7 +876,8 @@ result =>
     }
     public void RemoveRoomFromList(string aRoomName,string aRoomJson,System.Action onComplete=null)
     {
-        LoadingOverlay.instance.ShowLoading("RemoveSharedGroupMembers");
+        if (LoadingOverlay.instance != null)
+            LoadingOverlay.instance.ShowLoading("RemoveSharedGroupMembers");
 
         PlayFabClientAPI.RemoveSharedGroupMembers(new RemoveSharedGroupMembersRequest()
         { 
@@ -851,7 +885,8 @@ result =>
             PlayFabIds = new List<string>(){Startup._instance.MyPlayfabID}
         }, result =>
         {
-            LoadingOverlay.instance.DoneLoading("RemoveSharedGroupMembers");
+            if (LoadingOverlay.instance != null)
+                LoadingOverlay.instance.DoneLoading("RemoveSharedGroupMembers");
 
 
             string st = "";
@@ -881,7 +916,7 @@ result =>
     public void UpdateTargetGame(string aGame)
     {
         if(LoadingOverlay.instance != null)
-        LoadingOverlay.instance.ShowLoading("GetSharedGroupData");
+        LoadingOverlay.instance.ShowLoading("GetSharedGroupData1");
 
         PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
                 {
@@ -889,7 +924,7 @@ result =>
                 }, result =>
                 {
                     if (LoadingOverlay.instance != null)
-                        LoadingOverlay.instance.DoneLoading("GetSharedGroupData");
+                        LoadingOverlay.instance.DoneLoading("GetSharedGroupData1");
 
                     foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
                     {
@@ -932,7 +967,7 @@ result =>
     public void UpdateChatMessages(string aGame)
     {
         if (LoadingOverlay.instance != null)
-            LoadingOverlay.instance.ShowLoading("GetSharedGroupData");
+            LoadingOverlay.instance.ShowLoading("GetSharedGroupData2");
 
         PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
         {
@@ -940,7 +975,7 @@ result =>
         }, result =>
         {
             if (LoadingOverlay.instance != null)
-                LoadingOverlay.instance.DoneLoading("GetSharedGroupData");
+                LoadingOverlay.instance.DoneLoading("GetSharedGroupData2");
 
             foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
             {
@@ -1024,9 +1059,9 @@ result =>
     public void SendPushToUser(string aId,string title, string message)
     {
         if (title == "")
-            title = "Outnumbered";
+            title = "Outnumber";
         if (message == "")
-            message = "Outnumbered";
+            message = "Outnumber";
 
         PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
         {
@@ -1108,8 +1143,8 @@ result =>
 
         Startup._instance.DontAutoRefresh = false;
 
-
-        LoadingOverlay.instance.ShowLoading("GetPlayerProfile");
+        if (LoadingOverlay.instance != null)
+            LoadingOverlay.instance.ShowLoading("GetPlayerProfile");
 
         PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
         {
@@ -1184,6 +1219,15 @@ result =>
 
             if (Startup._instance.openGamesList[i].player1_abandon == "1" || Startup._instance.openGamesList[i].player2_abandon == "1" || int.Parse(Startup._instance.openGamesList[i].EmptyTurns) >= 4 || timeToDeadline<0)
             {
+                if( Startup._instance.openGamesList[i].playerTurn == "0" && timeToDeadline < 0)
+                {
+                    Startup._instance.openGamesList[i].player1_score = "0";
+                }
+                if (Startup._instance.openGamesList[i].playerTurn == "1" && timeToDeadline < 0)
+                {
+                    Startup._instance.openGamesList[i].player2_score = "0";
+                }
+
                 RemoveRoomFromList(Startup._instance.openGamesList[i].RoomName, Startup._instance.openGamesList[i].GetJson(), RemoveAbandonedGamesCO);
                 Startup._instance.openGamesList.RemoveAt(i);
                 return;
@@ -1194,22 +1238,24 @@ result =>
 
     }
 
-    public void DeleteGame(string aRoomName)
+    public void DeleteGame(string aRoomName, System.Action callback = null)
     {
-        SetAbandomeForPlayerInGame(aRoomName);
+        SetAbandomeForPlayerInGame(aRoomName, callback);
   
 
     }
-    public void SetAbandomeForPlayerInGame(string aRoomName)
+    public void SetAbandomeForPlayerInGame(string aRoomName, System.Action callback = null)
     {
-        LoadingOverlay.instance.ShowLoading("GetSharedGroupData");
+        if(LoadingOverlay.instance != null)
+        LoadingOverlay.instance.ShowLoading("GetSharedGroupData3");
 
         PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
         {
             SharedGroupId = aRoomName
         }, result =>
         {
-            LoadingOverlay.instance.DoneLoading("GetSharedGroupData");
+            if (LoadingOverlay.instance != null)
+                LoadingOverlay.instance.DoneLoading("GetSharedGroupData3");
             foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
             {
                 if (entry.Key == "Chat")
@@ -1217,8 +1263,8 @@ result =>
                 BoardData bd = new BoardData(entry.Value.Value);
 
                 bd.SetPlayerAbandome();
-
-                LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
+                if (LoadingOverlay.instance != null)
+                    LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
                 PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
                 {
                     SharedGroupId = aRoomName,
@@ -1229,9 +1275,10 @@ result =>
                 },
                result3 =>
                {
-                   LoadingOverlay.instance.DoneLoading("UpdateSharedGroupData");
+                   if (LoadingOverlay.instance != null)
+                       LoadingOverlay.instance.DoneLoading("UpdateSharedGroupData");
                    Debug.Log("Successfully updated SetAbadome in room name:" + aRoomName);
-                   RemoveRoomFromList(aRoomName, bd.GetJson());
+                   RemoveRoomFromList(aRoomName, bd.GetJson(), callback);
 
                },
                error =>
@@ -1259,7 +1306,18 @@ result =>
         }
         }, result => OnStatisticsUpdated(result), FailureCallback);
     }
-
+    public void SubmitExperience(int playerXP)
+    {
+        PlayFabClientAPI.UpdatePlayerStatistics(new UpdatePlayerStatisticsRequest
+        {
+            Statistics = new List<StatisticUpdate> {
+            new StatisticUpdate {
+                StatisticName = "Experience",
+                Value = playerXP
+            }
+        }
+        }, result => OnStatisticsUpdated(result), FailureCallback);
+    }
     private void OnStatisticsUpdated(UpdatePlayerStatisticsResult updateResult)
     {
         Debug.Log("Successfully submitted high score");
@@ -1452,6 +1510,14 @@ result =>
         {
             Debug.Log("Should we merge?");
             MainMenuController.instance.ShowMerginAlert();
+
+
+            if( MainMenuController.instance.FacebookButton.activeSelf )
+            {
+                MainMenuController.instance.ClickRecoveAccount();
+            }
+
+
         }
         LoadingOverlay.instance.DoneLoading("Facebook login");
         Debug.Log("PlayFab Facebook Auth Failed: " + error.GenerateErrorReport());
@@ -1473,28 +1539,55 @@ result =>
        // Debug.Log(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
     //    FB.API(aURL+ "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE", HttpMethod.GET, FbGetPicture);
 
-        StartCoroutine(GetFBProfilePicture(aURL));
+        //StartCoroutine(GetFBProfilePicture(aURL));
+
+
+       
+        ProfilePictureManager.instance.SetPicture(aURL, MainMenuController.instance.ProfilePicture, CallBackProfilePicture);
+       
+
+
+
     }
-     Sprite ProfilePictureSprite = null;
-    public static IEnumerator GetFBProfilePicture(string aURL)
+    public void CallBackProfilePicture()
     {
 
-        //string url = "https" + "://graph.facebook.com/10159330728290589/picture";
-        WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
-        yield return www;
-        Texture2D profilePic = www.texture;
-
-        MainMenuController.instance.ProfilePicture.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
-        MainMenuController.instance.ProfilePicture.rectTransform.sizeDelta = new Vector2(88, 88);
         MainMenuController.instance.ProfilePicture.enabled = true;
 
-        MainMenuController.instance.ProfilePicture2.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+
+
+        MainMenuController.instance.ProfilePicture2.sprite = Sprite.Create((Texture2D)MainMenuController.instance.ProfilePicture.sprite.texture, new Rect(0, 0, MainMenuController.instance.ProfilePicture.sprite.texture.height, MainMenuController.instance.ProfilePicture.sprite.texture.width), new Vector2());
         MainMenuController.instance.ProfilePicture2.rectTransform.sizeDelta = new Vector2(88, 88);
         MainMenuController.instance.ProfilePicture2.enabled = true;
 
         PlayfabHelperFunctions.instance.ProfilePictureSprite = MainMenuController.instance.ProfilePicture2.sprite;
 
     }
+
+
+    Sprite ProfilePictureSprite = null;
+    //public static IEnumerator GetFBProfilePicture(string aURL)
+    //{
+    //    if (MainMenuController.instance == null)
+    //    {
+    //        yield break;
+    //    }
+    //    //string url = "https" + "://graph.facebook.com/10159330728290589/picture";
+    //    WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
+    //    yield return www;
+    //    Texture2D profilePic = www.texture;
+       
+    //    MainMenuController.instance.ProfilePicture.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+    //    MainMenuController.instance.ProfilePicture.rectTransform.sizeDelta = new Vector2(88, 88);
+    //    MainMenuController.instance.ProfilePicture.enabled = true;
+
+    //    MainMenuController.instance.ProfilePicture2.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+    //    MainMenuController.instance.ProfilePicture2.rectTransform.sizeDelta = new Vector2(88, 88);
+    //    MainMenuController.instance.ProfilePicture2.enabled = true;
+
+    //    PlayfabHelperFunctions.instance.ProfilePictureSprite = MainMenuController.instance.ProfilePicture2.sprite;
+
+    //}
 
 
     public void OnUpdateAvatarURL(EmptyResponse response)

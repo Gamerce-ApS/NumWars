@@ -36,7 +36,11 @@ public class ProfileButton : MonoBehaviour
 
         }
 
-
+        if (Startup._instance.avatarURL != null)
+            if (Startup._instance.avatarURL.Length > 0)
+            {
+                PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+            }
 
     }
     void SetXP(string aXP)

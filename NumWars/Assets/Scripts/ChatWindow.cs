@@ -33,6 +33,7 @@ public class ChatWindow : MonoBehaviour
 
     public List<EmojiMap> Emojis = new List<EmojiMap>();
 
+    public GameObject _loadingGO;
 
     // Start is called before the first frame update
     void Start()
@@ -57,7 +58,29 @@ public class ChatWindow : MonoBehaviour
         Window.transform.GetChild(1).transform.position = new Vector3(_TextFlyInBoxoriginalPos.x - 10, _TextFlyInBoxoriginalPos.y, _TextFlyInBoxoriginalPos.z);
         Window.transform.GetChild(1).transform.DOMoveX(_TextFlyInBoxoriginalPos.x, 0.3f).SetEase(Ease.InOutQuart);
 
-        RequestChat();
+
+
+        _loadingGO.SetActive(true);
+
+        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        {
+            PlayFabId = Startup._instance.GameToLoad.GetOtherPlayerPlayfab(),
+            ProfileConstraints = new PlayerProfileViewConstraints()
+            {
+                ShowDisplayName = true,
+                ShowAvatarUrl = true
+            }
+        }, result => {
+
+          LoadAvatarURL(result.PlayerProfile.AvatarUrl);
+ 
+
+        }, (error) => {
+            Debug.Log("Got error retrieving user data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
+
+
     }
 
     public void CloseWindow()
@@ -95,7 +118,7 @@ public class ChatWindow : MonoBehaviour
         {
             Debug.Log("Got error making turn");
             Debug.Log(error.GenerateErrorReport());
-
+            _loadingGO.SetActive(false);
 
         });
 
@@ -112,15 +135,22 @@ public class ChatWindow : MonoBehaviour
             SharedGroupId = Startup._instance.GameToLoad.RoomName
         }, result =>
         {
-            currentChatData = result.Data["Chat"].Value;
+            if(result.Data.ContainsKey("Chat"))
+            {
+                currentChatData = result.Data["Chat"].Value;
 
-            string[] messages = result.Data["Chat"].Value.Split('≤');
+                string[] messages = result.Data["Chat"].Value.Split('≤');
 
-            LoadChat(messages);
-            PlayerPrefs.SetString(Startup._instance.GameToLoad.RoomName + "_chat", result.Data["Chat"].Value);
+                LoadChat(messages);
+                PlayerPrefs.SetString(Startup._instance.GameToLoad.RoomName + "_chat", result.Data["Chat"].Value);
+            }
+            else
+                _loadingGO.SetActive(false);
+            GameManager.instance.ChatNotificationIcon.SetActive(false);
 
         }, (error) =>
         {
+            _loadingGO.SetActive(false);
             Debug.Log(error.GenerateErrorReport());
         });
     }
@@ -139,8 +169,22 @@ public class ChatWindow : MonoBehaviour
                 GameObject go = GameObject.Instantiate(TextPrefabLeft, _TextListParent);
                 go.transform.GetChild(1).GetComponent<Text>().text = messages[i];
                 go.transform.GetChild(2).GetComponent<Text>().text = messages[i + 1];
+
+                if(me != null)
+                {
+                    Image img = go.transform.GetChild(0).GetChild(0).GetComponent<Image>();
+                  //  img.sprite = Sprite.Create((Texture2D)me, new Rect(0, 0, me.height, me.width), new Vector2());
+                    img.sprite = me.sprite;
+                    //  img.rectTransform.sizeDelta = new Vector2(88, 88);
+                    img.enabled = true;
+                }
+    
+
                 if (messages[i + 1].Contains("<emoji"))
                 {
+              
+
+       
                     go.transform.GetChild(3).gameObject.SetActive(true);
                     go.transform.GetChild(2).GetComponent<Text>().text = "";
                     go.transform.GetChild(3).GetComponent<Image>().sprite = GetEmoji(messages[i + 1]);
@@ -154,8 +198,21 @@ public class ChatWindow : MonoBehaviour
                 GameObject go = GameObject.Instantiate(TextPrefabRight, _TextListParent);
                 go.transform.GetChild(1).GetComponent<Text>().text = messages[i];
                 go.transform.GetChild(2).GetComponent<Text>().text = messages[i + 1];
-                if(messages[i + 1].Contains("<emoji"))
+
+                if(otherP != null)
                 {
+                    Image img = go.transform.GetChild(0).GetChild(0).GetComponent<Image>();
+                   // img.sprite = Sprite.Create((Texture2D)otherP, new Rect(0, 0, otherP.height, otherP.width), new Vector2());
+                    img.sprite = otherP.sprite;
+                    //img.rectTransform.sizeDelta = new Vector2(88, 88);
+                    img.enabled = true;
+                }
+       
+
+                if (messages[i + 1].Contains("<emoji"))
+                {
+       
+
                     go.transform.GetChild(3).gameObject.SetActive(true);
                     go.transform.GetChild(2).GetComponent<Text>().text = "";
                     go.transform.GetChild(3).GetComponent<Image>().sprite = GetEmoji(messages[i + 1]);
@@ -168,8 +225,8 @@ public class ChatWindow : MonoBehaviour
         StartCoroutine(ScrollDown());
         chatBox.text = "";
 
+        _loadingGO.SetActive(false);
 
-        
     }
     public Sprite GetEmoji(string aName)
     {
@@ -188,4 +245,51 @@ public class ChatWindow : MonoBehaviour
         _TextListParent.transform.parent.parent.GetComponent<ScrollRect>().normalizedPosition = new Vector2(0, 0);
 
     }
+    public Image otherP;
+    public Image me;
+
+
+    public void LoadAvatarURL(string aURL)
+    {
+
+        ProfilePictureManager.instance.SetPicture(aURL, otherP, OnDoneCallback);
+
+        //   StartCoroutine(GetFBProfilePicture(aURL, this));
+    }
+    public void OnDoneCallback()
+    {
+        ProfilePictureManager.instance.SetPicture(Startup._instance.avatarURL, me, OnDoneCallback2);
+
+    }
+    public void OnDoneCallback2()
+    {
+        RequestChat();
+    }
+    //public static IEnumerator GetFBProfilePicture(string aURL,ChatWindow chWin)
+    //{
+
+    //    //string url = "https" + "://graph.facebook.com/10159330728290589/picture";
+    //    if(aURL != null)
+    //    {
+    //        WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
+    //        yield return www;
+    //        Texture2D profilePic = www.texture;
+    //        chWin.otherP = www.texture;
+    //    }
+
+
+    //    WWW www2 = new WWW(Startup._instance.avatarURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
+    //    yield return www2;
+
+    //    chWin.me = www2.texture;
+
+    //    //aSprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+    //    //img.rectTransform.sizeDelta = new Vector2(88, 88);
+    //    //img.enabled = true;
+
+
+
+    //    chWin.RequestChat();
+
+    //}
 }

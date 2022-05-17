@@ -55,6 +55,11 @@ public class FriendsListWindow : MonoBehaviour
     }
     void OnEnable()
     {
+        foreach (Transform child in _parent)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+
         RequestLeaderboard();
     }
     // Update is called once per frame
@@ -72,7 +77,8 @@ public class FriendsListWindow : MonoBehaviour
              ProfileConstraints = new PlayerProfileViewConstraints()
              {
                  ShowDisplayName = true,
-                 ShowAvatarUrl = true
+                 ShowAvatarUrl = true,
+                 ShowStatistics = true
              }
 
         }, result => GetLeadoardOfFriends(result), FailureCallback);
@@ -98,9 +104,10 @@ public class FriendsListWindow : MonoBehaviour
 
             MaxResultsCount = 100,
             ProfileConstraints = new PlayerProfileViewConstraints()
-            {
+            { 
                 ShowDisplayName = true,
-                ShowAvatarUrl = true
+                ShowAvatarUrl = true,
+                ShowStatistics=true
             }
 
         }, result2 => DisplayLeaderboard(result,result2), FailureCallback);
@@ -109,10 +116,7 @@ public class FriendsListWindow : MonoBehaviour
 
 public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult result2)
     {
-        foreach (Transform child in _parent)
-        {
-            GameObject.Destroy(child.gameObject);
-        }
+        
 
 
         for (int i = 0; i < result.Friends.Count;i++)
@@ -145,24 +149,46 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
             go.GetComponent<FriendListItem>().Init(result.Friends[i].Profile, result.Friends[i].Profile.DisplayName, go.transform.GetChild(1).GetComponent<Text>().text, img);
 
             if (avatarURL.Length>0)
-            StartCoroutine(SetPicture(avatarURL, img));
+            {
+                ProfilePictureManager.instance.SetPicture(avatarURL, img);
+                //StartCoroutine(SetPicture(avatarURL, img));
+            }
+           
 
-            
+
+
+            bool hasFoundxp = false;
+            for (int j = 0; j < result.Friends[i].Profile.Statistics.Count; j++)
+            {
+                if (result.Friends[i].Profile.Statistics[j].Name == "Experience")
+                {
+                    go.transform.GetChild(5).GetChild(0).GetComponent<Text>().text = HelperFunctions.XPtoLevel(result.Friends[i].Profile.Statistics[1].Value.ToString()).ToString();
+                    hasFoundxp = true;
+                }
+            }
+
+
+            if (hasFoundxp == false)
+            {
+                go.transform.GetChild(5).gameObject.SetActive(false);
+            }
+
+
         }
 
     }
 
-    private IEnumerator SetPicture(string aURL, Image aImage)
-    {
-        WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
-        yield return www;
-        Texture2D profilePic = www.texture;
+    //private IEnumerator SetPicture(string aURL, Image aImage)
+    //{
+    //    WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
+    //    yield return www;
+    //    Texture2D profilePic = www.texture;
 
-        aImage.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
-        aImage.rectTransform.sizeDelta = new Vector2(88, 88);
+    //    aImage.sprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+    //    aImage.rectTransform.sizeDelta = new Vector2(88, 88);
 
 
-    }
+    //}
 
     public void AddFriend()
     {
@@ -183,10 +209,16 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
     }
     private void FailureCallbackAdd(PlayFabError error)
     {
+        if (error.Error == PlayFabErrorCode.UsersAlreadyFriends)
+        {
+            errorText.text = "Already friends!";
+            return;
+        }
+
         errorText.text = "Could not add friend";
         Debug.LogWarning("Cant Add Friend");
         Debug.LogError(error.GenerateErrorReport());
-
+        
         MainMenuController.instance.Share();
     }
 
