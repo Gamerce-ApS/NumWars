@@ -131,6 +131,8 @@ public class ScoreScreen : MonoBehaviour
         GameObject go = GameObject.Instantiate(ScorePrefab, bg.transform);
         go.transform.position = Board.instance.BoardTiles[(int)(aTile.Position.x + aTile.Position.y * 14)].transform.position;
         go.transform.GetChild(0).Find("Text").GetComponent<Text>().text = aTile.ScoreValue.ToString();
+
+
         createdPoints.Add(go);
     }
     IEnumerator SummarizeAfterTime(float aTime, List<FakeTileData> score, Player thePlayer,int totalScore)
@@ -284,8 +286,10 @@ public class ScoreScreen : MonoBehaviour
         GameObject go = GameObject.Instantiate(ScorePrefab, bg.transform);
         go.transform.position = aTile.transform.position;
         go.transform.GetChild(0).Find("Text").GetComponent<Text>().text = aTile.GetValue();
+        if (Startup._instance.isFake)
+            go.transform.localScale *= 1.5f;
 
-        if(shouldAddToHistory)
+        if (shouldAddToHistory)
         {
             if (GameManager.instance.thePlayers[1].isAI)
             {
@@ -349,6 +353,7 @@ public class ScoreScreen : MonoBehaviour
             bingo.SetActive(false);
             bingo.SetActive(true);
             totalScore += 50;
+            if(AchivmentController.instance != null)
             AchivmentController.instance.Bingo();
             yield return new WaitForSeconds(0.4f);
             createdPoints[createdPoints.Count-1].transform.GetChild(0).Find("Text").GetComponent<Text>().text = totalScore.ToString();

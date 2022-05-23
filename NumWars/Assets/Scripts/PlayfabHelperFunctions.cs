@@ -12,6 +12,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using LoginIdentityProvider = PlayFab.ClientModels.LoginIdentityProvider;
 using LoginResult = PlayFab.ClientModels.LoginResult;
+using Unity.Advertisement.IosSupport;
 
 public class PlayfabHelperFunctions : MonoBehaviour
 {
@@ -1359,10 +1360,14 @@ result =>
         Debug.Log("unlinked facebook");
         MainMenuController.instance.SetFBLinked(false);
     }
+    private void RegisterAppForNetworkAttribution()
+    {
+        SkAdNetworkBinding.SkAdNetworkRegisterAppForNetworkAttribution();
+    }
     private void OnFacebookInitialized()
     {
         Debug.Log("Logging into Facebook...");
-
+        Invoke(nameof(RegisterAppForNetworkAttribution), 1);
         // Once Facebook SDK is initialized, if we are logged in, we log out to demonstrate the entire authentication cycle.
         //if (FB.IsLoggedIn)
         //    FB.LogOut();

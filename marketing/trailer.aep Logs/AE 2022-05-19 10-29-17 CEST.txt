@@ -1,0 +1,1 @@
+  2022-05-19 10:29:19 CEST: Starting composition “Comp 1”.  Output To: /Users/patrikbertilsson/Desktop/Comp 1.mov    2022-05-19 10:30:40 CEST: Finished composition “Comp 1”.  Total Time Elapsed: 1 Min, 22 SecLog closed on 2022-05-19 at 10:30:40 CEST

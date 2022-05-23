@@ -1,0 +1,1 @@
+  2022-05-19 10:33:23 CEST: Starting composition “HandTutorial”.  Output To: /Users/patrikbertilsson/Desktop/HandTutorial.mov    2022-05-19 10:33:35 CEST: Finished composition “HandTutorial”.  Total Time Elapsed: 12 SecondsLog closed on 2022-05-19 at 10:33:35 CEST

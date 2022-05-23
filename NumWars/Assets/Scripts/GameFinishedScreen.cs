@@ -50,6 +50,25 @@ public Text p1_name;
     {
         
     }
+    public void Show()
+    {
+        for (int i = 0; i < ElementsToMoveOut.Count; i++)
+        {
+            if (ElementsToMoveOut[i] != null)
+                ElementsToMoveOut[i].transform.DOMoveX(10, 0.5f).SetEase(Ease.InOutQuart);
+        }
+
+        transform.GetChild(0).gameObject.SetActive(true);
+
+        float posX = transform.GetChild(0).transform.position.x;
+        transform.GetChild(0).transform.position -= new Vector3(10, 0, 0);
+        transform.GetChild(0).DOMoveX(posX, 0.5f).SetEase(Ease.InOutQuart);
+
+        transform.GetChild(0).GetChild(0).GetComponent<Image>().color = new Color(0, 0, 0, 0);
+        transform.GetChild(0).GetChild(0).GetComponent<Image>().DOFade(107f / 255f, 0.5f).SetEase(Ease.InOutQuart).SetDelay(0.1f);
+        p1_wins_go.SetActive(true);
+        p2_wins_go.SetActive(false);
+    }
     public void Show(BoardData bf)
     {
 

@@ -1,0 +1,1 @@
+  2022-05-19 11:52:37 CEST: Starting composition “Movie 3”.  Output To: /Users/patrikbertilsson/Desktop/Movie 3.mov    2022-05-19 11:53:30 CEST: Finished composition “Movie 3”.  Total Time Elapsed: 52 SecondsLog closed on 2022-05-19 at 11:53:30 CEST

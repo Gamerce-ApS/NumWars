@@ -195,7 +195,16 @@ public class Player : MonoBehaviour
         //Board.instance.AllTilesNumbers[4] =(4);
         //Board.instance.AllTilesNumbers[5]=(14);
 
+        if (Startup._instance.isFake)
+        {
 
+            Board.instance.AllTilesNumbers[0] = (1);
+            Board.instance.AllTilesNumbers[1] = (2);
+            Board.instance.AllTilesNumbers[2] = (3);
+            Board.instance.AllTilesNumbers[3] = (4);
+            Board.instance.AllTilesNumbers[4] = (7);
+            Board.instance.AllTilesNumbers[5] = (6);
+        }
 
 
         for (int i = myTiles.Count; i < 6; i++)
@@ -214,6 +223,10 @@ public class Player : MonoBehaviour
 
         if(PlayerBoard.instance.myPlayer == this)
             Board.instance.LoadLastUsedTiles(PlayerBoard.instance.myPlayer.myTiles);
+
+
+
+ 
 
 
     }

@@ -1,13 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using GameAnalyticsSDK;
 using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using AppodealAds.Unity.Api;
-using AppodealAds.Unity.Common;
+//using AppodealAds.Unity.Api;
+//using AppodealAds.Unity.Common;
 
 
 
@@ -58,10 +59,31 @@ public class GameManager : MonoBehaviour
     public Text p2_thropies;
 
 
+    public bool isFakeGame;
 
     // Start is called before the first frame update
     void Start()
     {
+        if(isFakeGame)
+        {
+            PlayerPrefs.SetInt("BoardLayout", 0);
+            Board.instance.Init();
+
+            thePlayers.Add(new GameObject("Player1").AddComponent<Player>().Init("Patrik", 0, p1_score.gameObject));
+            thePlayers[0].AddNewPlayerTiles();
+            PlayerBoard.instance.Init(thePlayers[0]);
+            thePlayers.Add(new GameObject("Player2").AddComponent<Player>().Init("AI: ", 1, p2_score.gameObject, true));
+
+            CurrentTurn = 0;
+            return;
+        }
+
+
+
+        GameAnalytics.NewDesignEvent("GameStarted", 0);
+        // TinySauce.OnGameStarted();
+
+
         if (Startup._instance.isTutorialGame)
         {
             TutorailGO.SetActive(true);
@@ -244,6 +266,9 @@ public class GameManager : MonoBehaviour
 
     public void AddScore(Player aPlayer, int aScore, int amountOfTiles , bool updateLast=true,bool isReplay = false)
     {
+        if (isFakeGame)
+            return;
+
         if(updateLast)
         aPlayer.LastScore = aScore;
 
@@ -279,6 +304,9 @@ public class GameManager : MonoBehaviour
 
     public void UpdateUI()
     {
+        if (isFakeGame)
+            return;
+
         if (thePlayers.Count == 0)
             return;
 
@@ -298,6 +326,8 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (isFakeGame)
+            return;
 
         if (runSetupAfterTime != -1)
         {
@@ -457,7 +487,8 @@ public class GameManager : MonoBehaviour
                     WaitingOverlay.SetActive(true);
                     WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
                     WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
-                    Appodeal.show(Appodeal.INTERSTITIAL);
+                    //if (TutorialController.instance == null && Random.Range(0,100) <50)
+                    //    Appodeal.show(Appodeal.INTERSTITIAL);
                 }
             }
 
@@ -466,7 +497,8 @@ public class GameManager : MonoBehaviour
                 WaitingOverlay.SetActive(true);
                 WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
                 WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
-                Appodeal.show(Appodeal.INTERSTITIAL);
+                //if (TutorialController.instance == null && Random.Range(0, 100) < 50)
+                //    Appodeal.show(Appodeal.INTERSTITIAL);
             }
                 
 
@@ -636,9 +668,9 @@ public class GameManager : MonoBehaviour
     }
     public void ClickBack()
     {
+       // TinySauce.OnGameFinished(0);
 
-
-        if(thePlayers[1].isAI)
+        if (thePlayers[1].isAI)
         {
             if( CurrentTurn == 1 )
             {

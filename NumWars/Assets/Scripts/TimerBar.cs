@@ -48,10 +48,10 @@ public class TimerBar : MonoBehaviour
         long timeToDeadline = Future - a;
 
         TimeSpan time = TimeSpan.FromSeconds(timeToDeadline);
-        _timeLeftLabel.text = time.Hours+":"+ time.Minutes+":"+ time.Seconds;
+        _timeLeftLabel.text = (int)time.TotalHours+":"+ time.Minutes+":"+ time.Seconds;
 
-
-        _bar.fillAmount = (timeToDeadline / (60f * 60f * 24f * 2f));
+        
+        _bar.fillAmount = (timeToDeadline / (Startup.TIMEOUT));
 
     }
 }

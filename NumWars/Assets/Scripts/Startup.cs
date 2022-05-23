@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
+using GameAnalyticsSDK;
 using Photon.Pun;
 using Photon.Realtime;
 using PlayFab;
@@ -11,8 +12,8 @@ using Unity.Notifications.iOS;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using AppodealAds.Unity.Api;
-using AppodealAds.Unity.Common;
+//using AppodealAds.Unity.Api;
+//using AppodealAds.Unity.Common;
 
 
 
@@ -49,14 +50,16 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public static string LIVE_VERSION = "2";
 
-   // public static long TIMEOUT = 60+60+60;
+    // public static long TIMEOUT = 60+60+60;
 
+    public bool isFake;
+    public GameObject ConfetiPart;
     // Start is called before the first frame update
     void Start()
     {
+        GameAnalytics.Initialize();
 
-        
-        Appodeal.initialize("91f0aae11c6d5b4fe09000ad17edf290d41803497b6ff82f", Appodeal.INTERSTITIAL | Appodeal.REWARDED_VIDEO, true);
+        //Appodeal.initialize("91f0aae11c6d5b4fe09000ad17edf290d41803497b6ff82f", Appodeal.INTERSTITIAL | Appodeal.REWARDED_VIDEO, true);
 
 
         Application.runInBackground = true;
@@ -75,6 +78,10 @@ public class Startup : MonoBehaviourPunCallbacks
 
         DontDestroyOnLoad(gameObject);
         _instance = this;
+
+        if (isFake)
+            return;
+
         _PlayfabHelperFunctions = gameObject.GetComponent<PlayfabHelperFunctions>();
         Board.instance.Init();
 

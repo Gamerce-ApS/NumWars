@@ -38,7 +38,7 @@ public  class BoardData
         {
             p2_tiles.Add(ap2_tiles[i]);
         }
-    }
+    } 
 
     public string player1_PlayfabId = "";
     public string player2_PlayfabId = "";
@@ -206,7 +206,11 @@ public class Board : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
+        // if(Startup._instance.isFake)
+        //{
+        //    ShowExtraTiles(false);
+        //    ShowExtraTiles2(false);
+        //}
     }
     public void Init()
     {
@@ -1082,6 +1086,33 @@ public class Board : MonoBehaviour
         return amount;
 
     }
+    public void ShowExtraTiles(bool activate)
+    {
+        for (int i = 0; i < BoardTiles.Count; i++)
+        {
+            if (BoardTiles[i].myTileType == TileType.MultiplierX2 || BoardTiles[i].myTileType == TileType.MultiplierX3 || BoardTiles[i].myTileType == TileType.MultiplierX4)
+            {
+                BoardTiles[i].transform.GetChild(0).gameObject.SetActive(activate);
+                BoardTiles[i].transform.GetChild(0).gameObject.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+                BoardTiles[i].transform.GetChild(0).DOScale(new Vector3(1f, 1f, 1f), 0.4f).SetEase(Ease.OutBounce);
+
+            }
+        }
+    }
+
+    public void ShowExtraTiles2(bool activate)
+    {
+        for (int i = 0; i < BoardTiles.Count; i++)
+        {
+            if (BoardTiles[i].myTileType == TileType.AdditionTile || BoardTiles[i].myTileType == TileType.DivisionTile || BoardTiles[i].myTileType == TileType.SubtractionTile || BoardTiles[i].myTileType == TileType.MultiplicationTile)
+            {
+                BoardTiles[i].transform.GetChild(0).gameObject.SetActive(activate);
+                BoardTiles[i].transform.GetChild(0).gameObject.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+                BoardTiles[i].transform.GetChild(0).DOScale(new Vector3(1f, 1f, 1f), 0.4f).SetEase(Ease.OutBounce);
+            }
+        }
+    }
+
     public void PressContinue()
     {
 
@@ -1168,9 +1199,35 @@ public class Board : MonoBehaviour
     void Update()
     {
 
-      
+        if (Input.GetKeyUp(KeyCode.Q))
+            PressContinue();
+        if (Input.GetKeyUp(KeyCode.W))
+            GameManager.instance.CurrentTurn = 0;
 
-        if( SceneManager.GetActiveScene().name == "MenuScene")
+        if (Input.GetKeyUp(KeyCode.E))
+            ShowExtraTiles(true);
+        if (Input.GetKeyUp(KeyCode.R))
+            ShowExtraTiles2(true);
+
+        if (Input.GetKeyUp(KeyCode.T))
+        {
+            GameFinishedScreen.instance.Show();
+        }
+        if (Input.GetKeyUp(KeyCode.A))
+        {
+            Startup._instance.ConfetiPart.SetActive(false);
+            Startup._instance.ConfetiPart.SetActive(true);
+
+        }
+
+
+        //if (Input.GetKeyUp(KeyCode.T))
+        //    ShowExtraTiles2(false);
+        //if (Input.GetKeyUp(KeyCode.Y))
+        //    ShowExtraTiles2(true);
+
+
+        if ( SceneManager.GetActiveScene().name == "MenuScene")
         {
             return;
         }

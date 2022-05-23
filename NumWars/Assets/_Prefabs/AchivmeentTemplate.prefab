@@ -492,7 +492,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &7532766042779355504
 RectTransform:
   m_ObjectHideFlags: 0
@@ -592,7 +592,18 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7532766042779355502}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 318266968111873301}
+        m_MethodName: Claim
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &7532766042937432667
 GameObject:
   m_ObjectHideFlags: 0
@@ -761,6 +772,7 @@ GameObject:
   - component: {fileID: 7532766042990121737}
   - component: {fileID: 7532766042990121736}
   - component: {fileID: 7532766042990121739}
+  - component: {fileID: 318266968111873301}
   m_Layer: 5
   m_Name: AchivmeentTemplate
   m_TagString: Untagged
@@ -872,18 +884,28 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7532766042990121736}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: OpenSetNameWidnow
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
+--- !u!114 &318266968111873301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7532766042990121741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4d6ce454590a438a98fb19126c71203, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  myAchivment:
+    myID: 0
+    title: 
+    description: 
+    current: 0
+    target: 0
+    reward: 0
+    myAchivmentType: 0
+    isClaimed: 0
 --- !u!1 &7532766043126917773
 GameObject:
   m_ObjectHideFlags: 0

@@ -30,6 +30,8 @@ public class AchivmentWindow : MonoBehaviour
 
             GameObject go = GameObject.Instantiate(template, _parent);
 
+            go.GetComponent<AchivmentItem>().myAchivment = current;
+
             go.SetActive(true);
 
             go.transform.GetChild(0).GetComponent<Text>().text = current.title;
