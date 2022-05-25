@@ -1199,26 +1199,26 @@ public class Board : MonoBehaviour
     void Update()
     {
 
-        if (Input.GetKeyUp(KeyCode.Q))
-            PressContinue();
-        if (Input.GetKeyUp(KeyCode.W))
-            GameManager.instance.CurrentTurn = 0;
+        //if (Input.GetKeyUp(KeyCode.Q))
+        //    PressContinue();
+        //if (Input.GetKeyUp(KeyCode.W))
+        //    GameManager.instance.CurrentTurn = 0;
 
-        if (Input.GetKeyUp(KeyCode.E))
-            ShowExtraTiles(true);
-        if (Input.GetKeyUp(KeyCode.R))
-            ShowExtraTiles2(true);
+        //if (Input.GetKeyUp(KeyCode.E))
+        //    ShowExtraTiles(true);
+        //if (Input.GetKeyUp(KeyCode.R))
+        //    ShowExtraTiles2(true);
 
-        if (Input.GetKeyUp(KeyCode.T))
-        {
-            GameFinishedScreen.instance.Show();
-        }
-        if (Input.GetKeyUp(KeyCode.A))
-        {
-            Startup._instance.ConfetiPart.SetActive(false);
-            Startup._instance.ConfetiPart.SetActive(true);
+        //if (Input.GetKeyUp(KeyCode.T))
+        //{
+        //    GameFinishedScreen.instance.Show();
+        //}
+        //if (Input.GetKeyUp(KeyCode.A))
+        //{
+        //    Startup._instance.ConfetiPart.SetActive(false);
+        //    Startup._instance.ConfetiPart.SetActive(true);
 
-        }
+        //}
 
 
         //if (Input.GetKeyUp(KeyCode.T))

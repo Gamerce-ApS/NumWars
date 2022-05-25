@@ -31,6 +31,9 @@ public class ProfilePictureManager : MonoBehaviour
         {
             if (myPictures[i].URL == url)
             {
+                if (aImage == null || aImage.rectTransform == null)
+                    return;
+
                 aImage.sprite = myPictures[i].theSprite;
                 aImage.rectTransform.sizeDelta = new Vector2(88, 88);
                 if(callback != null)
@@ -67,7 +70,7 @@ public class ProfilePictureManager : MonoBehaviour
         Texture2D profilePic = www.texture;
         ProfileData pf = new ProfileData();
         pf.URL = aURL;
-        pf.theSprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+        pf.theSprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.width , profilePic.height), new Vector2());
         myPictures.Add(pf);
         aImage.sprite = pf.theSprite;
         aImage.rectTransform.sizeDelta = new Vector2(88, 88);
@@ -82,7 +85,7 @@ public class ProfilePictureManager : MonoBehaviour
         Texture2D profilePic = www.texture;
         ProfileData pf = new ProfileData();
         pf.URL = aURL;
-        pf.theSprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.height, profilePic.width), new Vector2());
+        pf.theSprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.width, profilePic.height), new Vector2());
         myPictures.Add(pf);
         aImage = pf.theSprite.texture;
 //        aImage.rectTransform.sizeDelta = new Vector2(88, 88);

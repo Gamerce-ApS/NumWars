@@ -19,7 +19,7 @@ using UnityEngine.UI;
 
 public class Startup : MonoBehaviourPunCallbacks
 {
-
+    public Sprite EmptyProfilePicture;
     public PlayFab.ClientModels.PlayerProfileModel PlayerProfile;
     public UserAccountInfo UserAccount;
     
@@ -48,7 +48,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public static long TIMEOUT = 60 * 60 * 24 * 2;
 
-    public static string LIVE_VERSION = "2";
+    public static string LIVE_VERSION = "3";
 
     // public static long TIMEOUT = 60+60+60;
 
@@ -103,7 +103,7 @@ public class Startup : MonoBehaviourPunCallbacks
         StartCoroutine(RegisterPush());
 
 
-        if (PlayerPrefs.GetInt("Music", 0) == 0)
+        if (PlayerPrefs.GetInt("Music", 1) == 0)
         {
 
             Startup._instance.GetComponent<AudioSource>().volume = 0;
@@ -319,7 +319,7 @@ public class Startup : MonoBehaviourPunCallbacks
             Debug.Log("Joined your own room, waiting for other player");
             if(SearchingForGameObject == null)
             {
-                SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
+                SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent_updating);
                 SearchingForGameObject.transform.SetAsFirstSibling();
                 SearchingForGameObject.SetActive(true);
                 Vector3 rc = SearchingForGameObject.GetComponent<RectTransform>().localPosition;
@@ -383,9 +383,9 @@ public class Startup : MonoBehaviourPunCallbacks
             PhotonNetwork.LeaveRoom();
         }
 
-        for(int i = 0; i < MainMenuController.instance._GameListParent.childCount;i++)
+        for(int i = 0; i < MainMenuController.instance._GameListParent_updating.childCount;i++)
         {
-            GameListItem it = MainMenuController.instance._GameListParent.GetChild(i).GetComponent<GameListItem>();
+            GameListItem it = MainMenuController.instance._GameListParent_updating.GetChild(i).GetComponent<GameListItem>();
 
             if(it != null)
             {
@@ -396,7 +396,7 @@ public class Startup : MonoBehaviourPunCallbacks
                     Gname = "1_";
                 Gname += it.bd.RoomName;
 
-                MainMenuController.instance._GameListParent.GetChild(i).name = Gname;
+                MainMenuController.instance._GameListParent_updating.GetChild(i).name = Gname;
             }
  
 
@@ -406,7 +406,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
         List<Transform> children = new List<Transform>();
-        foreach (Transform child in MainMenuController.instance._GameListParent)
+        foreach (Transform child in MainMenuController.instance._GameListParent_updating)
             children.Add(child);
         children = children.OrderBy(o => o.name).ToList();
 
@@ -417,7 +417,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
         foreach (Transform child in children)
         {
-            child.parent = MainMenuController.instance._GameListParent;
+            child.parent = MainMenuController.instance._GameListParent_updating;
 
             Vector3 rc = child.GetComponent<RectTransform>().localPosition;
             child.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
@@ -434,7 +434,7 @@ public class Startup : MonoBehaviourPunCallbacks
         //If no loading in progress we know it's the last call.
         if (LoadingOverlay.instance.LoadingCall.Count== 0)
         {
-            GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent);
+            GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent_updating);
 
             string[] stringSeparators = new string[] { "[splitter]" };
             string[] oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
@@ -444,15 +444,32 @@ public class Startup : MonoBehaviourPunCallbacks
                 if (i>=0 && oldGameList[i].Length > 2)
                 {
                     BoardData bd = new BoardData(CompressString.StringCompressor.DecompressString(oldGameList[i]));
-                    GameObject obj2 = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._GameListItem, MainMenuController.instance._GameListParent);
+                    GameObject obj2 = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._GameListItem, MainMenuController.instance._GameListParent_updating);
                     obj2.GetComponent<GameListItem>().Init(bd, true);
                 }
 
             }
-            ScrollListBasedOnItems[] list = GameObject.FindObjectsOfType<ScrollListBasedOnItems>();
-            for(int i = 0; i< list.Length;i++)
+  
+
+            //
+
+
+
+            foreach (Transform child in MainMenuController.instance._GameListParent.transform)
             {
-                if(list[i].gameObject.activeSelf)
+                GameObject.Destroy(child.gameObject);
+            }
+            foreach (Transform child in MainMenuController.instance._GameListParent_updating.transform)
+            {
+                GameObject.Instantiate(child, MainMenuController.instance._GameListParent.transform);
+            }
+
+
+
+            ScrollListBasedOnItems[] list = GameObject.FindObjectsOfType<ScrollListBasedOnItems>();
+            for (int i = 0; i < list.Length; i++)
+            {
+                if (list[i].gameObject.activeSelf)
                     list[i].RefreshLayout();
             }
         }
@@ -460,6 +477,9 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
 
+
+
+     
 
 
 

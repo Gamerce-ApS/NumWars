@@ -19,6 +19,7 @@ public class MainMenuController : MonoBehaviour
     public Text _Name;
     public Text _Thropies;
     public Transform _GameListParent;
+    public Transform _GameListParent_updating;
     public GameObject NewGameWindow;
     public Vector3 _TextFlyInBoxoriginalPos;
 
@@ -94,7 +95,7 @@ public class MainMenuController : MonoBehaviour
     }
     public void PressUpdate()
     {
-        Application.OpenURL(Startup._instance.StaticServerData["LIVE_VERSION"]);
+        Application.OpenURL(Startup._instance.StaticServerData["UpdateLink"]);
     }
     public void PressPlayAI()
     {
@@ -161,6 +162,13 @@ public void PressOpenFriendsWindow()
         NewGameWindow.transform.GetChild(0).GetComponent<Image>().DOFade(0, 157f / 255f).SetEase(Ease.InOutQuart);
         NewGameWindow.transform.GetChild(1).transform.DOMoveX(_TextFlyInBoxoriginalPos.x + 10, 0.3f).SetEase(Ease.InOutQuart).OnComplete( ()=> { NewGameWindow.SetActive(false); } );
     }
+    public void CloseSetNameWindow()
+    {
+        Startup._instance.PlaySoundEffect(0);
+        SetNameGO.SetActive(false);
+
+    }
+    public GameObject SetNameCloseButton;
     public void OpenSetNameWidnow(bool isAnewAccount = false)
     {
         Startup._instance.PlaySoundEffect(0);
@@ -171,9 +179,11 @@ public void PressOpenFriendsWindow()
         {
             // setNameTextLabel.text = "What's your name?";
             FacebookButton.SetActive(true);
+            SetNameCloseButton.SetActive(false);
         }
         else
         {
+            SetNameCloseButton.SetActive(true);
             setNameTextLabel.text = _Name.text;
             FacebookButton.SetActive(false);
         }
@@ -326,6 +336,11 @@ public void PressOpenFriendsWindow()
     {
         Startup._instance.PlaySoundEffect(0);
     }
+    public GameObject infoWidnow;
+    public void OpenInformation()
+    {
+        infoWidnow.SetActive(true);
+    }
     public void OpenSettings()
     {
         Startup._instance.PlaySoundEffect(0);
@@ -348,7 +363,20 @@ public void PressOpenFriendsWindow()
         }
 
 
+        bool isLinked = false;
+        UserFacebookInfo info = null;
+        if(Startup._instance.UserAccount != null)
+            info =Startup._instance.UserAccount.FacebookInfo;
+        if (info != null && info.FacebookId != null && info.FacebookId.Length > 0)
+        {
+      
+            MainMenuController.instance.SetFBLinked(true);
 
+        }
+        else
+            MainMenuController.instance.SetFBLinked(false);
+
+      
 
     }
     public void CloseSettings()

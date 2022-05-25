@@ -11,6 +11,7 @@ public class AchivmentWindow : MonoBehaviour
     public Sprite Sprite_InProgress;
     public Sprite Sprite_Done;
 
+    public GameObject IntroText;
     // Start is called before the first frame update
     void Start()
     {
@@ -23,8 +24,10 @@ public class AchivmentWindow : MonoBehaviour
         {
             GameObject.Destroy(child.gameObject);
         }
+        GameObject intro = GameObject.Instantiate(IntroText, _parent);
+        intro.SetActive(true);
 
-        for(int i = 0; i< AchivmentController.instance.myAchivments.Count;i++)
+        for (int i = 0; i< AchivmentController.instance.myAchivments.Count;i++)
         {
             Achivment current = AchivmentController.instance.myAchivments[i];
 
@@ -47,6 +50,7 @@ public class AchivmentWindow : MonoBehaviour
             {
                 go.transform.GetChild(4).gameObject.SetActive(false);
                 go.transform.GetChild(5).gameObject.SetActive(true);
+                go.transform.GetChild(6).gameObject.SetActive(false);
             }
             else
             {
@@ -54,11 +58,16 @@ public class AchivmentWindow : MonoBehaviour
                 {
                     go.transform.GetChild(4).gameObject.SetActive(true);
                     go.transform.GetChild(5).gameObject.SetActive(false);
+
+                    go.transform.GetChild(6).gameObject.SetActive(false);
                 }
                 else
                 {
                     go.transform.GetChild(4).gameObject.SetActive(false);
                     go.transform.GetChild(5).gameObject.SetActive(false);
+                    go.transform.GetChild(6).gameObject.SetActive(true);
+                    go.transform.GetChild(6).GetChild(0).GetComponent<Text>().text = "+" + current.reward + "xp";
+
                 }
 
             }

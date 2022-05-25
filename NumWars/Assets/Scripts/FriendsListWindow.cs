@@ -203,6 +203,10 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
     }
     public void AddeFriendCallback(AddFriendResult result)
     {
+        foreach (Transform child in _parent)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
         RequestLeaderboard();
 
         errorText.text = "";

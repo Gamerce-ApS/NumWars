@@ -29,7 +29,20 @@ public PlayerProfileModel theProfile;
 
     public void InitUser(int aUserId)
     {
-        if(aUserId == 1 && GameManager.instance.thePlayers[1].isAI == false)
+        _name.text = "";
+        _thropies.text = "";
+        _level.text = "";
+        amountCompletedText.text = "";
+        winT.text = "";
+        LoseT.text = "";
+        _profilePic.enabled = false;
+        for (int i = 0; i < statsData.Count; i++)
+        {
+            statsData[i].SetText("");
+        }
+
+
+        if (aUserId == 1 && GameManager.instance.thePlayers[1].isAI == false)
         {
             PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
             {
@@ -133,6 +146,10 @@ public PlayerProfileModel theProfile;
         {
             ProfilePictureManager.instance.SetPicture(aURL, img);
             img.enabled = true;
+        }
+        else
+        {
+            img.sprite = Startup._instance.EmptyProfilePicture;
         }
 
     
@@ -309,6 +326,12 @@ public PlayerProfileModel theProfile;
     public void RemovedSucess(RemoveFriendResult result)
     {
         FriendsListWindow.instance.UserInfoWindow.SetActive(false);
+
+        foreach (Transform child in FriendsListWindow.instance._parent)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+
         FriendsListWindow.instance.RequestLeaderboard();
     }
     public void FailureCallback(PlayFabError error)

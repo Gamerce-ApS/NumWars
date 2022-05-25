@@ -40,4 +40,8 @@ public class StatsDataText : MonoBehaviour
             value = "F2";
         transform.GetChild(1).GetComponent<Text>().text = v.ToString(value);
     }
+    public void SetText(string aText)
+    {
+        transform.GetChild(1).GetComponent<Text>().text = aText;
+    }
 }

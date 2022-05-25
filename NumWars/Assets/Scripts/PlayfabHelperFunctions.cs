@@ -43,7 +43,11 @@ public class PlayfabHelperFunctions : MonoBehaviour
         else
             playerID = "asdafsfsdf2";
 
-          // playerID = "asdafsfsdf11";
+        //  playerID = "asdafsfsdf11";
+
+        // playerID = "Villads123";
+        //playerID = "PaxMM";
+       // playerID = "steffen123";
         instance = this;
         LoadingOverlay.instance.ShowLoadingFullscreen("LoginWithCustomID");
 
@@ -737,10 +741,11 @@ result =>
     bool updateHighscoreOnce = false;
     public void UpdateGameList()
     {
-        foreach (Transform child in MainMenuController.instance._GameListParent.transform)
+
+        foreach (Transform child in MainMenuController.instance._GameListParent_updating.transform)
         {
 
-            if(child.gameObject.name.Contains("_SerachingForGame") == false)
+            if (child.gameObject.name.Contains("_SerachingForGame") == false)
             {
                 GameObject.Destroy(child.gameObject);
             }
@@ -772,7 +777,7 @@ result =>
             BoardData aiGameBoard = new BoardData(jsonAIBoard);
 
            
-                GameObject obj2 = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent);
+                GameObject obj2 = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent_updating);
             Vector3 rc = obj2.GetComponent<RectTransform>().localPosition;
             obj2.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
             obj2.GetComponent<GameListItem>().Init(aiGameBoard, false, true);
@@ -825,7 +830,7 @@ result =>
                         }
                         else if(bd.player2_PlayfabId != "")
                         {
-                            GameObject obj = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent);
+                            GameObject obj = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent_updating);
                             Vector3 rc = obj.GetComponent<RectTransform>().localPosition;
                             obj.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
                             obj.GetComponent<GameListItem>().Init(bd);
@@ -834,7 +839,7 @@ result =>
                         {
                             if(Startup._instance.SearchingForGameObject == null)
                             {
-                                Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
+                                Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent_updating);
                                 Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
                                 Startup._instance.SearchingForGameObject.SetActive(true);
                                 Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
@@ -1561,7 +1566,7 @@ result =>
 
 
 
-        MainMenuController.instance.ProfilePicture2.sprite = Sprite.Create((Texture2D)MainMenuController.instance.ProfilePicture.sprite.texture, new Rect(0, 0, MainMenuController.instance.ProfilePicture.sprite.texture.height, MainMenuController.instance.ProfilePicture.sprite.texture.width), new Vector2());
+        MainMenuController.instance.ProfilePicture2.sprite = Sprite.Create((Texture2D)MainMenuController.instance.ProfilePicture.sprite.texture, new Rect(0, 0, MainMenuController.instance.ProfilePicture.sprite.texture.width , MainMenuController.instance.ProfilePicture.sprite.texture.height), new Vector2());
         MainMenuController.instance.ProfilePicture2.rectTransform.sizeDelta = new Vector2(88, 88);
         MainMenuController.instance.ProfilePicture2.enabled = true;
 

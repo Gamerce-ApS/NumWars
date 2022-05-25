@@ -257,11 +257,46 @@ public class AchivmentController
                 myAchivments[i].current++;
             }
         }
+
+        float totalGames = 0;
+        float totalScore = 0;
         for (int i = 0; i <myStatistics.Count; i++)
         {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.WIN)
+            {
+                totalGames += myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.TIE)
+            {
+                totalGames += myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.LOST)
+            {
+                totalGames += myStatistics[i].current;
+            }
+
             if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.LOST)
             {
                 myStatistics[i].current++;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.SCORE)
+            {
+                totalScore = myStatistics[i].current;
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.HGS)
+            {
+                if (score > myStatistics[i].current)
+                {
+                    myStatistics[i].current = score;
+                }
+            }
+        }
+
+        for (int i = 0; i < myStatistics.Count; i++)
+        {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.AGS)
+            {
+                myStatistics[i].current = (int)(totalScore / totalGames);
             }
         }
         UpdatePlayfab();
