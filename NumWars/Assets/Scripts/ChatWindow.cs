@@ -72,7 +72,7 @@ public class ChatWindow : MonoBehaviour
             }
         }, result => {
 
-          LoadAvatarURL(result.PlayerProfile.AvatarUrl);
+          LoadAvatarURL(result.PlayerProfile.AvatarUrl, Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
  
 
         }, (error) => {
@@ -249,16 +249,16 @@ public class ChatWindow : MonoBehaviour
     public Image me;
 
 
-    public void LoadAvatarURL(string aURL)
+    public void LoadAvatarURL(string aURL,string playfabID)
     {
 
-        ProfilePictureManager.instance.SetPicture(aURL, otherP, OnDoneCallback);
+        ProfilePictureManager.instance.SetPicture(aURL, playfabID, otherP, OnDoneCallback);
 
         //   StartCoroutine(GetFBProfilePicture(aURL, this));
     }
     public void OnDoneCallback()
     {
-        ProfilePictureManager.instance.SetPicture(Startup._instance.avatarURL, me, OnDoneCallback2);
+        ProfilePictureManager.instance.SetPicture(Startup._instance.avatarURL,Startup._instance.MyPlayfabID, me, OnDoneCallback2);
 
     }
     public void OnDoneCallback2()

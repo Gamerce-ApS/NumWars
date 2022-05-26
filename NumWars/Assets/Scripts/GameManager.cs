@@ -679,9 +679,12 @@ public class GameManager : MonoBehaviour
                 return;
             }
         }
+
+
+
         SceneManager.LoadScene(0);
         Startup._instance.Refresh(0.1f);
-
+        Startup._instance.LoadGameList(0.1f);
         if (Startup._instance.avatarURL != null && Startup._instance.avatarURL.Length > 0)
         {
             PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);

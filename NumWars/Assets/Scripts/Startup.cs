@@ -36,6 +36,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public List<BoardData> openGamesList = new List<BoardData>();
 
+
     PlayfabHelperFunctions _PlayfabHelperFunctions;
 
 
@@ -239,6 +240,10 @@ public class Startup : MonoBehaviourPunCallbacks
             }
 
         }
+
+
+        if (Input.GetKeyUp(KeyCode.L))
+            LoadGameList(0.1f);
     }
     public void ChangeValueFor(string aEntry,string aValue)
     {
@@ -461,7 +466,12 @@ public class Startup : MonoBehaviourPunCallbacks
             }
             foreach (Transform child in MainMenuController.instance._GameListParent_updating.transform)
             {
-                GameObject.Instantiate(child, MainMenuController.instance._GameListParent.transform);
+                Transform go2 = GameObject.Instantiate(child, MainMenuController.instance._GameListParent.transform);
+
+                if (go2.GetComponent<GameListItem>() != null)
+                    child.GetComponent<GameListItem>().OnPictureCallback = go2.GetComponent<GameListItem>();
+
+                
             }
 
 
@@ -472,6 +482,11 @@ public class Startup : MonoBehaviourPunCallbacks
                 if (list[i].gameObject.activeSelf)
                     list[i].RefreshLayout();
             }
+
+
+
+            SaveGameList();
+
         }
 
 
@@ -487,6 +502,168 @@ public class Startup : MonoBehaviourPunCallbacks
 
     }
 
+    [System.Serializable]
+    public class BoardList
+    {
+        public List<BoardData> myOpenGames;
+    }
+
+    public void SaveGameList()
+    {
+        BoardList bl = new BoardList();
+        bl.myOpenGames = Startup._instance.openGamesList;
+        string data = JsonUtility.ToJson(bl);
+        PlayerPrefs.SetString("SavedGameList", data);
+    }
+    public void LoadGameList(float aTime)
+    {
+        StartCoroutine(LoadGameListIE(aTime));
+    }
+    IEnumerator LoadGameListIE(float aTime)
+    {
+        yield return new WaitForSeconds(aTime);
+        
+        BoardList gameList = JsonUtility.FromJson<BoardList>( PlayerPrefs.GetString("SavedGameList") );
+
+        foreach (Transform child in MainMenuController.instance._GameListParent.transform)
+        {
+
+            if (child.gameObject.name.Contains("_SerachingForGame") == false)
+            {
+                GameObject.Destroy(child.gameObject);
+            }
+            else
+            {
+            }
+        }
+
+        Startup._instance.openGamesList.Clear();
+
+        string jsonAIBoard = PlayerPrefs.GetString("AIGame", "");
+        if (jsonAIBoard != "")
+        {
+            BoardData aiGameBoard = new BoardData(jsonAIBoard);
+            GameObject obj2 = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._GameListItem, MainMenuController.instance._GameListParent);
+            Vector3 rc = obj2.GetComponent<RectTransform>().localPosition;
+            obj2.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+            obj2.GetComponent<GameListItem>().Init(aiGameBoard, false, true);
+            obj2.name = "0_" + obj2.name;
+        }
+
+
+        for (int i = 0; i < gameList.myOpenGames.Count; i++)
+        {
+
+
+                BoardData bd = gameList.myOpenGames[i];
+
+                if (bd.player1_abandon == "1" || bd.player2_abandon == "1")
+                {
+
+                }
+                else if (bd.player2_PlayfabId != "")
+                {
+                    GameObject obj2 = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._GameListItem, MainMenuController.instance._GameListParent);
+                    Vector3 rc = obj2.GetComponent<RectTransform>().localPosition;
+                    obj2.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+                    obj2.GetComponent<GameListItem>().Init(bd);
+
+
+                    GameListItem it = obj2.GetComponent<GameListItem>();
+
+                    if (it != null)
+                    {
+                        string Gname = "";
+                        if (it.YourTurnGO.activeSelf)
+                            Gname = "0_";
+                        else
+                            Gname = "1_";
+                        Gname += it.bd.RoomName;
+
+                    obj2.name = Gname;
+                    }
+
+
+            }
+                else
+                {
+                    if (Startup._instance.SearchingForGameObject == null)
+                    {
+                        Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
+                        Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+                        Startup._instance.SearchingForGameObject.SetActive(true);
+                        Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                        Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+                        Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = bd.RoomName;
+                    }
+                    else
+                    {
+                        Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+                        Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                        Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
+
+                    }
+
+                }
+                Startup._instance.openGamesList.Add(bd);
+            
+
+
+            
+        }
+
+
+        List<Transform> children = new List<Transform>();
+        foreach (Transform child in MainMenuController.instance._GameListParent)
+            children.Add(child);
+        children = children.OrderBy(o => o.name).ToList();
+
+        foreach (Transform child in children)
+        {
+            child.parent = null;
+        }
+
+        foreach (Transform child in children)
+        {
+            child.parent = MainMenuController.instance._GameListParent;
+
+            Vector3 rc = child.GetComponent<RectTransform>().localPosition;
+            child.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
+        }
+
+
+
+
+
+        GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent);
+
+            string[] stringSeparators = new string[] { "[splitter]" };
+            string[] oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
+            for (int i = oldGameList.Length - 1; i > oldGameList.Length - 10; i--)
+            {
+
+                if (i >= 0 && oldGameList[i].Length > 2)
+                {
+                    BoardData bd = new BoardData(CompressString.StringCompressor.DecompressString(oldGameList[i]));
+                    GameObject obj2 = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._GameListItem, MainMenuController.instance._GameListParent);
+                    obj2.GetComponent<GameListItem>().Init(bd, true);
+                }
+
+            }
+
+
+
+
+
+            ScrollListBasedOnItems[] list = GameObject.FindObjectsOfType<ScrollListBasedOnItems>();
+            for (int i = 0; i < list.Length; i++)
+            {
+                if (list[i].gameObject.activeSelf)
+                    list[i].RefreshLayout(0.0f);
+            }
+
+
+    }
     public void SetPlayfabSecondPlayerInRoom(string player1_playfabID,string player2_playfabID,string player1_displayName, string roomName, string boardLayout)
     {
         // The game can start

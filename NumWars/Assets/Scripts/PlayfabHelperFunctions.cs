@@ -1051,6 +1051,30 @@ result =>
             SendPushToUser(userToSend,"", "It's your turn against "+displayName +"!");
 
 
+
+            string bliststring = PlayerPrefs.GetString("SavedGameList");
+            if(bliststring != null)
+            {
+                Startup.BoardList gameList = JsonUtility.FromJson<Startup.BoardList>(bliststring);
+
+                for (int i = 0; i < gameList.myOpenGames.Count; i++)
+                {
+                    if (gameList.myOpenGames[i].RoomName == aBoarddata.RoomName)
+                    {
+                        gameList.myOpenGames[i] = aBoarddata;
+
+
+                        string data = JsonUtility.ToJson(gameList);
+                        PlayerPrefs.SetString("SavedGameList", data);
+
+                    }
+                }
+            }
+       
+
+
+
+
         },
         error =>
         {
@@ -1553,7 +1577,7 @@ result =>
 
 
        
-        ProfilePictureManager.instance.SetPicture(aURL, MainMenuController.instance.ProfilePicture, CallBackProfilePicture);
+        ProfilePictureManager.instance.SetPicture(aURL, Startup._instance.MyPlayfabID , MainMenuController.instance.ProfilePicture, CallBackProfilePicture);
        
 
 

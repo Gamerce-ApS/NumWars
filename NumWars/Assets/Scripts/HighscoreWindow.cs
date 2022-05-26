@@ -77,7 +77,7 @@ public class HighscoreWindow : MonoBehaviour
 
             if (avatarURL.Length>0)
             {
-                ProfilePictureManager.instance.SetPicture(avatarURL, img);
+                ProfilePictureManager.instance.SetPicture(avatarURL, result.Leaderboard[i].Profile.PlayerId, img);
                 //StartCoroutine(SetPicture(avatarURL, img));
 
             }

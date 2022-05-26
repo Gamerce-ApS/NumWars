@@ -30104,6 +30104,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   parent: {fileID: 984789655}
+  parent2: {fileID: 383679419}
   visualImage: {fileID: 1580222655}
   rectTranform: {fileID: 805690403}
   startValue: 1300
@@ -32999,7 +33000,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 0.71
-  m_Text: You gain 2,3 or 4 times the points on the tile placed on this tile.
+  m_Text: You gain 2,3 or 4 times the points on the number placed on these tiles.
 --- !u!222 &871237779
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -45767,6 +45768,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   parent: {fileID: 1207826924}
+  parent2: {fileID: 0}
   visualImage: {fileID: 0}
   rectTranform: {fileID: 1207826924}
   startValue: 300
@@ -73822,6 +73824,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   parent: {fileID: 1948598911}
+  parent2: {fileID: 0}
   visualImage: {fileID: 0}
   rectTranform: {fileID: 1948598911}
   startValue: 300

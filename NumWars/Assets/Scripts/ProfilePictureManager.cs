@@ -7,6 +7,7 @@ public class ProfileData
 {
     public string URL;
     public Sprite theSprite;
+    public string playfabID;
 }
 
 public class ProfilePictureManager : MonoBehaviour
@@ -25,11 +26,11 @@ public class ProfilePictureManager : MonoBehaviour
         
     }
 
-    public void SetPicture(string url,Image aImage, System.Action callback=null)
+    public void SetPicture(string url, string playfabID, Image aImage, System.Action callback=null)
     {
         for(int i = 0; i < myPictures.Count;i++)
         {
-            if (myPictures[i].URL == url)
+            if (myPictures[i].URL == url && myPictures[i].playfabID == playfabID)
             {
                 if (aImage == null || aImage.rectTransform == null)
                     return;
@@ -43,9 +44,27 @@ public class ProfilePictureManager : MonoBehaviour
 
                 
         }
-        StartCoroutine(SetPictureIE(url, aImage, callback));
+        StartCoroutine(SetPictureIE(url, playfabID, aImage, callback));
     }
-    public void SetPicture(string url, Texture2D aImage, System.Action callback = null)
+    public bool HasEntry(string aPlayfabID)
+    {
+        for (int i = 0; i < myPictures.Count; i++)
+        {
+            if (myPictures[i].playfabID == aPlayfabID)
+                return true;
+        }
+        return false;
+    }
+    public string GetURL(string aPlayfabID)
+    {
+        for (int i = 0; i < myPictures.Count; i++)
+        {
+            if (myPictures[i].playfabID == aPlayfabID)
+                return myPictures[i].URL;
+        }
+        return "";
+    }
+    public void SetPicture(string url, string playfabID, Texture2D aImage, System.Action callback = null)
     {
         for (int i = 0; i < myPictures.Count; i++)
         {
@@ -60,10 +79,10 @@ public class ProfilePictureManager : MonoBehaviour
 
 
         }
-        StartCoroutine(SetPictureIE(url, aImage, callback));
+        StartCoroutine(SetPictureIE(url, playfabID, aImage, callback));
     }
 
-    private IEnumerator SetPictureIE(string aURL, Image aImage, System.Action callback = null)
+    private IEnumerator SetPictureIE(string aURL,string playfabID, Image aImage, System.Action callback = null)
     {
         WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
         yield return www;
@@ -71,6 +90,7 @@ public class ProfilePictureManager : MonoBehaviour
         ProfileData pf = new ProfileData();
         pf.URL = aURL;
         pf.theSprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.width , profilePic.height), new Vector2());
+        pf.playfabID = playfabID;
         myPictures.Add(pf);
         aImage.sprite = pf.theSprite;
         aImage.rectTransform.sizeDelta = new Vector2(88, 88);
@@ -78,7 +98,7 @@ public class ProfilePictureManager : MonoBehaviour
         if (callback != null)
             callback.Invoke();
     }
-    private IEnumerator SetPictureIE(string aURL, Texture2D aImage, System.Action callback = null)
+    private IEnumerator SetPictureIE(string aURL, string playfabID, Texture2D aImage, System.Action callback = null)
     {
         WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
         yield return www;
@@ -86,6 +106,7 @@ public class ProfilePictureManager : MonoBehaviour
         ProfileData pf = new ProfileData();
         pf.URL = aURL;
         pf.theSprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.width, profilePic.height), new Vector2());
+        pf.playfabID = playfabID;
         myPictures.Add(pf);
         aImage = pf.theSprite.texture;
 //        aImage.rectTransform.sizeDelta = new Vector2(88, 88);

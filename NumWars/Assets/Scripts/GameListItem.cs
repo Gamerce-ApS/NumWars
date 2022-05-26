@@ -27,6 +27,7 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     public GameObject lost;
 
     public bool isAiGame = false;
+    public GameListItem OnPictureCallback = null;
 
     RectTransform rc;
     // Start is called before the first frame update
@@ -190,23 +191,31 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
         if(!isAiGame)
         {
-            PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+            if(ProfilePictureManager.instance.HasEntry(otherPlayerID))
             {
-                PlayFabId = otherPlayerID,
-                ProfileConstraints = new PlayerProfileViewConstraints()
+                LoadAvatarURL(ProfilePictureManager.instance.GetURL(otherPlayerID), otherPlayerID);
+            }
+            else
+            {
+                PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
                 {
-                    ShowDisplayName = true,
-                    ShowAvatarUrl = true
-                }
-            }, result => {
+                    PlayFabId = otherPlayerID,
+                    ProfileConstraints = new PlayerProfileViewConstraints()
+                    {
+                        ShowDisplayName = true,
+                        ShowAvatarUrl = true
+                    }
+                }, result => {
 
-                LoadAvatarURL(result.PlayerProfile.AvatarUrl);
+                    LoadAvatarURL(result.PlayerProfile.AvatarUrl, otherPlayerID);
 
 
-            }, (error) => {
-                Debug.Log("Got error retrieving user data:");
-                Debug.Log(error.GenerateErrorReport());
-            });
+                }, (error) => {
+                    Debug.Log("Got error retrieving user data:");
+                    Debug.Log(error.GenerateErrorReport());
+                });
+            }
+ 
         }
 
 
@@ -233,13 +242,16 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     }
 
-    public void LoadAvatarURL(string aURL)
+    public void LoadAvatarURL(string aURL,string playfabID)
     {
         if(this != null)
         {
             if (aURL != null)
             {
-                ProfilePictureManager.instance.SetPicture(aURL, img);
+                ProfilePictureManager.instance.SetPicture(aURL, playfabID, img);
+                if(OnPictureCallback != null)
+                    ProfilePictureManager.instance.SetPicture(aURL, playfabID, OnPictureCallback.img);
+                
                 img.enabled = true;
             }
 

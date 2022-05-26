@@ -91,7 +91,7 @@ public class ChallengeWindow : MonoBehaviour
             }
         }, result => {
 
-            LoadAvatarURL(result.PlayerProfile.AvatarUrl);
+            LoadAvatarURL(result.PlayerProfile.AvatarUrl, currentChallenges[0].bd.GetOtherPlayerPlayfab());
 
 
         }, (error) => {
@@ -129,13 +129,13 @@ public class ChallengeWindow : MonoBehaviour
         UpdateWindow();
     }
 
-    public void LoadAvatarURL(string aURL)
+    public void LoadAvatarURL(string aURL,string playfabID)
     {
 
         //StartCoroutine(GetFBProfilePicture(aURL, this));
         if (aURL != null)
         {
-            ProfilePictureManager.instance.SetPicture(aURL, fbIcon);
+            ProfilePictureManager.instance.SetPicture(aURL, playfabID, fbIcon);
             fbIcon.enabled = true;
         }
 

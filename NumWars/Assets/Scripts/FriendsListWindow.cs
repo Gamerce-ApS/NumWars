@@ -150,7 +150,7 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
 
             if (avatarURL.Length>0)
             {
-                ProfilePictureManager.instance.SetPicture(avatarURL, img);
+                ProfilePictureManager.instance.SetPicture(avatarURL, result.Friends[i].Profile.PlayerId, img);
                 //StartCoroutine(SetPicture(avatarURL, img));
             }
            

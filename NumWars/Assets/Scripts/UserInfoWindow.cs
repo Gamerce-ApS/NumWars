@@ -113,14 +113,14 @@ public PlayerProfileModel theProfile;
             else
             {
                 PlayfabHelperFunctions.instance.GetOtherUserDataProfile(theProfile.PlayerId, this);
-                LoadAvatarURL(theProfile.AvatarUrl, _profilePic);
+                LoadAvatarURL(theProfile.AvatarUrl, theProfile.PlayerId, _profilePic);
                 _name.text = theProfile.DisplayName;
             }
         }
         else
         {
             PlayfabHelperFunctions.instance.GetOtherUserDataProfile(Startup._instance.MyPlayfabID, this);
-            LoadAvatarURL(Startup._instance.avatarURL, _profilePic);
+            LoadAvatarURL(Startup._instance.avatarURL, Startup._instance.MyPlayfabID, _profilePic);
             _name.text = Startup._instance.displayName;
         }
 
@@ -137,14 +137,14 @@ public PlayerProfileModel theProfile;
         }
 
     }
-    public void LoadAvatarURL(string aURL,Image img)
+    public void LoadAvatarURL(string aURL,string playfabid,Image img)
     {
     //    StartCoroutine(GetFBProfilePicture(aURL, img));
 
 
         if(aURL != null && aURL.Length>3)
         {
-            ProfilePictureManager.instance.SetPicture(aURL, img);
+            ProfilePictureManager.instance.SetPicture(aURL, playfabid, img);
             img.enabled = true;
         }
         else

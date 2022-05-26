@@ -7,6 +7,7 @@ public class ScrollListBasedOnItems : MonoBehaviour
 {
 
     public Transform parent;
+    public Transform parent2;
     public Image visualImage;
     public RectTransform rectTranform;
 
@@ -39,6 +40,16 @@ public class ScrollListBasedOnItems : MonoBehaviour
 
 
     }
+    public void RefreshLayout(float aTime)
+    {
+        StartCoroutine(RefreshLayoutIE(aTime));
+    }
+    IEnumerator RefreshLayoutIE(float aTime)
+    {
+        yield return new WaitForSeconds(aTime);
+        RefreshLayout();
+    }
+
     public void RefreshLayout()
     {
         int amount = 0;
@@ -47,6 +58,15 @@ public class ScrollListBasedOnItems : MonoBehaviour
             if (parent.GetChild(i).gameObject.active)
                 amount++;
         }
+        if(amount == 0&& parent2 != null)
+        {
+            for (int i = 0; i < parent2.childCount; i++)
+            {
+                if (parent2.GetChild(i).gameObject.active)
+                    amount++;
+            }
+        }
+
         var newContentWidth = startValue + (dif) * amount;
         if(rectTranform !=null)
         rectTranform.sizeDelta = new Vector2(rectTranform.sizeDelta.x, newContentWidth);
