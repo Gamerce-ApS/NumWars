@@ -52,6 +52,9 @@ public class MainMenuController : MonoBehaviour
     {
         instance = this;
         _TextFlyInBoxoriginalPos = NewGameWindow.transform.GetChild(1).transform.position;
+
+
+        SetBoardLayout(PlayerPrefs.GetInt("BoardLayout", 0));
     }
 
     float UpdateTimer = 0;
@@ -431,6 +434,9 @@ public void PressOpenFriendsWindow()
     public Image LayoutButton1;
     public Image LayoutButton2;
 
+    public Image LayoutButton1_challenge;
+    public Image LayoutButton2_challenge;
+
     public void SetBoardLayout(int aVersion)
     {
         PlayerPrefs.SetInt("BoardLayout", aVersion);
@@ -444,13 +450,17 @@ public void PressOpenFriendsWindow()
             LayoutButton1.color = Color.white;
             LayoutButton2.color = col;
 
-
+            LayoutButton1_challenge.color = Color.white;
+            LayoutButton2_challenge.color = col;
         }
         if (aVersion == 1)
         {
             // Random
             LayoutButton2.color = Color.white;
             LayoutButton1.color = col;
+
+            LayoutButton2_challenge.color = Color.white;
+            LayoutButton1_challenge.color = col;
         }
 
     }

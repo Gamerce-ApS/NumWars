@@ -193,7 +193,7 @@ public class Player : MonoBehaviour
         //Board.instance.AllTilesNumbers[2]=(6);
         //Board.instance.AllTilesNumbers[3]=(10);
         //Board.instance.AllTilesNumbers[4] =(4);
-        //Board.instance.AllTilesNumbers[5]=(14);
+        //Board.instance.AllTilesNumbers[5]=(3);
 
         if (Startup._instance.isFake)
         {

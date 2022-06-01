@@ -945,6 +945,8 @@ result =>
 
                                 GameManager.instance.ChatNotificationIcon.SetActive(true);
                                 float dif = Mathf.Abs(liveMessegaes.Length - viewedMessegaes.Length) / 2;
+                                if (dif == 0)
+                                    dif = 1;
                                 GameManager.instance.ChatNotificationIcon.transform.GetChild(0).GetComponent<Text>().text = dif.ToString();
                             }
                             else
@@ -1013,7 +1015,7 @@ result =>
             Debug.Log(error.GenerateErrorReport());
         });
     }
-    public void SendNextTurn(BoardData aBoarddata)
+    public void SendNextTurn(BoardData aBoarddata, System.Action callback=null)
     {
 
        // LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
@@ -1070,7 +1072,11 @@ result =>
                     }
                 }
             }
-       
+
+            if (callback != null)
+                callback.Invoke();
+
+
 
 
 

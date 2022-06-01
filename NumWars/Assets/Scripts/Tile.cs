@@ -263,7 +263,16 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         GameManager.instance.thePlayers[0].myTiles.Remove(this);
         GameManager.instance.thePlayers[1].myTiles.Remove(this);
         Destroy(gameObject);
+        PlacedOnTile._child.gameObject.SetActive(true);
+    }
+    public void PreDestroy()
+    {
+        PlacedOnTile.SetTile(StaticTile.TileType.NormalTile, int.Parse(textLabel.text));
 
+        GameManager.instance.thePlayers[0].myTiles.Remove(this);
+        GameManager.instance.thePlayers[1].myTiles.Remove(this);
+        if(PlacedOnTile != null && PlacedOnTile._child != null)
+            PlacedOnTile._child.gameObject.SetActive(false);;
     }
     public bool isValidPlaced()
     {

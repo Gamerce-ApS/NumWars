@@ -1143,7 +1143,7 @@ public class Board : MonoBehaviour
                 if (PlayerBoard.instance.myPlayer.myTiles[i].isValidPlaced())
                     scoreTiles.Add(PlayerBoard.instance.myPlayer.myTiles[i]);
             }
-
+            GameManager.instance.IsSendingData = true;
             ScoreScreen.instance.ShowScore(scoreTiles, PlayerBoard.instance.myPlayer);
 
 
@@ -1179,7 +1179,7 @@ public class Board : MonoBehaviour
     }
     public void SetTileColor(int aX, int aY, Color aCol)
     {
-
+        if(BoardTiles[aX + aY * 14].transform.childCount>0)
         BoardTiles[aX + aY * 14].transform.GetChild(0).GetComponent<Image>().color = aCol;
         //BoardTiles[aX + aY * 14].transform.GetChild(0).gameObject.SetActive(false);
         //Destroy(BoardTiles[aX + aY * 14].transform.GetChild(0).gameObject);

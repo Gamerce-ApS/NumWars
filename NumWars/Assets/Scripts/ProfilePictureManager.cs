@@ -14,6 +14,7 @@ public class ProfilePictureManager : MonoBehaviour
 {
     public List<ProfileData> myPictures = new List<ProfileData>();
     public static ProfilePictureManager instance;
+    public Texture2D StandardPicture;
     // Start is called before the first frame update
     void Start()
     {
@@ -28,6 +29,13 @@ public class ProfilePictureManager : MonoBehaviour
 
     public void SetPicture(string url, string playfabID, Image aImage, System.Action callback=null)
     {
+        Debug.Log(playfabID);
+        if (url.Length<1 || url =="")
+        {
+            if (callback != null)
+                callback.Invoke();
+            return;
+        }
         for(int i = 0; i < myPictures.Count;i++)
         {
             if (myPictures[i].URL == url && myPictures[i].playfabID == playfabID)
@@ -66,6 +74,7 @@ public class ProfilePictureManager : MonoBehaviour
     }
     public void SetPicture(string url, string playfabID, Texture2D aImage, System.Action callback = null)
     {
+
         for (int i = 0; i < myPictures.Count; i++)
         {
             if (myPictures[i].URL == url)
@@ -84,9 +93,17 @@ public class ProfilePictureManager : MonoBehaviour
 
     private IEnumerator SetPictureIE(string aURL,string playfabID, Image aImage, System.Action callback = null)
     {
+
         WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
         yield return www;
+
+        if (playfabID == "54209EA097616244")
+            Debug.Log(playfabID);
+
         Texture2D profilePic = www.texture;
+        if (www.error != null)
+            profilePic = StandardPicture;
+        //If texture is null add a standard one.. This is for facebook error
         ProfileData pf = new ProfileData();
         pf.URL = aURL;
         pf.theSprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.width , profilePic.height), new Vector2());
@@ -103,6 +120,8 @@ public class ProfilePictureManager : MonoBehaviour
         WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
         yield return www;
         Texture2D profilePic = www.texture;
+        if (www.error != null)
+            profilePic = StandardPicture;
         ProfileData pf = new ProfileData();
         pf.URL = aURL;
         pf.theSprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.width, profilePic.height), new Vector2());

@@ -61,6 +61,8 @@ public class GameManager : MonoBehaviour
 
     public bool isFakeGame;
 
+    public bool IsSendingData = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -264,7 +266,7 @@ public class GameManager : MonoBehaviour
         
     }
 
-    public void AddScore(Player aPlayer, int aScore, int amountOfTiles , bool updateLast=true,bool isReplay = false)
+    public void AddScore(Player aPlayer, int aScore, int amountOfTiles , bool updateLast=true,bool isReplay = false,bool updateUI = true)
     {
         if (isFakeGame)
             return;
@@ -280,8 +282,8 @@ public class GameManager : MonoBehaviour
         if (aPlayer.ID == 1 && aPlayer.isAI && isReplay== false)
             AchivmentController.instance.Scored(aScore, amountOfTiles, true);
 
-
-        UpdateUI();
+        if(updateUI)
+            UpdateUI();
 
         scoreOverview.text = aScore.ToString();
     }
@@ -397,7 +399,7 @@ public class GameManager : MonoBehaviour
         updateInProgress = false;
         _refreshTimer = 0;
     }
-    public void NextTurn(bool isEmptyTurn = false)
+    public void NextTurn(bool isEmptyTurn = false,System.Action callback=null)
     {
         _refreshTimer = 0;
 
@@ -473,7 +475,7 @@ public class GameManager : MonoBehaviour
 
 
                 updateInProgress = true;
-                PlayfabHelperFunctions.instance.SendNextTurn(updatedBoard);
+                PlayfabHelperFunctions.instance.SendNextTurn(updatedBoard, callback);
                 _refreshTimer = 0;
 
 

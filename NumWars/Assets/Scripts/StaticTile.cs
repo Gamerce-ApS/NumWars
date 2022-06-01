@@ -61,13 +61,14 @@ public class StaticTile : MonoBehaviour
     }
     public int GetScoreMultiplier(int aScore)
     {
-        if(myTileType == TileType.MultiplierX2)
+        if(myTileType == TileType.MultiplierX2 || PreviousTileType == TileType.MultiplierX2)
             return aScore*2;
-        if (myTileType == TileType.MultiplierX3)
+        if (myTileType == TileType.MultiplierX3 || PreviousTileType == TileType.MultiplierX3)
             return aScore*3;
-        if (myTileType == TileType.MultiplierX4)
+        if (myTileType == TileType.MultiplierX4 || PreviousTileType == TileType.MultiplierX4)
             return aScore*4;
-        if (myTileType == TileType.MultiplicationTile || myTileType == TileType.SubtractionTile || myTileType == TileType.AdditionTile|| myTileType == TileType.DivisionTile)
+        if (myTileType == TileType.MultiplicationTile || myTileType == TileType.SubtractionTile || myTileType == TileType.AdditionTile|| myTileType == TileType.DivisionTile ||
+            PreviousTileType == TileType.MultiplicationTile || PreviousTileType == TileType.SubtractionTile || PreviousTileType == TileType.AdditionTile || PreviousTileType == TileType.DivisionTile)
             return aScore+10;
 
 
@@ -92,6 +93,7 @@ public class StaticTile : MonoBehaviour
 //        Debug.Log("SetNumber" + aNumber);
         Number = aNumber;
     }
+    public TileType PreviousTileType= TileType.EmptyTile;
     public void SetTile(TileType aType, int aNumber)
     {
         if (_child != null)
@@ -99,6 +101,7 @@ public class StaticTile : MonoBehaviour
 
         Number = aNumber;
 
+        PreviousTileType = myTileType;
         myTileType = aType;
 
         if(ResourceManager.instance != null&& aType != 0)

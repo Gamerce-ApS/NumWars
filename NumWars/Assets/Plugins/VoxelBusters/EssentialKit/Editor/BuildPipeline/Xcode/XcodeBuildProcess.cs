@@ -224,8 +224,48 @@ namespace VoxelBusters.EssentialKit.Editor.Build.Xcode
                 }
             }
 
+
+            // Add NSAppTrans
+
+
+            PlistElementDict dic = rootDict.CreateDict("NSAppTransportSecurity");
+            dic.SetBoolean("NSAllowsArbitraryLoads",true);
+            PlistElementDict dic2 = dic.CreateDict("NSExceptionDomains");
+
+            PlistElementDict dic3 = dic2.CreateDict("facebook.com");
+            dic3.SetBoolean("NSIncludesSubdomains", true);
+            dic3.SetBoolean("NSThirdPartyExceptionRequiresForwardSecrecy", false);
+
+            PlistElementDict dic4 = dic2.CreateDict("fbcdn.net");
+            dic4.SetBoolean("NSIncludesSubdomains", true);
+            dic4.SetBoolean("NSThirdPartyExceptionRequiresForwardSecrecy", false);
+
+
+            PlistElementDict dic5 = dic2.CreateDict("akamaihd.net");
+            dic5.SetBoolean("NSIncludesSubdomains", true);
+            dic5.SetBoolean("NSThirdPartyExceptionRequiresForwardSecrecy", false);
+
+            rootDict.values.Remove("UIRequiredDeviceCapabilities");
+
+
+
+            PlistElementArray arr = rootDict.CreateArray("SKAdNetworkItems");
+
+            PlistElementDict arrDic = arr.AddDict();
+            arrDic.SetString("SKAdNetworkIdentifier", "v9wttpbfk9.skadnetwork");
+
+            PlistElementDict arrDic2 = arr.AddDict();
+            arrDic2.SetString("SKAdNetworkIdentifier", "n38lu8286q.skadnetwork");
+
+
+
+
+
+
+
+
             // add deeplinks
-            var     deepLinkCustomSchemeUrls    = GetDeepLinkCustomSchemeUrls();
+            var deepLinkCustomSchemeUrls    = GetDeepLinkCustomSchemeUrls();
             if (deepLinkCustomSchemeUrls.Length > 0)
             {
                 PlistElementArray   urlTypes;
@@ -309,10 +349,26 @@ namespace VoxelBusters.EssentialKit.Editor.Build.Xcode
                 schemeList.Add("fb");
                 schemeList.Add("twitter");
                 schemeList.Add("whatsapp");
+
+                schemeList.Add("fbapi");
+                schemeList.Add("fbapi20130214");
+                schemeList.Add("fbapi20130410");
+                schemeList.Add("fbapi20130702");
+                schemeList.Add("fbapi20131010");
+                schemeList.Add("fbapi20131219");
+                schemeList.Add("fbapi20140410");
+                schemeList.Add("fbapi20140116");
+                schemeList.Add("fbapi20150313");
+                schemeList.Add("fbapi20150629");
+                schemeList.Add("fbauth");
+                schemeList.Add("fbauth2");
+                schemeList.Add("fb - messenger - api20140430");
+                schemeList.Add("fb-messenger-api20140430");
             }
 
             return schemeList.ToArray();
         }
+
 
         private static DeepLinkDefinition[] GetDeepLinkCustomSchemeUrls()
         {

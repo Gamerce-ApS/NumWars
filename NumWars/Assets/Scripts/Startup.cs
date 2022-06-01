@@ -49,7 +49,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public static long TIMEOUT = 60 * 60 * 24 * 2;
 
-    public static string LIVE_VERSION = "3";
+    public static string LIVE_VERSION = "5";
 
     // public static long TIMEOUT = 60+60+60;
 
@@ -58,6 +58,14 @@ public class Startup : MonoBehaviourPunCallbacks
     // Start is called before the first frame update
     void Start()
     {
+
+        Application.targetFrameRate = 30;
+        UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
+        UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
+
+
+
+
         GameAnalytics.Initialize();
 
         //Appodeal.initialize("91f0aae11c6d5b4fe09000ad17edf290d41803497b6ff82f", Appodeal.INTERSTITIAL | Appodeal.REWARDED_VIDEO, true);
@@ -101,6 +109,7 @@ public class Startup : MonoBehaviourPunCallbacks
         UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert | UnityEngine.iOS.NotificationType.Badge | UnityEngine.iOS.NotificationType.Sound, true);
 
 
+
         StartCoroutine(RegisterPush());
 
 
@@ -119,6 +128,10 @@ public class Startup : MonoBehaviourPunCallbacks
     {
         if(!pauseStatus)
         {
+
+            UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
+            UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
+
             if (PhotonNetwork.IsConnected)
             { }
             else
@@ -244,7 +257,20 @@ public class Startup : MonoBehaviourPunCallbacks
 
         if (Input.GetKeyUp(KeyCode.L))
             LoadGameList(0.1f);
+
+
+
+
+        float current = 0;
+        current = current = (int)(1f / Time.unscaledDeltaTime);
+        avgFrameRate = (int)current;
+        GameObject go = GameObject.Find("FPS_COUNTER");
+        if(go != null)
+            go.GetComponent<Text>().text = avgFrameRate.ToString() + " FPS";
+
     }
+    int avgFrameRate = 0;
+
     public void ChangeValueFor(string aEntry,string aValue)
     {
         _PlayfabHelperFunctions.ChangeValueFor(aEntry, aValue);
@@ -387,6 +413,9 @@ public class Startup : MonoBehaviourPunCallbacks
         {
             PhotonNetwork.LeaveRoom();
         }
+
+        if (MainMenuController.instance == null)
+            return;
 
         for(int i = 0; i < MainMenuController.instance._GameListParent_updating.childCount;i++)
         {
