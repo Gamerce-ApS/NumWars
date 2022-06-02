@@ -233,6 +233,11 @@ public void PressOpenFriendsWindow()
         Startup._instance.PlaySoundEffect(0);
         PlayfabHelperFunctions.instance.FacebookLink();
     }
+    public void ClickLoginWithApple()
+    {
+        Startup._instance.PlaySoundEffect(0);
+        PlayfabHelperFunctions.instance.AppleLink();
+    }
     public void ShowMerginAlert()
     {
         MerginWindow.SetActive(true);

@@ -68,10 +68,10 @@ MonoBehaviour:
           m_minHours: 6
           m_minLaunches: 5
   m_addressBookSettings:
-    m_isEnabled: 1
+    m_isEnabled: 0
     m_defaultImage: {fileID: 0}
   m_nativeUISettings:
-    m_isEnabled: 1
+    m_isEnabled: 0
     m_customUICollection:
       m_rendererPrefab: {fileID: 114882653979984282, guid: ee1dcec1533844bc19c19281b8d148b6,
         type: 3}
@@ -79,13 +79,13 @@ MonoBehaviour:
         type: 3}
       m_datePickerPrefab: {fileID: 0}
   m_sharingServicesSettings:
-    m_isEnabled: 1
+    m_isEnabled: 0
   m_cloudServicesSettings:
-    m_isEnabled: 1
+    m_isEnabled: 0
     m_synchronizeOnLoad: 0
     m_syncInterval: 60
   m_gameServicesSettings:
-    m_isEnabled: 1
+    m_isEnabled: 0
     m_leaderboards: []
     m_achievements: []
     m_showAchievementCompletionBanner: 1
@@ -97,7 +97,7 @@ MonoBehaviour:
       m_showErrorDialogs: 1
       m_displayPopupsAtTop: 1
   m_billingServicesSettings:
-    m_isEnabled: 1
+    m_isEnabled: 0
     m_products: []
     m_maintainPurchaseHistory: 1
     m_autoFinishTransactions: 1
@@ -107,7 +107,7 @@ MonoBehaviour:
     m_androidProperties:
       m_publicKey: 
   m_networkServicesSettings:
-    m_isEnabled: 1
+    m_isEnabled: 0
     m_hostAddress:
       m_ipv4: 8.8.8.8
       m_ipv6: 0:0:0:0:0:FFFF:0808:0808
@@ -118,13 +118,13 @@ MonoBehaviour:
       m_timeOutPeriod: 60
       m_port: 53
   m_webViewSettings:
-    m_isEnabled: 1
+    m_isEnabled: 0
     m_androidProperties:
       m_usesCamera: 0
       m_usesMicrophone: 0
       m_allowBackNavigationKey: 1
   m_notificationServicesSettings:
-    m_isEnabled: 1
+    m_isEnabled: 0
     m_presentationOptions: 7
     m_usesLocationBasedNotification: 0
     m_pushNotificationServiceType: 1
@@ -147,12 +147,12 @@ MonoBehaviour:
         m_bigPicture: big_picture
         m_largeIcon: large_icon
   m_mediaServicesSettings:
-    m_isEnabled: 1
+    m_isEnabled: 0
     m_usesCamera: 1
     m_usesGallery: 1
     m_savesFilesToGallery: 1
   m_deepLinkServicesSettings:
-    m_isEnabled: 1
+    m_isEnabled: 0
     m_iosProperties:
       m_customSchemeUrls: []
       m_universalLinks: []

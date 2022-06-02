@@ -14,7 +14,6 @@ using VoxelBusters.CoreLibrary.Editor.NativePlugins.Build;
 using VoxelBusters.CoreLibrary.Editor.NativePlugins.Build.Xcode;
 using VoxelBusters.EssentialKit;
 using UnityEditor.Build.Reporting;
-
 namespace VoxelBusters.EssentialKit.Editor.Build.Xcode
 {
     [InitializeOnLoad]
@@ -96,11 +95,13 @@ namespace VoxelBusters.EssentialKit.Editor.Build.Xcode
             UpdateUnityPreprocessor();
 
             DebugLogger.Log("[XcodeBuildProcess] Successfully completed post-build task execution.");
+
+
         }
 
-#endregion
+        #endregion
 
-#region Private methods
+        #region Private methods
 
         private static bool IsBuildTargetSupported(BuildTarget buildTarget)
         {

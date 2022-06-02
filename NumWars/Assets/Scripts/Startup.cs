@@ -8,7 +8,9 @@ using Photon.Realtime;
 using PlayFab;
 using PlayFab.ClientModels;
 using PlayFab.CloudScriptModels;
+#if UNITY_IOS
 using Unity.Notifications.iOS;
+#endif
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -60,9 +62,10 @@ public class Startup : MonoBehaviourPunCallbacks
     {
 
         Application.targetFrameRate = 30;
+#if UNITY_IOS
         UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
         UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
-
+#endif
 
 
 
@@ -105,9 +108,9 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
 
-
+#if UNITY_IOS
         UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert | UnityEngine.iOS.NotificationType.Badge | UnityEngine.iOS.NotificationType.Sound, true);
-
+#endif
 
 
         StartCoroutine(RegisterPush());
@@ -128,9 +131,10 @@ public class Startup : MonoBehaviourPunCallbacks
     {
         if(!pauseStatus)
         {
-
+                            #if UNITY_IOS
             UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
             UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
+#endif
 
             if (PhotonNetwork.IsConnected)
             { }
@@ -165,7 +169,7 @@ public class Startup : MonoBehaviourPunCallbacks
     IEnumerator RegisterPush()
     {
         yield return new WaitForSeconds(3);
-
+#if UNITY_IOS
         byte[] token = UnityEngine.iOS.NotificationServices.deviceToken;
         if (token != null)
         {
@@ -212,7 +216,7 @@ public class Startup : MonoBehaviourPunCallbacks
             iOSNotificationCenter.ScheduleNotification(notification);
         };
 
-
+#endif
 
 
 
@@ -276,7 +280,7 @@ public class Startup : MonoBehaviourPunCallbacks
         _PlayfabHelperFunctions.ChangeValueFor(aEntry, aValue);
     }
 
-    #region MonoBehaviourPunCallbacks CallBacks
+#region MonoBehaviourPunCallbacks CallBacks
     public override void OnConnectedToMaster()
     {
         LoadingOverlay.instance.DoneLoading("Connecting to photon");
@@ -758,7 +762,7 @@ public class Startup : MonoBehaviourPunCallbacks
         timer = 0;
     }
 
-    #endregion
+#endregion
 
 
 
