@@ -79,7 +79,7 @@ MonoBehaviour:
         type: 3}
       m_datePickerPrefab: {fileID: 0}
   m_sharingServicesSettings:
-    m_isEnabled: 0
+    m_isEnabled: 1
   m_cloudServicesSettings:
     m_isEnabled: 0
     m_synchronizeOnLoad: 0
@@ -124,7 +124,7 @@ MonoBehaviour:
       m_usesMicrophone: 0
       m_allowBackNavigationKey: 1
   m_notificationServicesSettings:
-    m_isEnabled: 0
+    m_isEnabled: 1
     m_presentationOptions: 7
     m_usesLocationBasedNotification: 0
     m_pushNotificationServiceType: 1

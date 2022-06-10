@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using DG.Tweening;
 using GameAnalyticsSDK;
 using Photon.Pun;
@@ -57,11 +59,23 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public bool isFake;
     public GameObject ConfetiPart;
+
+
+    public static bool ValidateCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+    {
+        // Implement your own certificate validation here
+        return true;
+        //return IsCertificateValid(certificate, chain, sslPolicyErrors);
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        PlayFab.Internal.PlayFabWebRequest.CustomCertValidationHook = ValidateCertificate;
+        PlayFab.Internal.PlayFabWebRequest.SkipCertificateValidation();
+        //    PlayFab.Internal.PlayFabWebRequest.CustomCertValidationHook
 
-        Application.targetFrameRate = 30;
+        Application.targetFrameRate = 60;
 #if UNITY_IOS
         UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
         UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
@@ -74,7 +88,7 @@ public class Startup : MonoBehaviourPunCallbacks
         //Appodeal.initialize("91f0aae11c6d5b4fe09000ad17edf290d41803497b6ff82f", Appodeal.INTERSTITIAL | Appodeal.REWARDED_VIDEO, true);
 
 
-        Application.runInBackground = true;
+        Application.runInBackground = false;
         GameToLoad = null;
         DontAutoRefresh = true;
         myAchivmentController = new AchivmentController();
@@ -127,7 +141,19 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
     }
-    void OnApplicationPause(bool pauseStatus)
+
+
+    //private void OnApplicationPause(bool pause)
+    //{
+    //    Pasued(pause);
+    //}
+
+    private void OnApplicationFocus(bool focus)
+    {
+        Pasued(!focus);
+    }
+
+    void Pasued(bool pauseStatus)
     {
         if(!pauseStatus)
         {
@@ -137,15 +163,28 @@ public class Startup : MonoBehaviourPunCallbacks
 #endif
 
             if (PhotonNetwork.IsConnected)
-            { }
+            {
+                if (Startup._instance != null)
+                {
+                    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+                    Startup._instance.Refresh(0.1f);
+                }
+            }
             else
             {
+                if (Startup._instance != null)
+                {
+                    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+                    Startup._instance.Refresh(0.1f);
+                }
+
                 // #Critical, we must first and foremost connect to Photon Online Server.
                 PhotonNetwork.ConnectUsingSettings();
                 PhotonNetwork.GameVersion = "1";
 
                 if(Startup._instance != null)
                 {
+                    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
                     Startup._instance.Refresh(0.1f);
                     if (Startup._instance.avatarURL != null)
                         if (Startup._instance.avatarURL.Length > 0)
@@ -234,7 +273,12 @@ public class Startup : MonoBehaviourPunCallbacks
     public IEnumerator DelayRefresh(float aDelay = 0.5f)
     {
         yield return new WaitForSeconds(aDelay);
-        Refresh();
+        if (PlayFabClientAPI.IsClientLoggedIn())
+            Refresh();
+        else
+        {
+            LoadingOverlay.instance.DoneLoading("Updating..");
+        }
     }
     public void UpdateDisplayName()
     {
@@ -283,6 +327,7 @@ public class Startup : MonoBehaviourPunCallbacks
 #region MonoBehaviourPunCallbacks CallBacks
     public override void OnConnectedToMaster()
     {
+        if (LoadingOverlay.instance != null)
         LoadingOverlay.instance.DoneLoading("Connecting to photon");
         // we don't want to do anything if we are not attempting to join a room. 
         // this case where isConnecting is false is typically when you lost or quit the game, when this level is loaded, OnConnectedToMaster will be called, in that case
@@ -335,7 +380,7 @@ public class Startup : MonoBehaviourPunCallbacks
         }
         else
         {
-            Debug.LogError("Can't join random room now, client is not ready");
+         //   Debug.LogError("Can't join random room now, client is not ready");
         }
 
 
@@ -460,7 +505,6 @@ public class Startup : MonoBehaviourPunCallbacks
             Vector3 rc = child.GetComponent<RectTransform>().localPosition;
             child.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
         }
-    
 
 
 
@@ -468,6 +512,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
 
+        LoadingOverlay.instance.DoneLoading("Updating..");
 
         //If no loading in progress we know it's the last call.
         if (LoadingOverlay.instance.LoadingCall.Count== 0)
@@ -757,8 +802,8 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public override void OnDisconnected(DisconnectCause cause)
     {
-        Debug.Log("<Color=Red>OnDisconnected</Color> " + cause);
-        Debug.LogError("PUN Basics Tutorial/Launcher:Disconnected");
+        //Debug.Log("<Color=Red>OnDisconnected</Color> " + cause);
+        //Debug.LogError("PUN Basics Tutorial/Launcher:Disconnected");
         timer = 0;
     }
 
@@ -810,6 +855,10 @@ public class Startup : MonoBehaviourPunCallbacks
         AddXP(85);
 
     }
+
+
+
+        
     public void AddXP(int aValue)
     {
         myData["XP"].Value = (int.Parse(myData["XP"].Value) + aValue).ToString();

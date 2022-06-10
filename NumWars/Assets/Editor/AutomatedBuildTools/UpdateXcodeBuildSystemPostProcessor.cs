@@ -5,6 +5,7 @@ using UnityEditor.Callbacks;
 using UnityEditor.iOS.Xcode;
 
 #if UNITY_IOS || UNITY_TVOS
+using AppleAuth.Editor;
 // Create specific aliases for iOS.Xcode imports.
 // Unity Editor on macOS can report a conflict with other plugins
 using PlistDocument = UnityEditor.iOS.Xcode.PlistDocument;
@@ -115,6 +116,15 @@ public class UpdateXcodeBuildSystemPostProcessor : MonoBehaviour
 
         Debug.Log("UpdateXcodeBuildSystem: update Swift version in Xcode " +
             "project.");
+
+
+
+
+
+
+
+
+
     }
 
 

@@ -203,6 +203,7 @@ namespace VoxelBusters.CoreLibrary.Editor.NativePlugins.Build.Xcode
                         case PBXCapabilityType.PushNotifications:
                             capabilityManager.AddPushNotifications(Debug.isDebugBuild);
                             capabilityManager.AddBackgroundModes(BackgroundModesOptions.RemoteNotifications);
+                            capabilityManager.AddSignInWithApple();
                             break;
 
                         case PBXCapabilityType.AssociatedDomains:
@@ -218,6 +219,12 @@ namespace VoxelBusters.CoreLibrary.Editor.NativePlugins.Build.Xcode
 
             // save changes
             capabilityManager.WriteToFile();
+
+
+      
+
+
+
         }
 
         private static void UpdateMacroDefinitions()

@@ -20,7 +20,13 @@ public class GameManager : MonoBehaviour
         get
         {
             if (_instance == null)
+            {
+                if (GameObject.Find("GameManager") == null)
+                    return null;
+
                 _instance = GameObject.Find("GameManager").GetComponent<GameManager>();
+
+            }
             return _instance;
         }
     }
@@ -479,19 +485,19 @@ public class GameManager : MonoBehaviour
                 _refreshTimer = 0;
 
 
-                if (int.Parse(updatedBoard.EmptyTurns) >= 4)
-                {
-                    updateInProgress = false;
-                    EndGameAfterPasses(updatedBoard);
-                }
-                else
-                {
-                    WaitingOverlay.SetActive(true);
-                    WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
-                    WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
-                    //if (TutorialController.instance == null && Random.Range(0,100) <50)
-                    //    Appodeal.show(Appodeal.INTERSTITIAL);
-                }
+                //if (int.Parse(updatedBoard.EmptyTurns) >= 4)
+                //{
+                //    updateInProgress = false;
+                //    EndGameAfterPasses(updatedBoard);
+                //}
+                //else
+                //{
+                //    WaitingOverlay.SetActive(true);
+                //    WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
+                //    WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
+                //    //if (TutorialController.instance == null && Random.Range(0,100) <50)
+                //    //    Appodeal.show(Appodeal.INTERSTITIAL);
+                //}
             }
 
             if (thePlayers[1].isAI)
@@ -642,8 +648,10 @@ public class GameManager : MonoBehaviour
             ftd.Number = int.Parse(moveInfo[1]);
             ftd.ScoreValue = int.Parse(moveInfo[2]);
             ftd.Player = int.Parse(moveInfo[3]);
+            if (moveInfo.Length > 4)
+                ftd.SpecialTypeTile = int.Parse(moveInfo[4]);
 
-            if (myBackednTurn != ftd.Player)
+                if (myBackednTurn != ftd.Player)
             {
                 lastMoves.Add(ftd);
             }
@@ -656,7 +664,7 @@ public class GameManager : MonoBehaviour
 
         for(int i = 0; i < lastMoves.Count;i++)
         {
-            Board.instance.SetTileColor((int)(lastMoves[i].Position.x), (int)(lastMoves[i].Position.y), col);
+                Board.instance.SetTileColor((int)(lastMoves[i].Position.x), (int)(lastMoves[i].Position.y), col);
 
 
         }

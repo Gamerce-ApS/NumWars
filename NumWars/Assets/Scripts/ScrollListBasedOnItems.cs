@@ -18,13 +18,13 @@ public class ScrollListBasedOnItems : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        //Application.targetFrameRate = 60;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(updateTimer != -1)
+        if(updateTimer != -1 && Input.GetMouseButton(0)== false)
         {
             timer -= Time.deltaTime;
             if(timer<0)
@@ -34,12 +34,26 @@ public class ScrollListBasedOnItems : MonoBehaviour
             }
         }
 
+        //if(Input.GetMouseButton(0))
+        //{
+        //    Application.targetFrameRate = 60;
+        //}else
+        //    Application.targetFrameRate = 30;
+
+
+        //float current = 0;
+        //current = current = (int)(1f / Time.unscaledDeltaTime);
+        //avgFrameRate = (int)current;
+        //GameObject go = GameObject.Find("FPS_COUNTER");
+        //if (go != null)
+        //    go.GetComponent<Text>().text = avgFrameRate.ToString() + " FPS";
+
+    
 
 
 
-
-
-    }
+}
+    //int avgFrameRate = 0;
     public void RefreshLayout(float aTime)
     {
         StartCoroutine(RefreshLayoutIE(aTime));

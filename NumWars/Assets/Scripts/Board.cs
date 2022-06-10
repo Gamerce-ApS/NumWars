@@ -1179,8 +1179,17 @@ public class Board : MonoBehaviour
     }
     public void SetTileColor(int aX, int aY, Color aCol)
     {
-        if(BoardTiles[aX + aY * 14].transform.childCount>0)
-        BoardTiles[aX + aY * 14].transform.GetChild(0).GetComponent<Image>().color = aCol;
+        if(BoardTiles[aX + aY * 14].transform.childCount==1)
+        {
+                BoardTiles[aX + aY * 14].transform.GetChild(0).GetComponent<Image>().color = aCol;
+        }
+        else if (BoardTiles[aX + aY * 14].transform.childCount >1)
+        {
+            if(BoardTiles[aX + aY * 14].transform.GetChild(0).name.Contains( "StartTile" ))
+                BoardTiles[aX + aY * 14].transform.GetChild(0).GetComponent<Image>().color = aCol;
+            else 
+                BoardTiles[aX + aY * 14].transform.GetChild(0).GetComponent<Image>().color = Color.white;
+        }
         //BoardTiles[aX + aY * 14].transform.GetChild(0).gameObject.SetActive(false);
         //Destroy(BoardTiles[aX + aY * 14].transform.GetChild(0).gameObject);
     }

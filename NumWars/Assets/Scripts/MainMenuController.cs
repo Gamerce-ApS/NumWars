@@ -32,7 +32,8 @@ public class MainMenuController : MonoBehaviour
     public Image ProfilePicture;
     public Image ProfilePicture2;
     public GameObject FacebookButton;
-    
+    public GameObject AppleButton;
+
 
     public GameObject FriendsWindow;
 
@@ -183,12 +184,15 @@ public void PressOpenFriendsWindow()
             // setNameTextLabel.text = "What's your name?";
             FacebookButton.SetActive(true);
             SetNameCloseButton.SetActive(false);
+            AppleButton.SetActive(true);
         }
         else
         {
             SetNameCloseButton.SetActive(true);
             setNameTextLabel.text = _Name.text;
             FacebookButton.SetActive(false);
+            AppleButton.SetActive(false);
+
         }
     }
     public void OpenProfileWindow()
@@ -284,6 +288,9 @@ public void PressOpenFriendsWindow()
     public GameObject LinkFBButton;
     public GameObject UnlinkFBButton;
 
+    public GameObject LinkAppleButton;
+    public GameObject UnlinkAppleButton;
+
     public void SetFBLinked(bool isLinked)
     {
         if( isLinked )
@@ -296,6 +303,22 @@ public void PressOpenFriendsWindow()
             UnlinkFBButton.SetActive(false);
 
             LinkFBButton.SetActive(true);
+        }
+
+    }
+    public void SetAppleLinked(bool isLinked)
+    {
+        if (isLinked)
+        {
+            UnlinkAppleButton.SetActive(true);
+
+            LinkAppleButton.SetActive(false);
+        }
+        else
+        {
+            UnlinkAppleButton.SetActive(false);
+
+            LinkAppleButton.SetActive(true);
         }
 
     }

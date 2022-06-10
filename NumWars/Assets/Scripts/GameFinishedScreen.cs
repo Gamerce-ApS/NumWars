@@ -71,10 +71,17 @@ public Text p1_name;
     }
     public void Show(BoardData bf)
     {
+        bool isOpenGame = false;
+        for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
+        {
+            if (Startup._instance.openGamesList[i].RoomName == bf.RoomName)
+            {
+                isOpenGame = true;
+            }
+        }
 
 
-        
-        if(bf.hasFinished == false && bf.player2_displayName == "AI")
+        if (bf.hasFinished == false && bf.player2_displayName == "AI")
         PlayfabHelperFunctions.instance.AddAiGameToOldGames(CompressString.StringCompressor.CompressString(bf.GetJson()));
 
 
@@ -107,7 +114,7 @@ public Text p1_name;
             p2_score.text = bf.player2_score;
             p2_wins.text = "-";
 
-            if (bf.hasFinished == false)
+            if (bf.hasFinished == false && isOpenGame)
             {
                 if (int.Parse(bf.player1_score) > int.Parse(bf.player2_score))
                     Startup._instance.AdjustThropies(30, bf.player2_PlayfabId, bf.player2_displayName, int.Parse(bf.player1_score));
@@ -131,7 +138,7 @@ public Text p1_name;
             p1_score.text = bf.player2_score;
             p1_wins.text = "-";
 
-            if (bf.hasFinished == false)
+            if (bf.hasFinished == false && isOpenGame)
             {
                 if (int.Parse(bf.player2_score) > int.Parse(bf.player1_score))
                     Startup._instance.AdjustThropies(30, bf.player1_PlayfabId, bf.player1_displayName, int.Parse(bf.player2_score));
@@ -177,6 +184,20 @@ public Text p1_name;
         p2_wins.text = amountLost.ToString();
 
 
+        if(isOpenGame)
+        {
+            PlayfabHelperFunctions.instance.RemoveRoomFromList(bf.RoomName, bf.GetJson(), PlayfabHelperFunctions.instance.RemoveAbandonedGamesCO);
+            for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
+            {
+                if (Startup._instance.openGamesList[i].RoomName == bf.RoomName)
+                {
+                    Startup._instance.openGamesList.RemoveAt(i);
+                    return;
+                }
+            }
+        }
+     
+        
 
     }
     public void PressContinue()

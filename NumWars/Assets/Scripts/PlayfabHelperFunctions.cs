@@ -13,13 +13,10 @@ using UnityEngine.UI;
 using LoginIdentityProvider = PlayFab.ClientModels.LoginIdentityProvider;
 using LoginResult = PlayFab.ClientModels.LoginResult;
 using System.Text;
+using UnityEngine.SignInWithApple;
 #if UNITY_IOS
 using Unity.Advertisement.IosSupport;
-using AppleAuth;
-using AppleAuth.Enums;
-using AppleAuth.Extensions;
-using AppleAuth.Interfaces;
-using AppleAuth.Native;
+
 #endif
 
 public class PlayfabHelperFunctions : MonoBehaviour
@@ -37,14 +34,30 @@ public class PlayfabHelperFunctions : MonoBehaviour
     public static PlayfabHelperFunctions instance;
 
 #if UNITY_IOS
-    private IAppleAuthManager appleAuthManager;
+ //   private IAppleAuthManager appleAuthManager;
 #endif
 
     public void ReLogin()
     {
 
 
-        OnFacebookInitialized();
+
+
+        if (PlayerPrefs.HasKey("AppleUserIdKey"))
+        {
+            MainMenuController.instance.SetAppleLinked(true);
+            DoAppleQuickLogin();
+
+        }
+        else if (PlayerPrefs.HasKey("FacebookLink"))
+        {
+            MainMenuController.instance.SetFBLinked(true);
+            OnFacebookInitialized();
+        }
+        else
+        {
+            Login();
+        }
     }
 
     public void Login()
@@ -58,11 +71,16 @@ public class PlayfabHelperFunctions : MonoBehaviour
         //  playerID = "asdafsfsdf11";
 
         // playerID = "Villads123";
-        //playerID = "PaxMM";
+       // playerID = "PaxMM";
        // playerID = "steffen123";
         instance = this;
         LoadingOverlay.instance.ShowLoadingFullscreen("LoginWithCustomID");
 
+        if (PlayerPrefs.HasKey("AppleUserIdKey"))
+        {
+            DoAppleQuickLogin();
+            return;
+        }
 
         if (FB.IsInitialized)
             OnFacebookInitialized();
@@ -74,12 +92,8 @@ public class PlayfabHelperFunctions : MonoBehaviour
             return;
         }
 
-        if (PlayerPrefs.HasKey("AppleUserIdKey"))
-        {
-            DoAppleQuickLogin();
-            return;
-        }
-
+ 
+        
 
 
 
@@ -132,64 +146,166 @@ result =>
 },
  error => Debug.LogError(error.GenerateErrorReport()));
 
+#elif UNITY_ANDROID
+
+        PlayFabClientAPI.LoginWithAndroidDeviceID(new LoginWithAndroidDeviceIDRequest()
+        { 
+
+            TitleId = PlayFabSettings.TitleId,
+            AndroidDeviceId = SystemInfo.deviceUniqueIdentifier,
+            OS = SystemInfo.operatingSystem,
+            AndroidDevice = SystemInfo.deviceModel,
+            CreateAccount = true,
+            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+            {
+                GetUserAccountInfo = true,
+                GetPlayerProfile = true
+            }
+        },
+    result =>
+    {
+        LoginSucess(result);
+    },
+     error => Debug.LogError(error.GenerateErrorReport()));
 #endif
 
 
+
+
     }
+    public SignInWithApple signInWithApple;
 
     public void DoAppleQuickLogin()
     {
-#if UNITY_IOS_
-        var quickLoginArgs = new AppleAuthQuickLoginArgs();
 
-        this.appleAuthManager.QuickLogin(
-            quickLoginArgs,
-            credential =>
+
+        Debug.Log("DoAppleQuickLogin");
+
+
+        if( PlayerPrefs.HasKey("AppleidentityToken") )
+        {
+            string tooken = PlayerPrefs.GetString("AppleidentityToken");
+            PlayFabClientAPI.LoginWithApple(new LoginWithAppleRequest()
             {
-                // Received a valid credential!
-                // Try casting to IAppleIDCredential or IPasswordCredential
 
-                // Previous Apple sign in credential
-                var appleIdCredential = credential as IAppleIDCredential;
+                TitleId = PlayFabSettings.TitleId,
+                IdentityToken = tooken,
+                InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+                {
+                    GetUserAccountInfo = true,
+                    GetPlayerProfile = true
+                }
+            },
+            result2 =>
+            {
+            LoginSucess(result2);
+            },
+            error => Debug.LogError(error.GenerateErrorReport())); ;
 
-                // Saved Keychain credential (read about Keychain Items)
-                     var passwordCredential = credential as IPasswordCredential;
+         }
+        else
+        {
+            signInWithApple.Login((args) =>
+            {
+                if (!string.IsNullOrEmpty(args.error))
+                {
+                    Debug.Log("Apple -> sign in error:" + args.error);
+                    return;
+                }
+                string idToken = args.userInfo.idToken;
+                //LogMessage("Apple --> Identity Token:\n" + idToken);
 
-                var identityToken = Encoding.UTF8.GetString(
-               appleIdCredential.IdentityToken,
-               0,
-               appleIdCredential.IdentityToken.Length);
+
 
                 PlayFabClientAPI.LoginWithApple(new LoginWithAppleRequest()
                 {
 
                     TitleId = PlayFabSettings.TitleId,
-                    IdentityToken = identityToken,
+                    IdentityToken = idToken,
                     InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
                     {
                         GetUserAccountInfo = true,
                         GetPlayerProfile = true
                     }
                 },
-                    result2 =>
-                    {
-                        LoginSucess(result2);
-                    },
-                    error => Debug.LogError(error.GenerateErrorReport())); ;
-                                    LoadingOverlay.instance.DoneLoading("Apple login");
+           result2 =>
+           {
+               LoginSucess(result2);
+
+           },
+           error => Debug.LogError(error.GenerateErrorReport())); ;
+                LoadingOverlay.instance.DoneLoading("Apple login");
+
+                // use idToken to login to PlayFab or any other web services
+            });
+        }
+ 
 
 
-            },
-            error =>
-            {
-        // Quick login failed. The user has never used Sign in With Apple on your app. Go to login screen
-         });
-#endif
+
+
+
+
+//#if UNITY_IOS_
+        //var quickLoginArgs = new AppleAuthQuickLoginArgs();
+
+        //this.appleAuthManager.QuickLogin(
+        //    quickLoginArgs,
+        //    credential =>
+        //    {
+        //        // Received a valid credential!
+        //        // Try casting to IAppleIDCredential or IPasswordCredential
+
+        //        // Previous Apple sign in credential
+        //        var appleIdCredential = credential as IAppleIDCredential;
+
+        //        // Saved Keychain credential (read about Keychain Items)
+        //             var passwordCredential = credential as IPasswordCredential;
+
+        //        var identityToken = Encoding.UTF8.GetString(
+        //       appleIdCredential.IdentityToken,
+        //       0,
+        //       appleIdCredential.IdentityToken.Length);
+        //               Debug.Log("LoginWithApplePlayfab");
+        //        PlayFabClientAPI.LoginWithApple(new LoginWithAppleRequest()
+        //        { 
+
+        //            TitleId = PlayFabSettings.TitleId,
+        //            IdentityToken = identityToken,
+        //            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+        //            {
+        //                GetUserAccountInfo = true,
+        //                GetPlayerProfile = true
+        //            }
+        //        },
+        //            result2 =>
+        //            {
+        //                StartCoroutine(AfteTimeLogin(result2));
+
+        //            },
+        //            error => Debug.LogError(error.GenerateErrorReport())); ;
+        //                            LoadingOverlay.instance.DoneLoading("Apple login");
+
+
+        //    },
+        //    error =>
+        //    {
+        //            Debug.Log("Quick login failed. The user has never used Sign in With Apple on your app. Go to login screen");
+        //            Debug.Log(error.Domain);
+        //        Debug.Log(error.Code);
+
+
+        //        // Quick login failed. The user has never used Sign in With Apple on your app. Go to login screen
+        //    });
+//#endif
     }
-    public void LoginSucess(LoginResult result)
+
+        public void LoginSucess(LoginResult result)
     {
-        
-                    LoadingOverlay.instance.ShowLoadingFullscreen("Loading data!");
+        Debug.Log("LoginSucess_ DoAppleQuickLogin");
+
+
+        LoadingOverlay.instance.ShowLoadingFullscreen("Loading data!");
 
         PlayFabClientAPI.GetTitleData(new GetTitleDataRequest(),
               result2 => {
@@ -254,6 +370,9 @@ result =>
                 MainMenuController.instance.SetFBLinked(false);
             }
 
+        
+
+
 
             if (GetComponent<Startup>().avatarURL != null)
                 if (GetComponent<Startup>().avatarURL.Length > 0)
@@ -277,6 +396,20 @@ result =>
             }
 
 
+            if (result.InfoResultPayload.AccountInfo.AppleAccountInfo != null && result.InfoResultPayload.AccountInfo.AppleAccountInfo.AppleSubjectId.Length > 0)
+            {
+                MainMenuController.instance.SetAppleLinked(true);
+                Startup._instance.Refresh(0.1f);
+
+                return;
+
+            }
+            else
+            {
+                MainMenuController.instance.SetAppleLinked(false);
+            }
+
+
             Refresh();
         }
     }
@@ -285,26 +418,13 @@ result =>
     // Start is called before the first frame update
     void Start()
     {
-        #if UNITY_IOS
-        if (AppleAuthManager.IsCurrentPlatformSupported)
-        {
-            // Creates a default JSON deserializer, to transform JSON Native responses to C# instances
-            var deserializer = new PayloadDeserializer();
-            // Creates an Apple Authentication manager with the deserializer
-            this.appleAuthManager = new AppleAuthManager(deserializer);
-        }
-        #endif
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        #if UNITY_IOS
-        if (this.appleAuthManager != null)
-        {
-            this.appleAuthManager.Update();
-        }
-        #endif
+
     }
     public void UpdateDisplayName(string aName)
     {
@@ -1022,6 +1142,9 @@ result =>
                                 string[] liveMessegaes = entry.Value.Value.Split('≤');
                                 string[] viewedMessegaes = chatViewed.Split('≤');
 
+                                if (GameManager.instance == null)
+                                    return;
+
                                 GameManager.instance.ChatNotificationIcon.SetActive(true);
                                 float dif = Mathf.Abs(liveMessegaes.Length - viewedMessegaes.Length) / 2;
                                 if (dif == 0)
@@ -1077,6 +1200,8 @@ result =>
 
                         GameManager.instance.ChatNotificationIcon.SetActive(true);
                         float dif = Mathf.Abs(liveMessegaes.Length - viewedMessegaes.Length) / 2;
+                        if (dif == 0)
+                            dif = 1;
                         GameManager.instance.ChatNotificationIcon.transform.GetChild(0).GetComponent<Text>().text = dif.ToString();
                     }
                     else
@@ -1157,6 +1282,24 @@ result =>
 
 
 
+
+
+            if (int.Parse(aBoarddata.EmptyTurns) >= 4)
+            {
+                GameManager.instance.updateInProgress = false;
+                GameManager.instance.EndGameAfterPasses(aBoarddata);
+            }
+            else
+            {
+                //GameManager.instance.WaitingOverlay.SetActive(true);
+                //GameManager.instance.WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
+                //GameManager.instance.WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
+
+
+
+                //if (TutorialController.instance == null && Random.Range(0,100) <50)
+                //    Appodeal.show(Appodeal.INTERSTITIAL);
+            }
 
 
 
@@ -1329,10 +1472,10 @@ result =>
 
 
 
-
+            
   
 
-            if (Startup._instance.openGamesList[i].player1_abandon == "1" || Startup._instance.openGamesList[i].player2_abandon == "1" || int.Parse(Startup._instance.openGamesList[i].EmptyTurns) >= 4 || timeToDeadline<0)
+            if (Startup._instance.openGamesList[i].player1_abandon == "1" || Startup._instance.openGamesList[i].player2_abandon == "1" /*|| int.Parse(Startup._instance.openGamesList[i].EmptyTurns) >= 4 */|| timeToDeadline<0)
             {
                 if( Startup._instance.openGamesList[i].playerTurn == "0" && timeToDeadline < 0)
                 {
@@ -1465,45 +1608,82 @@ result =>
     public void AppleLink()
     {
                 #if UNITY_IOS
-        var loginArgs = new AppleAuthLoginArgs(LoginOptions.IncludeEmail | LoginOptions.IncludeFullName);
+        //var loginArgs = new AppleAuthLoginArgs(LoginOptions.IncludeEmail | LoginOptions.IncludeFullName);
 
-        this.appleAuthManager.LoginWithAppleId(
-            loginArgs,
-            credential =>
+        //this.appleAuthManager.LoginWithAppleId(
+        //    loginArgs,
+        //    credential =>
+        //    {
+        //        // Obtained credential, cast it to IAppleIDCredential
+        //        var appleIdCredential = credential as IAppleIDCredential;
+        //        if (appleIdCredential != null)
+        //        {
+        //            // Apple User ID
+        //            // You should save the user ID somewhere in the device
+        //            var userId = appleIdCredential.User;
+        //            PlayerPrefs.SetString("AppleUserIdKey", userId);
+
+        //            // Email (Received ONLY in the first login)
+        //            var email = appleIdCredential.Email;
+
+        //            // Full name (Received ONLY in the first login)
+        //            var fullName = appleIdCredential.FullName;
+
+        //            // Identity token
+        //            var identityToken = Encoding.UTF8.GetString(
+        //                        appleIdCredential.IdentityToken,
+        //                        0,
+        //                        appleIdCredential.IdentityToken.Length);
+        //            PlayerPrefs.SetString("AppleidentityToken", identityToken);
+        //            // Authorization code
+        //            var authorizationCode = Encoding.UTF8.GetString(
+        //                        appleIdCredential.AuthorizationCode,
+        //                        0,
+        //                        appleIdCredential.AuthorizationCode.Length);
+
+
+        //                 PlayFabClientAPI.LinkApple(new LinkAppleRequest { IdentityToken = identityToken }, AppleLoginSucess, OnPlayfabAppleAuthFailed);
+
+
+        //            // 
+        //            //WriteTitleEventRequest callback from top
+        //     //       SetAppleLinked
+
+
+        //           //MainMenuController.instance.SetAppleLinked()
+
+
+
+        //            // And now you have all the information to create/login a user in your system
+        //        }
+        //    },
+        //    error =>
+        //    {
+        //        // Something went wrong
+        //        var authorizationErrorCode = error.GetAuthorizationErrorCode();
+
+        //    });
+
+
+
+        Debug.Log("DoAppleQuickLogin");
+        signInWithApple.Login((args) =>
+        {
+            if (!string.IsNullOrEmpty(args.error))
             {
-                // Obtained credential, cast it to IAppleIDCredential
-                var appleIdCredential = credential as IAppleIDCredential;
-                if (appleIdCredential != null)
-                {
-                    // Apple User ID
-                    // You should save the user ID somewhere in the device
-                    var userId = appleIdCredential.User;
-                    PlayerPrefs.SetString("AppleUserIdKey", userId);
+                Debug.Log("Apple -> sign in error:" + args.error);
+                return;
+            }
+            string idToken = args.userInfo.idToken;
+            //LogMessage("Apple --> Identity Token:\n" + idToken);
 
-                    // Email (Received ONLY in the first login)
-                    var email = appleIdCredential.Email;
+            PlayerPrefs.SetString("AppleUserIdKey", args.userInfo.displayName);
+            PlayerPrefs.SetString("AppleidentityToken", args.userInfo.idToken);
 
-                    // Full name (Received ONLY in the first login)
-                    var fullName = appleIdCredential.FullName;
+            PlayFabClientAPI.LinkApple(new LinkAppleRequest { IdentityToken = args.userInfo.idToken }, AppleLoginSucess, OnPlayfabAppleAuthFailed);
 
-                    // Identity token
-                    var identityToken = Encoding.UTF8.GetString(
-                                appleIdCredential.IdentityToken,
-                                0,
-                                appleIdCredential.IdentityToken.Length);
-                    PlayerPrefs.SetString("AppleidentityToken", identityToken);
-                    // Authorization code
-                    var authorizationCode = Encoding.UTF8.GetString(
-                                appleIdCredential.AuthorizationCode,
-                                0,
-                                appleIdCredential.AuthorizationCode.Length);
-
-
-                         PlayFabClientAPI.LinkApple(new LinkAppleRequest { IdentityToken = identityToken }, null, OnPlayfabFacebookAuthFailed);
-
-
-
-                 
+            // use idToken to login to PlayFab or any other web services
+        });
 
 
 
@@ -1511,17 +1691,23 @@ result =>
 
 
 
-                    // And now you have all the information to create/login a user in your system
-                }
-            },
-            error =>
-            {
-                // Something went wrong
-                var authorizationErrorCode = error.GetAuthorizationErrorCode();
-            });
 #endif
 
     }
+
+    private void AppleLoginSucess(PlayFab.ClientModels.EmptyResult obj)
+    {
+        MainMenuController.instance.SetAppleLinked(true);
+
+
+
+        SceneManager.LoadScene(0);
+        // Startup._instance.Refresh(0.1f);
+        PlayfabHelperFunctions.instance.ReLogin();
+
+    }
+
+
     public void FacebookUnLink()
     {
         PlayFabClientAPI.UnlinkFacebookAccount(new UnlinkFacebookAccountRequest {  }, OnUnlinked, null);
@@ -1543,7 +1729,10 @@ result =>
     private void OnFacebookInitialized()
     {
         Debug.Log("Logging into Facebook...");
+
+#if UNITY_IOS
         Invoke(nameof(RegisterAppForNetworkAttribution), 1);
+#endif
         // Once Facebook SDK is initialized, if we are logged in, we log out to demonstrate the entire authentication cycle.
         //if (FB.IsLoggedIn)
         //    FB.LogOut();
@@ -1642,7 +1831,18 @@ result =>
         {
             LoginSucess(result2);
         },
-        error => Debug.LogError(error.GenerateErrorReport())); ;
+        error =>
+        {
+            Debug.LogError(error.GenerateErrorReport());
+
+            PlayerPrefs.DeleteKey("FacebookLink");
+            LoadingOverlay.instance.LoadingCall.Clear();
+            PlayfabHelperFunctions.instance.ReLogin();
+            SceneManager.LoadScene(0);
+            Startup._instance.Refresh(0.1f);
+        }
+        );
+        
         LoadingOverlay.instance.DoneLoading("Facebook login");
     }
     public void TryAppleLogin()
@@ -1699,13 +1899,13 @@ result =>
     
     private void OnPlayfabFacebookAuthFailed(PlayFabError error)
     {
-        if(error.Error == PlayFabErrorCode.LinkedAccountAlreadyClaimed)
+        if(error.Error == PlayFabErrorCode.LinkedAccountAlreadyClaimed || error.Error == PlayFabErrorCode.LinkedIdentifierAlreadyClaimed)
         {
             Debug.Log("Should we merge?");
-            MainMenuController.instance.ShowMerginAlert();
+          //  MainMenuController.instance.ShowMerginAlert();
 
 
-            if( MainMenuController.instance.FacebookButton.activeSelf )
+          //  if( MainMenuController.instance.FacebookButton.activeSelf )
             {
                 MainMenuController.instance.ClickRecoveAccount();
             }
@@ -1715,7 +1915,23 @@ result =>
         LoadingOverlay.instance.DoneLoading("Facebook login");
         Debug.Log("PlayFab Facebook Auth Failed: " + error.GenerateErrorReport());
     }
+    private void OnPlayfabAppleAuthFailed(PlayFabError error)
+    {
+        if (error.Error == PlayFabErrorCode.LinkedAccountAlreadyClaimed || error.Error == PlayFabErrorCode.LinkedIdentifierAlreadyClaimed)
+        {
+            Debug.Log("Should we merge?");
 
+            Startup._instance.PlaySoundEffect(0);
+     
+            SceneManager.LoadScene(0);
+            // Startup._instance.Refresh(0.1f);
+            PlayfabHelperFunctions.instance.ReLogin();
+
+
+        }
+        LoadingOverlay.instance.DoneLoading("Facebook login");
+        Debug.Log("PlayFab Facebook Auth Failed: " + error.GenerateErrorReport());
+    }
     private static void FbGetPicture(IGraphResult result)
     {
         if (result.Texture != null)
