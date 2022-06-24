@@ -55,6 +55,8 @@ public class FriendsListWindow : MonoBehaviour
     }
     void OnEnable()
     {
+        errorText.text = "";
+        inputF.text = "";
         foreach (Transform child in _parent)
         {
             GameObject.Destroy(child.gameObject);
@@ -69,25 +71,58 @@ public class FriendsListWindow : MonoBehaviour
     }
 
     //Get the players with the top 10 high scores in the game
-    public void RequestLeaderboard()
+    public void RequestLeaderboard(bool forceUpdate = false)
     {
-        PlayFabClientAPI.GetFriendsList(new GetFriendsListRequest
+        if(PlayerPrefs.HasKey("GetFriendsListResult") && PlayerPrefs.HasKey("GetLeaderboardResult") && forceUpdate == false)
         {
-            IncludeFacebookFriends=true,
-             ProfileConstraints = new PlayerProfileViewConstraints()
-             {
-                 ShowDisplayName = true,
-                 ShowAvatarUrl = true,
-                 ShowStatistics = true
-             }
+            LoadLocalInfo();
+        }
+        else
+        {
+            PlayFabClientAPI.GetFriendsList(new GetFriendsListRequest
+            {
+                IncludeFacebookFriends = true,
+                ProfileConstraints = new PlayerProfileViewConstraints()
+                {
+                    ShowDisplayName = true,
+                    ShowAvatarUrl = true,
+                    ShowStatistics = true
+                }
 
-        }, result => GetLeadoardOfFriends(result), FailureCallback);
+            }, result => GetLeadoardOfFriends(result), FailureCallback);
+        }
+
+
+
+
 
 
 
 
     }
+    public void LoadLocalInfo()
+    {
+        var json = PluginManager.GetPlugin<ISerializerPlugin>(PluginContract.PlayFab_Serializer);
+        GetFriendsListResult res = json.DeserializeObject<GetFriendsListResult>(PlayerPrefs.GetString("GetFriendsListResult"));
+        GetLeaderboardResult res2 = json.DeserializeObject<GetLeaderboardResult>(PlayerPrefs.GetString("GetLeaderboardResult"));
 
+        DisplayLeaderboard(res,res2);
+
+
+
+        PlayFabClientAPI.GetFriendsList(new GetFriendsListRequest
+        {
+            IncludeFacebookFriends = true,
+            ProfileConstraints = new PlayerProfileViewConstraints()
+            {
+                ShowDisplayName = true,
+                ShowAvatarUrl = true,
+                ShowStatistics = true
+            }
+
+        }, result => GetLeadoardOfFriends(result), FailureCallback);
+
+    }
 
     private void FailureCallback(PlayFabError error)
     {
@@ -110,72 +145,79 @@ public class FriendsListWindow : MonoBehaviour
                 ShowStatistics=true
             }
 
-        }, result2 => DisplayLeaderboard(result,result2), FailureCallback);
+        }, result2 => DisplayLeaderboard(result,result2,true), FailureCallback);
     }
 
 
-public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult result2)
+public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult result2,bool newData = false)
     {
-        
-
-
-        for (int i = 0; i < result.Friends.Count;i++)
+        if(newData)
         {
-            GameObject go =  GameObject.Instantiate(templateItem, _parent);
-
-            go.transform.GetChild(2).GetComponent<Text>().text = result.Friends[i].Profile.DisplayName;
-            go.transform.GetChild(4).GetComponent<Text>().text = "";
-            go.transform.GetChild(1).GetComponent<Text>().text = "";
-         //   go.transform.GetChild(5).GetChild(0).GetComponent<Text>().text = HelperFunctions.XPtoLevel();
-
-
-            for (int j = 0; j< result2.Leaderboard.Count;j++)
+            PlayerPrefs.SetString("GetFriendsListResult", result.ToJson());
+            PlayerPrefs.SetString("GetLeaderboardResult", result2.ToJson());
+            foreach (Transform child in _parent)
             {
-                if( result2.Leaderboard[j].PlayFabId == result.Friends[i].FriendPlayFabId)
-                {
-                    go.transform.GetChild(1).GetComponent<Text>().text = result2.Leaderboard[j].StatValue.ToString();
-                }
+                GameObject.Destroy(child.gameObject);
             }
-
-
-            
-
-            string avatarURL = "";
-
-            if(result.Friends[i].Profile.AvatarUrl != null)
-            avatarURL = result.Friends[i].Profile.AvatarUrl;
-
-            Image img = go.transform.GetChild(0).GetChild(0).GetComponent<Image>();
-            go.GetComponent<FriendListItem>().Init(result.Friends[i].Profile, result.Friends[i].Profile.DisplayName, go.transform.GetChild(1).GetComponent<Text>().text, img);
-
-            if (avatarURL.Length>0)
-            {
-                ProfilePictureManager.instance.SetPicture(avatarURL, result.Friends[i].Profile.PlayerId, img);
-                //StartCoroutine(SetPicture(avatarURL, img));
-            }
-           
-
-
-
-            bool hasFoundxp = false;
-            for (int j = 0; j < result.Friends[i].Profile.Statistics.Count; j++)
-            {
-                if (result.Friends[i].Profile.Statistics[j].Name == "Experience")
-                {
-                    go.transform.GetChild(5).GetChild(0).GetComponent<Text>().text = HelperFunctions.XPtoLevel(result.Friends[i].Profile.Statistics[1].Value.ToString()).ToString();
-                    hasFoundxp = true;
-                }
-            }
-
-
-            if (hasFoundxp == false)
-            {
-                go.transform.GetChild(5).gameObject.SetActive(false);
-            }
-
-
         }
+        
+            for (int i = 0; i < result.Friends.Count; i++)
+            {
+                GameObject go = GameObject.Instantiate(templateItem, _parent);
 
+                go.transform.GetChild(2).GetComponent<Text>().text = result.Friends[i].Profile.DisplayName;
+                go.transform.GetChild(4).GetComponent<Text>().text = "";
+                go.transform.GetChild(1).GetComponent<Text>().text = "";
+                //   go.transform.GetChild(5).GetChild(0).GetComponent<Text>().text = HelperFunctions.XPtoLevel();
+
+
+                for (int j = 0; j < result2.Leaderboard.Count; j++)
+                {
+                    if (result2.Leaderboard[j].PlayFabId == result.Friends[i].FriendPlayFabId)
+                    {
+                        go.transform.GetChild(1).GetComponent<Text>().text = result2.Leaderboard[j].StatValue.ToString();
+                    }
+                }
+
+
+
+
+                string avatarURL = "";
+
+                if (result.Friends[i].Profile.AvatarUrl != null)
+                    avatarURL = result.Friends[i].Profile.AvatarUrl;
+
+                Image img = go.transform.GetChild(0).GetChild(0).GetComponent<Image>();
+                go.GetComponent<FriendListItem>().Init(result.Friends[i].Profile, result.Friends[i].Profile.DisplayName, go.transform.GetChild(1).GetComponent<Text>().text, img);
+
+                if (avatarURL.Length > 0)
+                {
+                    ProfilePictureManager.instance.SetPicture(avatarURL, result.Friends[i].Profile.PlayerId, img);
+                    //StartCoroutine(SetPicture(avatarURL, img));
+                }
+
+
+
+
+                bool hasFoundxp = false;
+                for (int j = 0; j < result.Friends[i].Profile.Statistics.Count; j++)
+                {
+                    if (result.Friends[i].Profile.Statistics[j].Name == "Experience")
+                    {
+                        go.transform.GetChild(5).GetChild(0).GetComponent<Text>().text = HelperFunctions.XPtoLevel(result.Friends[i].Profile.Statistics[1].Value.ToString()).ToString();
+                        hasFoundxp = true;
+                    }
+                }
+
+
+                if (hasFoundxp == false)
+                {
+                    go.transform.GetChild(5).gameObject.SetActive(false);
+                }
+
+
+            }
+        
     }
 
     //private IEnumerator SetPicture(string aURL, Image aImage)
@@ -207,9 +249,10 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
         {
             GameObject.Destroy(child.gameObject);
         }
-        RequestLeaderboard();
+        RequestLeaderboard(true);
 
         errorText.text = "";
+        inputF.text = "";
     }
     private void FailureCallbackAdd(PlayFabError error)
     {

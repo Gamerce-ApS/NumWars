@@ -128,6 +128,7 @@ namespace PlayFab.Internal
             Action<PlayFabError> errorCallback, object customData = null, Dictionary<string, string> extraHeaders = null, PlayFabAuthenticationContext authenticationContext = null, PlayFabApiSettings apiSettings = null, IPlayFabInstanceApi instanceApi = null)
             where TResult : PlayFabResultCommon
         {
+
             apiSettings = apiSettings ?? PlayFabSettings.staticSettings;
             var fullUrl = apiSettings.GetFullUrl(apiEndpoint, apiSettings.RequestGetParams);
             _MakeApiCall(apiEndpoint, fullUrl, request, authType, resultCallback, errorCallback, customData, extraHeaders, false, authenticationContext, apiSettings, instanceApi);

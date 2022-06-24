@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using UnityEngine.UI;
+using System.Globalization;
 
 public class FakeTileData
 {
@@ -45,9 +46,77 @@ public class ScoreScreen : MonoBehaviour
         if(Input.GetMouseButtonUp(0))
             Speed = 0.5f;
     }
+    public void SetYourLastScore(BoardData _bd, int lastMoveIndex)
+    {
+        List<string> moveHistory = _bd.History;
+        List<FakeTileData> lastMoves = new List<FakeTileData>();
+
+        int myBackednTurn = _bd.GetPlayerTurn(GameManager.instance.CurrentTurn);
+
+        //if (moveHistory != null)
+        //    if (moveHistory.Count > 0)
+        //        if (moveHistory[moveHistory.Count - 1] == "#SWAP#")
+        //        {
+        //            AlertText.instance.ShowAlert("Player swapped!", 0.5f);
+        //            return;
+        //        }
+        //if (moveHistory != null)
+        //    if (moveHistory.Count > 0)
+        //        if (moveHistory[moveHistory.Count - 1] == "#EMPTY#")
+        //        {
+        //            AlertText.instance.ShowAlert("Empty turn!", 0.5f);
+        //            return;
+        //        }
+
+
+        if (moveHistory == null)
+            return;
+
+
+        for (int i = lastMoveIndex-1; i >= 0; i--)
+        {
+            if (moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#" || moveHistory[i].Contains("#TILESONHAND"))
+            {
+                break;
+            }
+            string[] moveInfo = moveHistory[i].Split('#');
+            FakeTileData ftd = new FakeTileData();
+            ftd.Position = StringToVector2(moveInfo[0]);
+            ftd.Number = int.Parse(moveInfo[1]);
+            ftd.ScoreValue = int.Parse(moveInfo[2]);
+            ftd.Player = int.Parse(moveInfo[3]);
+            ftd.SpecialTypeTile = 0;
+            if (moveInfo.Length > 4)
+                ftd.SpecialTypeTile = int.Parse(moveInfo[4]);
+
+
+
+            if (myBackednTurn == ftd.Player)
+            {
+                lastMoves.Add(ftd);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        int totalScore = 0;
+        for (int i = 0; i < lastMoves.Count; i++)
+        {
+            totalScore += lastMoves[i].ScoreValue;
+        }
+
+        GameManager.instance.thePlayers[0].LastScore = totalScore;
+        GameManager.instance.UpdateUI();
+
+    }
     // Replay functions
     public void ShowScoreLastPlay(bool isFromStart, BoardData _bd)
     {
+  
+
+
         List<string> moveHistory = _bd.History;
         List<FakeTileData> lastMoves = new List<FakeTileData>();
 
@@ -58,13 +127,22 @@ public class ScoreScreen : MonoBehaviour
         if(moveHistory[moveHistory.Count-1]== "#SWAP#")
         {
             AlertText.instance.ShowAlert("Player swapped!",0.5f);
+            SetYourLastScore(_bd, moveHistory.Count - 1);
+            return;
+        }
+        if (moveHistory != null)
+        if (moveHistory.Count > 0)
+        if (moveHistory[moveHistory.Count - 1] == "#EMPTY#")
+        {
+            AlertText.instance.ShowAlert("Empty turn!", 0.5f);
+            SetYourLastScore(_bd, moveHistory.Count - 2);
             return;
         }
 
 
-
         if (moveHistory == null)
             return;
+        int LastMoveIndex = 0;
         for (int i = moveHistory.Count-1; i>=0 ;i--)
         {
             if (moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#" || moveHistory[i].Contains("#TILESONHAND"))
@@ -91,11 +169,12 @@ public class ScoreScreen : MonoBehaviour
             {
                 break;
             }
+            LastMoveIndex = i;
         }
         Debug.Log("Replay " + lastMoves.Count + " turns");
 
+        SetYourLastScore(_bd, LastMoveIndex-1);
 
- 
 
         int totalScore = 0;
         for (int i = 0; i < lastMoves.Count; i++)
@@ -625,10 +704,16 @@ public class ScoreScreen : MonoBehaviour
         // split the items
         string[] sArray = sVector.Split(',');
 
+        //Debug.Log(sVector);
+        //Debug.Log(sArray);
+        //Debug.Log(sArray[0]);
+        //Debug.Log(sArray[1]);
+
+
         // store as a Vector3
         Vector2 result = new Vector2(
-            float.Parse(sArray[0]),
-            float.Parse(sArray[1]));
+            float.Parse(sArray[0], CultureInfo.InvariantCulture.NumberFormat),
+            float.Parse(sArray[1],CultureInfo.InvariantCulture.NumberFormat));
 
         return result;
     }

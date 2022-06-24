@@ -83,21 +83,7 @@ public PlayerProfileModel theProfile;
 
  
         isAIInfo = false;
-            StatsData _statsData = Startup._instance.GetStatsData();
-        int amountLost = 0;
-        int amountWin = 0;
-        for (int i = 0; i < _statsData.FinishedGames.Count; i++)
-        {
-            if (_statsData.FinishedGames[i].PlayfabID == theProfile.PlayerId)
-            {
-                if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
-                    amountWin++;
-                else
-                    amountLost++;
-            }
-        }
-        winT.text = amountWin.ToString();
-        LoseT.text = amountLost.ToString();
+
 
 
         if(aUserId ==1)
@@ -115,6 +101,9 @@ public PlayerProfileModel theProfile;
                 PlayfabHelperFunctions.instance.GetOtherUserDataProfile(theProfile.PlayerId, this);
                 LoadAvatarURL(theProfile.AvatarUrl, theProfile.PlayerId, _profilePic);
                 _name.text = theProfile.DisplayName;
+
+
+
             }
         }
         else
@@ -122,6 +111,25 @@ public PlayerProfileModel theProfile;
             PlayfabHelperFunctions.instance.GetOtherUserDataProfile(Startup._instance.MyPlayfabID, this);
             LoadAvatarURL(Startup._instance.avatarURL, Startup._instance.MyPlayfabID, _profilePic);
             _name.text = Startup._instance.displayName;
+
+
+            StatsData _statsData = Startup._instance.GetStatsData();
+            int amountLost = 0;
+            int amountWin = 0;
+            for (int i = 0; i < _statsData.FinishedGames.Count; i++)
+            {
+                if (_statsData.FinishedGames[i].PlayfabID == theProfile.PlayerId)
+                {
+                    if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
+                        amountWin++;
+                    else
+                        amountLost++;
+                }
+            }
+
+
+            winT.text = amountWin.ToString();
+            LoseT.text = amountLost.ToString();
         }
 
 
@@ -203,26 +211,47 @@ public PlayerProfileModel theProfile;
 
 
 
-        StatsData _statsData = Startup._instance.GetStatsData();
+        //StatsData _statsData = Startup._instance.GetStatsData();
+        //int amountLost = 0;
+        //int amountWin = 0;
+        //for (int i = 0; i < _statsData.FinishedGames.Count; i++)
+        //{
+        //    if (_statsData.FinishedGames[i].PlayfabID == theProfile.PlayerId)
+        //    {
+        //        if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
+        //            amountWin++;
+        //        else
+        //            amountLost++;
+        //    }
+        //}
+        //winT.text = amountWin.ToString();
+        //LoseT.text = amountLost.ToString();
+
+
+
         int amountLost = 0;
         int amountWin = 0;
-        for (int i = 0; i < _statsData.FinishedGames.Count; i++)
+        for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
         {
-            if (_statsData.FinishedGames[i].PlayfabID == theProfile.PlayerId)
+            if ((Startup.instance.myOldGameList[i].player1_PlayfabId == theProfile.PlayerId || Startup.instance.myOldGameList[i].player2_PlayfabId == theProfile.PlayerId))
             {
-                if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
+                if( Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
+                {
                     amountWin++;
-                else
+                }else
+                {
                     amountLost++;
-            }
+                }
+             }
         }
         winT.text = amountWin.ToString();
         LoseT.text = amountLost.ToString();
 
+
         PlayfabHelperFunctions.instance.GetOtherUserDataProfile(theProfile.PlayerId,this);
 
     }
-    public void SetData(Dictionary<string,UserDataRecord> profileData)
+    public void SetData(Dictionary<string,UserDataRecord> profileData,string playfabID)
     {
 
         _level.text = HelperFunctions.XPtoLevel(profileData["XP"].Value).ToString();
@@ -230,7 +259,7 @@ public PlayerProfileModel theProfile;
 
         AchivmentController ac = new AchivmentController();
         ac.Init(profileData["Achivments"].Value);
-
+        ac.playfabid = playfabID;
         for (int i = 0; i< statsData.Count;i++)
         {
             statsData[i].SetFromData(ac,isAIInfo);
@@ -251,6 +280,57 @@ public PlayerProfileModel theProfile;
 
         if(_thropies != null)
         _thropies.text = profileData["Ranking"].Value;
+
+
+
+
+
+        //StatsData _statsData = new StatsData(profileData["StatsData"].Value);
+        //int amountLost = 0;
+        //int amountWin = 0;
+        //for (int i = 0; i < _statsData.FinishedGames.Count; i++)
+        //{
+        //    if (_statsData.FinishedGames[i].PlayfabID == Startup.instance.MyPlayfabID)
+        //    {
+        //        if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
+        //            amountWin++;
+        //        else
+        //            amountLost++;
+        //    }
+        //}
+        //if(amountWin+ amountLost>0)
+        //{
+        //    winT.text = amountWin.ToString();
+        //    LoseT.text = amountLost.ToString();
+        //}
+
+
+        int amountLost = 0;
+        int amountWin = 0;
+        for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+        {
+            if ((Startup.instance.myOldGameList[i].player1_PlayfabId == theProfile.PlayerId || Startup.instance.myOldGameList[i].player2_PlayfabId == theProfile.PlayerId))
+            {
+                if (Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
+                {
+                    amountWin++;
+                }
+                else
+                {
+                    amountLost++;
+                }
+            }
+        }
+        if (amountWin + amountLost > 0)
+        {
+            winT.text = amountWin.ToString();
+            LoseT.text = amountLost.ToString();
+        }
+
+
+
+
+
 
     }
     // Start is called before the first frame update

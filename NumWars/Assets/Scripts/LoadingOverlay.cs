@@ -32,7 +32,16 @@ public class LoadingOverlay : MonoBehaviour
     {
         
     }
+    //public bool GetIsLoadingGames()
+    //{
+    //    return false;
+    //    if (LoadingCall.Contains("GetPlayerProfile") ||
+    //        LoadingCall.Contains("GetUserData") ||
+    //        LoadingCall.Contains("GetSharedGroupData0"))
+    //        return true;
 
+    //    return false;
+    //}
     // Update is called once per frame
     void Update()
     {
@@ -45,7 +54,7 @@ public class LoadingOverlay : MonoBehaviour
                 //transform.GetChild(0).gameObject.SetActive(false);
                 LoadingGOList.SetActive(false);
                 targetAlpha = 0;
-
+                loadingTick = 7;
             }
         }
 
@@ -71,9 +80,20 @@ public class LoadingOverlay : MonoBehaviour
         {
             transform.GetChild(0).GetComponent<CanvasGroup>().alpha = 0;
             transform.GetChild(0).gameObject.SetActive(false);
+            loadingTick = -1;
+        }
+        if(loadingTick != -1)
+        {
+            loadingTick += Time.deltaTime;
+            float loadingTime = ((float)loadingTick / 7.1f);
+            if (loadingTime > 1)
+                loadingTime = 1;
+
+            log.text = (100 * loadingTime).ToString("F0") + "%";
         }
 
     }
+    float loadingTick = 0;
     public void ClickRetry()
     {
         LoadingCall.Clear();
@@ -84,15 +104,17 @@ public class LoadingOverlay : MonoBehaviour
     public void ShowLoading(string function)
     {
         timer = -1;
+        if (loadingTick == -1)
+            loadingTick = 0;
      //   transform.GetChild(0).gameObject.SetActive(true);
      //   LoadingGOList.SetActive(true);
         LoadingCall.Add(function);
        // log.text = "Start:" + function;
 
-        float loadingTime = ((float)LoadingCall.Count / 15f);
-        if (loadingTime > 1)
-            loadingTime = 1;
-        log.text = (100 * loadingTime).ToString("F0") + "%";
+        //float loadingTime = ((float)laodingTimer / 7.1f);
+        //if (loadingTime > 1)
+        //    loadingTime = 1;
+        //log.text = (100 * loadingTime).ToString("F0") + "%";
     }
     public void DoneLoading(string aFunction)
     {
@@ -114,10 +136,10 @@ public class LoadingOverlay : MonoBehaviour
         LoadingCall.Add(function);
         //log.text = "Start:" + function;
 
-        float loadingTime = ((float)LoadingCall.Count / 15f);
-        if (loadingTime > 1)
-            loadingTime = 1;
-        log.text = (100 * loadingTime).ToString("F0") + "%";
+        //float loadingTime = ((float)LoadingCall.Count / 15f);
+        //if (loadingTime > 1)
+        //    loadingTime = 1;
+        //log.text = (100 * loadingTime).ToString("F0") + "%";
 
     }
 

@@ -14,6 +14,7 @@ using PlayFab.CloudScriptModels;
 using Unity.Notifications.iOS;
 #endif
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 //using AppodealAds.Unity.Api;
@@ -47,13 +48,24 @@ public class Startup : MonoBehaviourPunCallbacks
     public bool isTutorialGame = false;
     public BoardData GameToLoad = null;
 
-    public static Startup _instance=null;
+    //public static Startup _instance=null;
+    public static Startup _instance = null;
+    public static Startup instance
+    {
+        get
+        {
+            if (_instance == null)
+                _instance = GameObject.Find("Startup").GetComponent<Startup>();
+            return _instance;
+        }
+    }
+
     public AchivmentController myAchivmentController;
     public bool DontAutoRefresh = true;
 
     public static long TIMEOUT = 60 * 60 * 24 * 2;
 
-    public static string LIVE_VERSION = "5";
+    public static string LIVE_VERSION = "6";
 
     // public static long TIMEOUT = 60+60+60;
 
@@ -71,11 +83,18 @@ public class Startup : MonoBehaviourPunCallbacks
     // Start is called before the first frame update
     void Start()
     {
+       // Screen.SetResolution(Screen.width/2, Screen.height / 2, true);
+
         PlayFab.Internal.PlayFabWebRequest.CustomCertValidationHook = ValidateCertificate;
         PlayFab.Internal.PlayFabWebRequest.SkipCertificateValidation();
         //    PlayFab.Internal.PlayFabWebRequest.CustomCertValidationHook
 
+        QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 60;
+        // When the Menu starts, set the rendering to target 20fps
+        OnDemandRendering.renderFrameInterval = 3;
+
+
 #if UNITY_IOS
         UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
         UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
@@ -155,45 +174,51 @@ public class Startup : MonoBehaviourPunCallbacks
 
     void Pasued(bool pauseStatus)
     {
-        if(!pauseStatus)
+        if(MainMenuController.instance != null)
+        MainMenuController.instance.UpdateTimer = 0;
+
+        if (!pauseStatus)
         {
-                            #if UNITY_IOS
+            //PhotonNetwork.Disconnect();
+            #if UNITY_IOS
             UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
             UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
-#endif
-
+            #endif
+            PlayfabCallbackHandler.instance.CancelAllCalls();
             if (PhotonNetwork.IsConnected)
             {
                 if (Startup._instance != null)
                 {
+                    if(LoadingOverlay.instance != null)
                     LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
                     Startup._instance.Refresh(0.1f);
                 }
             }
             else
             {
-                if (Startup._instance != null)
-                {
-                    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
-                    Startup._instance.Refresh(0.1f);
-                }
+                //if (Startup._instance != null)
+                //{
+                //    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+                //    Startup._instance.Refresh(0.1f);
+                //}
 
                 // #Critical, we must first and foremost connect to Photon Online Server.
                 PhotonNetwork.ConnectUsingSettings();
                 PhotonNetwork.GameVersion = "1";
 
-                if(Startup._instance != null)
+                if (Startup._instance != null)
                 {
-                    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
-                    Startup._instance.Refresh(0.1f);
-                    if (Startup._instance.avatarURL != null)
-                        if (Startup._instance.avatarURL.Length > 0)
-                        {
-                            PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
-                        }
+                    if (LoadingOverlay.instance != null)
+                        LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+                    //Startup._instance.Refresh(0.1f);
+                    //if (Startup._instance.avatarURL != null)
+                    //    if (Startup._instance.avatarURL.Length > 0)
+                    //    {
+                    //        PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+                    //    }
                     SceneManager.LoadScene(0);
                 }
-   
+
             }
 
         }
@@ -289,7 +314,26 @@ public class Startup : MonoBehaviourPunCallbacks
     // Update is called once per frame
     void Update()
     {
-        if(timer != -1)
+        if (Input.GetMouseButton(0) || (Input.touchCount > 0))
+        {
+            // If the mouse button or touch detected render at 60 FPS (every frame).
+            OnDemandRendering.renderFrameInterval = 1;
+        }
+        else
+        {
+            // If there is no mouse and no touch input then we can go back to 20 FPS (every 3 frames).
+            OnDemandRendering.renderFrameInterval = 3;
+        }
+
+
+        if (Input.GetKeyUp(KeyCode.O))
+        {
+            PlayfabHelperFunctions.instance.GetSharedDataGrouped(Startup.instance.MyPlayfabID);
+        }
+
+
+
+        if (timer != -1)
         if(!PhotonNetwork.IsConnected)
         {
             timer += Time.deltaTime;
@@ -441,6 +485,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
         //_PlayfabHelperFunctions.RemoveAbandonedGames();
     }
+    public List<BoardData> myOldGameList = new List<BoardData>();
     public void FinishedGettingGameListCheckForOpenGames()
     {
         for (int i = 0; i < openGamesList.Count; i++)
@@ -495,12 +540,12 @@ public class Startup : MonoBehaviourPunCallbacks
 
         foreach (Transform child in children)
         {
-            child.parent = null;
+            child.SetParent(null);
         }
 
         foreach (Transform child in children)
         {
-            child.parent = MainMenuController.instance._GameListParent_updating;
+            child.SetParent( MainMenuController.instance._GameListParent_updating);
 
             Vector3 rc = child.GetComponent<RectTransform>().localPosition;
             child.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
@@ -517,11 +562,14 @@ public class Startup : MonoBehaviourPunCallbacks
         //If no loading in progress we know it's the last call.
         if (LoadingOverlay.instance.LoadingCall.Count== 0)
         {
+
+            PlayfabHelperFunctions.instance.RemoveLegacyAndEmptyGames();
+
             GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent_updating);
 
             string[] stringSeparators = new string[] { "[splitter]" };
             string[] oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
-            for (int i = oldGameList.Length-1; i > oldGameList.Length-10; i--)
+            for (int i = oldGameList.Length-1; i > oldGameList.Length - 10; i--)
             {
 
                 if (i>=0 && oldGameList[i].Length > 2)
@@ -532,7 +580,18 @@ public class Startup : MonoBehaviourPunCallbacks
                 }
 
             }
-  
+
+            myOldGameList.Clear();
+            for (int i = 0; i < oldGameList.Length; i++)
+            {
+                if (i >= 0 && oldGameList[i].Length > 2)
+                {
+                    BoardData bd = new BoardData(CompressString.StringCompressor.DecompressString(oldGameList[i]));
+                    myOldGameList.Add(bd);
+                }
+
+
+            }
 
             //
 

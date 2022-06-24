@@ -104,7 +104,7 @@ public class SwapScreen : MonoBehaviour
     }
     public void SwapYes()
     {
-
+        GameManager.instance.IsSendingData = true;
 
 
         if (SelectedTiles.Count > Board.instance.AllTilesNumbers.Count)
@@ -142,6 +142,15 @@ public class SwapScreen : MonoBehaviour
             Board.instance.History.Add("#SWAP#");
 
 
-        GameManager.instance.NextTurn(false);
+        GameManager.instance.NextTurn(false, OnSwapDone);
+    }
+    public void OnSwapDone()
+    {
+        GameManager.instance.IsSendingData = false;
+
+        GameManager.instance.WaitingOverlay.SetActive(true);
+        GameManager.instance.WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
+        GameManager.instance.WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f * ScoreScreen.instance.Speed).SetEase(Ease.InOutQuart);
+
     }
 }

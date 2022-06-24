@@ -261,8 +261,9 @@ namespace VoxelBusters.EssentialKit.Editor.Build.Xcode
 
 
 
-
-
+           // PlistElementDict dic6 = rootDict.CreateDict("FacebookClientToken");
+            rootDict.SetString("FacebookClientToken", "d1f119442ac37c00554bdf3cd6868b82");
+            
 
 
             // add deeplinks

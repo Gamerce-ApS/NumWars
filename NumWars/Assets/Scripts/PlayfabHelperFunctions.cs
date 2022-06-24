@@ -14,10 +14,27 @@ using LoginIdentityProvider = PlayFab.ClientModels.LoginIdentityProvider;
 using LoginResult = PlayFab.ClientModels.LoginResult;
 using System.Text;
 using UnityEngine.SignInWithApple;
+using System;
+
 #if UNITY_IOS
 using Unity.Advertisement.IosSupport;
 
 #endif
+
+[Serializable]
+public class SendRequest
+{
+    public string GetMembers;
+    public string Keys;
+    public string SharedGroupId;
+    public string AuthenticationContext;
+}
+[Serializable]
+public class messageValue
+{
+    public string[] sharedgroupdataArray;
+}
+
 
 public class PlayfabHelperFunctions : MonoBehaviour
 {
@@ -62,6 +79,14 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
     public void Login()
     {
+
+        if (PlayFabClientAPI.IsClientLoggedIn())
+        {
+            Refresh();
+            return;
+        }
+
+
         string playerID = "";
         if (TESTING_PLAYER_1)
             playerID = "asdafsfsdf";
@@ -71,16 +96,16 @@ public class PlayfabHelperFunctions : MonoBehaviour
         //  playerID = "asdafsfsdf11";
 
         // playerID = "Villads123";
-       // playerID = "PaxMM";
-       // playerID = "steffen123";
+        //  playerID = "PaxMM";
+        // playerID = "steffen123";
+        //  playerID = "hmt";
+        //playerID = "mike";
+       // playerID = "kasper";
+        //playerID = "test5";
         instance = this;
         LoadingOverlay.instance.ShowLoadingFullscreen("LoginWithCustomID");
 
-        if (PlayerPrefs.HasKey("AppleUserIdKey"))
-        {
-            DoAppleQuickLogin();
-            return;
-        }
+
 
         if (FB.IsInitialized)
             OnFacebookInitialized();
@@ -92,8 +117,16 @@ public class PlayfabHelperFunctions : MonoBehaviour
             return;
         }
 
- 
-        
+        if (PlayerPrefs.HasKey("AppleUserIdKey"))
+        {
+            DoAppleQuickLogin();
+            return;
+        }
+
+       
+
+
+
 
 
 
@@ -104,25 +137,30 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
 #if UNITY_EDITOR
-        PlayFabClientAPI.LoginWithCustomID(new LoginWithCustomIDRequest()
-        {
-            CreateAccount = true,
-            CustomId = playerID,
-            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
-            {
-                GetUserAccountInfo = true,
-                GetPlayerProfile = true,
 
-            }
-        },
-        result =>
-        {
-            LoginSucess(result);
-        },
-        error =>
-        {
-            Debug.LogError(error.GenerateErrorReport());
-        });
+
+        PlayfabCallbackHandler.instance.LoginWithCustomID(playerID, LoginSucess, error =>{Debug.LogError(error.GenerateErrorReport());} );
+
+
+        //PlayFabClientAPI.LoginWithCustomID(new LoginWithCustomIDRequest()
+        //{
+        //    CreateAccount = true,
+        //    CustomId = playerID,
+        //    InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+        //    {
+        //        GetUserAccountInfo = true,
+        //        GetPlayerProfile = true,
+
+        //    }
+        //},
+        //result =>
+        //{
+        //    LoginSucess(result);
+        //},
+        //error =>
+        //{
+        //    Debug.LogError(error.GenerateErrorReport());
+        //});
 
 
 #elif UNITY_IOS
@@ -307,28 +345,50 @@ result =>
 
         LoadingOverlay.instance.ShowLoadingFullscreen("Loading data!");
 
-        PlayFabClientAPI.GetTitleData(new GetTitleDataRequest(),
-              result2 => {
-                  if (result2.Data == null || !result2.Data.ContainsKey("TilesAmount"))
-                      Debug.Log("No TilesAmount");
-                  else
-                  {
-                      Startup._instance.StaticServerData = result2.Data;
-                  }
-                  LoadingOverlay.instance.DoneLoading("Loading data!");
+       
+        PlayfabCallbackHandler.instance.GetTitleData(result2 => {
+            if (result2.Data == null || !result2.Data.ContainsKey("TilesAmount"))
+                Debug.Log("No TilesAmount");
+            else
+            {
+                Startup._instance.StaticServerData = result2.Data;
+            }
+            LoadingOverlay.instance.DoneLoading("Loading data!");
 
 
-                  if( int.Parse(Startup.LIVE_VERSION) < int.Parse(Startup._instance.StaticServerData["LIVE_VERSION"]))
-                  {
-                      MainMenuController.instance.UpdateWindow.SetActive(true);
-                  }
+            if (int.Parse(Startup.LIVE_VERSION) < int.Parse(Startup._instance.StaticServerData["LIVE_VERSION"]))
+            {
+                MainMenuController.instance.UpdateWindow.SetActive(true);
+            }
 
-              },
+        },
               error => {
                   Debug.Log("Got error getting titleData:");
                   Debug.Log(error.GenerateErrorReport());
-              }
-          );
+              });
+
+        //PlayFabClientAPI.GetTitleData(new GetTitleDataRequest(),
+        //      result2 => {
+        //          if (result2.Data == null || !result2.Data.ContainsKey("TilesAmount"))
+        //              Debug.Log("No TilesAmount");
+        //          else
+        //          {
+        //              Startup._instance.StaticServerData = result2.Data;
+        //          }
+        //          LoadingOverlay.instance.DoneLoading("Loading data!");
+
+
+        //          if( int.Parse(Startup.LIVE_VERSION) < int.Parse(Startup._instance.StaticServerData["LIVE_VERSION"]))
+        //          {
+        //              MainMenuController.instance.UpdateWindow.SetActive(true);
+        //          }
+
+        //      },
+        //      error => {
+        //          Debug.Log("Got error getting titleData:");
+        //          Debug.Log(error.GenerateErrorReport());
+        //      }
+        //  );
 
 
        for(int i = 0; i< 200;i++)
@@ -868,22 +928,15 @@ result =>
         if (LoadingOverlay.instance != null)
             LoadingOverlay.instance.ShowLoading("GetUserData");
 
-        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
-        {
-            PlayFabId = GetComponent<Startup>().MyPlayfabID,
-            Keys = null
-        }, result => {
 
 
-            if( SceneManager.GetActiveScene().name == "GameScene")
+
+        PlayfabCallbackHandler.instance.GetUserData(result => {
+
+            if (SceneManager.GetActiveScene().name == "GameScene")
             {
                 return;
             }
-
- 
-
-
-
 
             if (LoadingOverlay.instance != null)
                 LoadingOverlay.instance.DoneLoading("GetUserData");
@@ -901,10 +954,10 @@ result =>
             {
                 achivmentsData = Startup._instance.myAchivmentController.GetDefault();
             }
-            
+
 
             Startup._instance.myAchivmentController.Init(achivmentsData);
-
+            Startup._instance.myAchivmentController.CheckWithLocal();
 
             //GetComponent<Startup>()._infoLabel.text = GetComponent<Startup>().displayName + "\nPicture: " + GetComponent<Startup>().myData["Picture"].Value + "\n" + "Ranking: " + GetComponent<Startup>().myData["Ranking"].Value;
             //MainMenuController.instance._Name.text = GetComponent<Startup>().displayName;
@@ -913,13 +966,13 @@ result =>
             if (result.Data.ContainsKey("XP") == true)
             {
                 xp = result.Data["XP"].Value;
-                
+
             }
             else
                 ChangeValueFor("XP", "0");
 
             ProfileButton.instance.Init(GetComponent<Startup>().displayName, GetComponent<Startup>().myData["Ranking"].Value, xp);
-            if(!updateHighscoreOnce)
+            if (!updateHighscoreOnce)
             {
                 SubmitHighscore(int.Parse(GetComponent<Startup>().myData["Ranking"].Value));
                 updateHighscoreOnce = true;
@@ -931,13 +984,110 @@ result =>
 
             //if (result.Data == null || !result.Data.ContainsKey("Ancestor")) Debug.Log("No Ancestor");
             //else Debug.Log("Ancestor: " + result.Data["Ancestor"].Value);
-        }, (error) => {
-            Debug.Log("Got error retrieving user data:");
-            Debug.Log(error.GenerateErrorReport());
-        });
+
+        },
+error => {
+    Debug.Log("Got error retrieving user data:");
+    Debug.Log(error.GenerateErrorReport());
+});
+
+        //PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+        //{
+        //    PlayFabId = GetComponent<Startup>().MyPlayfabID,
+        //    Keys = null
+        //}, result => {
+
+
+        //    if( SceneManager.GetActiveScene().name == "GameScene")
+        //    {
+        //        return;
+        //    }
+
+
+
+
+
+
+        //    if (LoadingOverlay.instance != null)
+        //        LoadingOverlay.instance.DoneLoading("GetUserData");
+
+        //    Debug.Log("Done getting data");
+
+        //    GetComponent<Startup>().myData = result.Data;
+
+        //    string achivmentsData = "";
+        //    if (result.Data.ContainsKey("Achivments") == true)
+        //    {
+        //        achivmentsData = result.Data["Achivments"].Value;
+        //    }
+        //    else
+        //    {
+        //        achivmentsData = Startup._instance.myAchivmentController.GetDefault();
+        //    }
+
+
+        //    Startup._instance.myAchivmentController.Init(achivmentsData);
+
+
+        //    //GetComponent<Startup>()._infoLabel.text = GetComponent<Startup>().displayName + "\nPicture: " + GetComponent<Startup>().myData["Picture"].Value + "\n" + "Ranking: " + GetComponent<Startup>().myData["Ranking"].Value;
+        //    //MainMenuController.instance._Name.text = GetComponent<Startup>().displayName;
+        //    //MainMenuController.instance._Thropies.text = GetComponent<Startup>().myData["Ranking"].Value;
+        //    string xp = "0";
+        //    if (result.Data.ContainsKey("XP") == true)
+        //    {
+        //        xp = result.Data["XP"].Value;
+
+        //    }
+        //    else
+        //        ChangeValueFor("XP", "0");
+
+        //    ProfileButton.instance.Init(GetComponent<Startup>().displayName, GetComponent<Startup>().myData["Ranking"].Value, xp);
+        //    if(!updateHighscoreOnce)
+        //    {
+        //        SubmitHighscore(int.Parse(GetComponent<Startup>().myData["Ranking"].Value));
+        //        updateHighscoreOnce = true;
+        //    }
+
+
+
+        //    UpdateGameList();
+
+        //    //if (result.Data == null || !result.Data.ContainsKey("Ancestor")) Debug.Log("No Ancestor");
+        //    //else Debug.Log("Ancestor: " + result.Data["Ancestor"].Value);
+        //}, (error) => {
+        //    Debug.Log("Got error retrieving user data:");
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
 
     }
     bool updateHighscoreOnce = false;
+    public List<string> EmptyGamesToRemove = new List<string>();
+    public void RemoveLegacyAndEmptyGames()
+    {
+        if(EmptyGamesToRemove.Count>0)
+        {
+            for(int i = 0; i < EmptyGamesToRemove.Count;i++)
+            {
+                Startup._instance.myData["MyGames"].Value = Startup._instance.myData["MyGames"].Value.Replace("," + EmptyGamesToRemove[i], "");
+            }
+            PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+            {
+                Data = new Dictionary<string, string>() {
+                {"MyGames",Startup._instance.myData["MyGames"].Value}
+            }
+            },
+            result =>
+            {
+                Debug.Log("Removed non existing SharedData room in UserData");
+            },
+            error => {
+                Debug.Log(error.GenerateErrorReport());
+            });
+
+        }
+        EmptyGamesToRemove.Clear();
+    }
+  
     public void UpdateGameList()
     {
 
@@ -989,94 +1139,102 @@ result =>
         //Destroy(Startup._instance.SearchingForGameObject);
 
 
-        bool shouldAddOldGamesNow = true;
-        for (int i = 0;i < gameList.Length;i++)
-        {
-            if(gameList[i].Length>1)
-            {
-                LoadingOverlay.instance.ShowLoading("GetSharedGroupData0");
-                shouldAddOldGamesNow = false;
-                Debug.Log("Getting game data: " + i + " : " + gameList[i]);
-                PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
-                {
-                    SharedGroupId = gameList[i]
-                }, result =>
-                {
-                    if(LoadingOverlay.instance != null)
-                    LoadingOverlay.instance.DoneLoading("GetSharedGroupData0");
-                    foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
-                    {
-                        if (entry.Key == "Chat")
-                            continue;
-
-                        BoardData bd = new BoardData(entry.Value.Value);
-                        //GetComponent<Startup>()._roomListLabel.text += "" + bd.player1_PlayfabId + " vs " + bd.player2_PlayfabId + " turn: " + bd.playerTurn + "\n";
+        GetSharedDataGrouped(Startup.instance.MyPlayfabID);
 
 
-                        if(Startup._instance.SearchingForGameObject != null)
-                        {
-                            if( Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID == bd.RoomName)
-                            {
-                                if(bd.player2_PlayfabId != "")
-                                Destroy(Startup._instance.SearchingForGameObject);
-                            }
-                        }
+       // bool shouldAddOldGamesNow = true;
+       // for (int i = 0;i < gameList.Length;i++)
+       // {
+       //     if(gameList[i].Length>1)
+       //     {
+       //         LoadingOverlay.instance.ShowLoading("GetSharedGroupData0");
+       //         shouldAddOldGamesNow = false;
+
+       //         PlayfabCallbackHandler.instance.GetSharedGroupData(gameList[i], result => {
+
+       //             if(result.Data == null || result.Data.Count<=0)
+       //             {
+       //                 Debug.Log(result.Request.ToJson());
+       //                 SendRequest vd = JsonUtility.FromJson<SendRequest>(result.Request.ToJson());
+
+                        
+       //                 EmptyGamesToRemove.Add(vd.SharedGroupId);
+
+       //             }
 
 
-                        if(bd.player1_abandon == "1" || bd.player2_abandon == "1")
-                        {
+       //             if (LoadingOverlay.instance != null)
+       //                 LoadingOverlay.instance.DoneLoading("GetSharedGroupData0");
+       //             foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
+       //             {
+       //                 if (entry.Key == "Chat")
+       //                     continue;
 
-                        }
-                        else if(bd.player2_PlayfabId != "")
-                        {
-                            GameObject obj = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent_updating);
-                            Vector3 rc = obj.GetComponent<RectTransform>().localPosition;
-                            obj.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
-                            obj.GetComponent<GameListItem>().Init(bd);
-
-                        }else
-                        {
-                            if(Startup._instance.SearchingForGameObject == null)
-                            {
-                                Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent_updating);
-                                Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
-                                Startup._instance.SearchingForGameObject.SetActive(true);
-                                Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
-                                Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
-                                Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = bd.RoomName;
-                            }
-                            else
-                            {
-                                Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
-                                Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
-                                Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-
-                            }
-      
-                        }
-
-                        //Debug.Log(entry.Value.Value.Length);
-
-                     //   string st = CompressString.StringCompressor.CompressString(entry.Value.Value);
-                      //  Debug.Log(st);
-                        //Debug.Log(st.Length);
-                       // Debug.Log(CompressString.StringCompressor.DecompressString(st));
-
-                        Startup._instance.openGamesList.Add(bd);
-                    }
+       //                 BoardData bd = new BoardData(entry.Value.Value);
+       //                 //GetComponent<Startup>()._roomListLabel.text += "" + bd.player1_PlayfabId + " vs " + bd.player2_PlayfabId + " turn: " + bd.playerTurn + "\n";
 
 
-                    Startup._instance.FinishedGettingGameListCheckForOpenGames();
+       //                 if (Startup._instance.SearchingForGameObject != null)
+       //                 {
+       //                     if (Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID == bd.RoomName)
+       //                     {
+       //                         if (bd.player2_PlayfabId != "")
+       //                             Destroy(Startup._instance.SearchingForGameObject);
+       //                     }
+       //                 }
 
-                }, (error) =>
-                {
-                    Debug.Log(error.GenerateErrorReport());
-                });
-            }
-        }
 
-       if(shouldAddOldGamesNow)
-            Startup._instance.FinishedGettingGameListCheckForOpenGames();
+       //                 if (bd.player1_abandon == "1" || bd.player2_abandon == "1")
+       //                 {
+
+       //                 }
+       //                 else if (bd.player2_PlayfabId != "")
+       //                 {
+       //                     GameObject obj = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent_updating);
+       //                     Vector3 rc = obj.GetComponent<RectTransform>().localPosition;
+       //                     obj.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+       //                     obj.GetComponent<GameListItem>().Init(bd);
+
+       //                 }
+       //                 else
+       //                 {
+       //                     if (Startup._instance.SearchingForGameObject == null)
+       //                     {
+       //                         Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent_updating);
+       //                         Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+       //                         Startup._instance.SearchingForGameObject.SetActive(true);
+       //                         Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+       //                         Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+       //                         Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = bd.RoomName;
+       //                     }
+       //                     else
+       //                     {
+       //                         Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+       //                         Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+       //                         Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
+
+       //                     }
+
+       //                 }
+
+
+       //                 Startup._instance.openGamesList.Add(bd);
+       //             }
+
+
+       //             Startup._instance.FinishedGettingGameListCheckForOpenGames();
+
+       //         },
+       //           error => {
+       //                   Debug.Log(error.GenerateErrorReport());
+       //           });
+
+
+       //     }
+       // }
+
+       //if(shouldAddOldGamesNow)
+       //     Startup._instance.FinishedGettingGameListCheckForOpenGames();
 
     }
     public void RemoveRoomFromList(string aRoomName,string aRoomJson,System.Action onComplete=null)
@@ -1335,6 +1493,112 @@ result =>
 
         }, error => Debug.LogError(error.GenerateErrorReport()));
     }
+    public void GetSharedDataGrouped(string aId)
+    {
+        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        {
+            SpecificRevision= 50,
+            RevisionSelection= PlayFab.ClientModels.CloudScriptRevisionOption.Specific,
+            FunctionName = "GetSharedDataGrouped",
+            FunctionParameter = new Dictionary<string, object>() {
+            { "PlayFabId", aId }
+        }
+        }, result => {
+
+            IEnumerable test = (IEnumerable)result.FunctionResult;
+
+            List<BoardData> gameList = new List<BoardData>();
+            foreach (IEnumerable item in test)
+            {
+                gameList.Add( new BoardData(item.ToString()));
+
+            }
+
+
+            bool shouldAddOldGamesNow = true;
+            for (int i = 0; i < gameList.Count; i++)
+            {
+                if (gameList[i] != null)
+                {
+
+                    shouldAddOldGamesNow = false;
+
+
+                             BoardData bd = gameList[i];
+
+
+                            if (Startup._instance.SearchingForGameObject != null)
+                            {
+                                if (Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID == bd.RoomName)
+                                {
+                                    if (bd.player2_PlayfabId != "")
+                                        Destroy(Startup._instance.SearchingForGameObject);
+                                }
+                            }
+
+
+                            if (bd.player1_abandon == "1" || bd.player2_abandon == "1")
+                            {
+
+                            }
+                            else if (bd.player2_PlayfabId != "")
+                            {
+                                GameObject obj = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent_updating);
+                                Vector3 rc = obj.GetComponent<RectTransform>().localPosition;
+                                obj.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+                                obj.GetComponent<GameListItem>().Init(bd);
+
+                            }
+                            else
+                            {
+                                if (Startup._instance.SearchingForGameObject == null)
+                                {
+                                    Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent_updating);
+                                    Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+                                    Startup._instance.SearchingForGameObject.SetActive(true);
+                                    Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                                    Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+                                    Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = bd.RoomName;
+                                }
+                                else
+                                {
+                                    Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+                                    Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                                    Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
+
+                                }
+
+                            }
+
+
+                            Startup._instance.openGamesList.Add(bd);
+                        
+
+
+                      //  Startup._instance.FinishedGettingGameListCheckForOpenGames();
+
+                
+
+
+                }
+            }
+
+           // if (shouldAddOldGamesNow)
+                Startup._instance.FinishedGettingGameListCheckForOpenGames();
+
+
+
+
+
+
+
+
+
+
+
+
+        }, error => Debug.LogError(error.GenerateErrorReport()));
+    }
     public void AddGameToPlayerListCloudScript(string aId, string aRoomName)
     {
         PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
@@ -1396,6 +1660,10 @@ result =>
 
     public void Refresh()
     {
+        //if (LoadingOverlay.instance.GetIsLoadingGames())
+        //    return;
+        if (PlayfabCallbackHandler.instance.IsLoadingGames())
+            return;
         //if (LoadingOverlay.instance.LoadingCall.Count > 0)
         //    return;
 
@@ -1404,25 +1672,46 @@ result =>
         if (LoadingOverlay.instance != null)
             LoadingOverlay.instance.ShowLoading("GetPlayerProfile");
 
-        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
-        {
-            PlayFabId = GetComponent<Startup>().MyPlayfabID,
-            ProfileConstraints = new PlayerProfileViewConstraints()
-            {
-                ShowDisplayName = true
-            }
-        },
-        result =>
-        {
-            if(LoadingOverlay.instance != null)
-            LoadingOverlay.instance.DoneLoading("GetPlayerProfile");
 
-            GetComponent<Startup>().displayName = result.PlayerProfile.DisplayName;
+
+
+
+        PlayfabCallbackHandler.instance.GetPlayerProfile(result2 => {
+            if (LoadingOverlay.instance != null)
+                LoadingOverlay.instance.DoneLoading("GetPlayerProfile");
+
+            GetComponent<Startup>().displayName = result2.PlayerProfile.DisplayName;
 
 
             GetUserData();
+
         },
-        error => Debug.LogError(error.GenerateErrorReport()));
+      error => {
+          Debug.Log(error.GenerateErrorReport());
+      });
+
+
+
+
+        //PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        //{
+        //    PlayFabId = GetComponent<Startup>().MyPlayfabID,
+        //    ProfileConstraints = new PlayerProfileViewConstraints()
+        //    {
+        //        ShowDisplayName = true
+        //    }
+        //},
+        //result =>
+        //{
+        //    if(LoadingOverlay.instance != null)
+        //    LoadingOverlay.instance.DoneLoading("GetPlayerProfile");
+
+        //    GetComponent<Startup>().displayName = result.PlayerProfile.DisplayName;
+
+
+        //    GetUserData();
+        //},
+        //error => Debug.LogError(error.GenerateErrorReport()));
 
 
 
@@ -2047,7 +2336,7 @@ result =>
         }, result => {
 
 
-            theWidnow.SetData(result.Data);
+            theWidnow.SetData(result.Data, aPlayfabId);
     
 
 

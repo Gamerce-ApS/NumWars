@@ -78,6 +78,8 @@ public class AchivmentController
     public List<Achivment> myAIStatistics = new List<Achivment>();
     public static AchivmentController instance;
 
+    public string playfabid = "";
+
     // Start is called before the first frame update
     public void Init(string achivmentsData)
     {
@@ -90,6 +92,8 @@ public class AchivmentController
         myAIStatistics = list.myAIStats;
 
     }
+
+    
     public float GetStats(AchivmentTypeEnum aStats, bool getAIstats = false)
     {
         if(getAIstats)
@@ -105,7 +109,79 @@ public class AchivmentController
             }
         }
 
-        for(int i = 0; i< myStatistics.Count;i++)
+        if(playfabid == Startup.instance.MyPlayfabID || playfabid == "")
+        {
+            if (AchivmentTypeEnum.WIN == aStats)
+            {
+                int totalWins = 0;
+                for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+                {
+                    if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
+                    Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
+                    Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
+                    {
+                        //string abPlayer = Startup.instance.myOldGameList[i].GetHasAbboned();
+                        //if (abPlayer == "" || abPlayer != Startup.instance.MyPlayfabID)
+                        //{
+                        totalWins++;
+
+                        //}
+                    }
+                }
+                return totalWins;
+            }
+            if (AchivmentTypeEnum.LOST == aStats)
+            {
+                int totalLosts = 0;
+                for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+                {
+                    if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
+                    Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
+                    Startup.instance.myOldGameList[i].GetWinner() != Startup.instance.MyPlayfabID &&
+                    Startup.instance.myOldGameList[i].GetWinner().Length > 0)
+                    {
+                        totalLosts++;
+                    }
+                }
+                return totalLosts;
+            }
+            if (AchivmentTypeEnum.TIMEOUT == aStats)
+            {
+                int totalLosts = 0;
+                for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+                {
+                    if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
+                    Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
+                    Startup.instance.myOldGameList[i].GetWinner() != Startup.instance.MyPlayfabID &&
+                    Startup.instance.myOldGameList[i].GetWinner().Length > 0 &&
+                    Startup.instance.myOldGameList[i].WasTimout())
+                    {
+                        totalLosts++;
+                    }
+                }
+                return totalLosts;
+            }
+            if (AchivmentTypeEnum.RESIGN == aStats)
+            {
+                int totalAban = 0;
+                for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+                {
+                    if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
+                    Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
+
+                    (Startup.instance.myOldGameList[i].player1_abandon == "1" &&
+                    Startup.instance.myOldGameList[i].player1_PlayfabId == Startup.instance.MyPlayfabID) ||
+                   (Startup.instance.myOldGameList[i].player2_abandon == "1" &&
+                    Startup.instance.myOldGameList[i].player2_PlayfabId == Startup.instance.MyPlayfabID))
+                    {
+                        totalAban++;
+                    }
+                }
+                return totalAban;
+            }
+        }
+      
+        for (int i = 0; i< myStatistics.Count;i++)
         {
             if (myStatistics[i].myAchivmentType == aStats)
                 return myStatistics[i].current;
@@ -446,6 +522,102 @@ public class AchivmentController
 
 
         UpdatePlayfab();
+
+    }
+
+    public void CheckWithLocal()
+    {
+        int totalWins = 0;
+        for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+        {
+            if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
+            Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
+            Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
+            {
+                totalWins++;
+            }
+        }
+        int totalLosts = 0;
+        for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+        {
+            if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
+            Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
+            Startup.instance.myOldGameList[i].GetWinner() != Startup.instance.MyPlayfabID &&
+            Startup.instance.myOldGameList[i].GetWinner().Length > 0)
+            {
+                totalLosts++;
+            }
+        }
+        int totalAban = 0;
+        for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+        {
+            if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
+            Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
+
+            (Startup.instance.myOldGameList[i].player1_abandon == "1" &&
+            Startup.instance.myOldGameList[i].player1_PlayfabId == Startup.instance.MyPlayfabID) ||
+           (Startup.instance.myOldGameList[i].player2_abandon == "1" &&
+            Startup.instance.myOldGameList[i].player2_PlayfabId == Startup.instance.MyPlayfabID))
+            {
+                totalAban++;
+            }
+        }
+        int totalTime = 0;
+        for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+        {
+            if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
+            Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
+            Startup.instance.myOldGameList[i].GetWinner() != Startup.instance.MyPlayfabID &&
+            Startup.instance.myOldGameList[i].GetWinner().Length > 0 &&
+            Startup.instance.myOldGameList[i].WasTimout())
+            {
+                totalTime++;
+            }
+        }
+
+        bool shouldUpdate = false; ;
+        for (int i = 0; i < myStatistics.Count; i++)
+        {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.WIN)
+            {
+                if (totalWins != myStatistics[i].current)
+                {
+                    shouldUpdate = true;
+                    myStatistics[i].current = totalWins;
+
+                }
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.LOST)
+            {
+                if (totalLosts != myStatistics[i].current)
+                {
+                    shouldUpdate = true;
+                    myStatistics[i].current = totalLosts;
+                }
+
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.TIMEOUT)
+            {
+                if (totalTime != myStatistics[i].current)
+                {
+                    shouldUpdate = true;
+                    myStatistics[i].current = totalTime;
+                }
+
+            }
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.RESIGN)
+            {
+                if (totalAban != myStatistics[i].current)
+                {
+                    shouldUpdate = true;
+                    myStatistics[i].current =totalAban;
+                }
+
+            }  
+        }
+        if(shouldUpdate)
+            UpdatePlayfab();
+
 
     }
 }

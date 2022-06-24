@@ -172,6 +172,7 @@ namespace VoxelBusters.CoreLibrary.Editor.NativePlugins.Build.Xcode
         {
             // create capability manager
             string  projectFilePath     = PBXProject.GetPBXProjectPath(s_projectPath);
+
 #if UNITY_2019_3_OR_NEWER
             var     capabilityManager   = new ProjectCapabilityManager(projectFilePath, "ios.entitlements", null, project.GetUnityMainTargetGuid());
 #else
@@ -217,12 +218,36 @@ namespace VoxelBusters.CoreLibrary.Editor.NativePlugins.Build.Xcode
                 }
             }
 
+
+
+
+
+
+
+
+
+
+
             // save changes
             capabilityManager.WriteToFile();
 
 
-      
 
+            string projPath = PBXProject.GetPBXProjectPath(s_projectPath);
+
+            var project2 = new PBXProject();
+            project2.ReadFromFile(projPath);
+
+            string mainTargetGuid = project2.GetUnityMainTargetGuid();
+
+            foreach (var targetGuid in new[] { mainTargetGuid, project2.GetUnityFrameworkTargetGuid() })
+            {
+                project2.SetBuildProperty(targetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES", "NO");
+            }
+
+            project2.SetBuildProperty(mainTargetGuid, "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES", "YES");
+
+            project2.WriteToFile(projPath);
 
 
         }

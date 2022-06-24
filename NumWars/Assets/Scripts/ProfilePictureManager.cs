@@ -29,7 +29,7 @@ public class ProfilePictureManager : MonoBehaviour
 
     public void SetPicture(string url, string playfabID, Image aImage, System.Action callback=null)
     {
-        Debug.Log(playfabID);
+    //    Debug.Log(playfabID);
         if (url.Length<1 || url =="")
         {
             if (callback != null)

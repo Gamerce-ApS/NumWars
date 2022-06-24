@@ -75,7 +75,7 @@ public class ValidationScreen : MonoBehaviour
     public void SwapYes()
     {
 
-
+        GameManager.instance.IsSendingData = true;
 
 
         CloseWindow();

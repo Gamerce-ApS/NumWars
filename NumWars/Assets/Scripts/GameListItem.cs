@@ -170,7 +170,11 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                 if(aBd.player1_PlayfabId == Startup._instance.MyPlayfabID)
                     quit.transform.GetChild(0).GetComponent<Text>().text = "YOU\nLEFT";
                 else
+                {
+                    quit.GetComponent<Image>().color = new Color(160f/255f,1, 155f / 255f, 1);
                     quit.transform.GetChild(0).GetComponent<Text>().text = "PLAYER\nLEFT";
+                }
+
             }
             if (aBd.player2_abandon == "1")
             {
@@ -180,7 +184,11 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
                 won.SetActive(false);
                 lost.SetActive(false);
                 if (aBd.player1_PlayfabId == Startup._instance.MyPlayfabID)
+                {
+                    quit.GetComponent<Image>().color = new Color(160f / 255f, 1, 155f / 255f, 1);
                     quit.transform.GetChild(0).GetComponent<Text>().text = "PLAYER\nLEFT";
+                }
+
                 else
                     quit.transform.GetChild(0).GetComponent<Text>().text = "YOU\nLEFT";
             }

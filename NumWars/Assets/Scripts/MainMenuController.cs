@@ -58,7 +58,7 @@ public class MainMenuController : MonoBehaviour
         SetBoardLayout(PlayerPrefs.GetInt("BoardLayout", 0));
     }
 
-    float UpdateTimer = 0;
+    public float UpdateTimer = 0;
     // Update is called once per frame
     void Update()
     {

@@ -121,6 +121,54 @@ public  class BoardData
             return player1_displayName;
 
     }
+
+    public string GetWinner()
+    {
+        int score1 = 0;
+        int score2 = 0;
+        if(player1_score.Length>0)
+            score1 = int.Parse(player1_score);
+        if (player2_score.Length > 0)
+            score2 = int.Parse(player2_score);
+
+
+        if( GetHasAbboned() == player1_PlayfabId)
+            return player2_PlayfabId;
+        else if (GetHasAbboned() == player2_PlayfabId)
+            return player1_PlayfabId;
+
+        if (score1 > score2)
+            return player1_PlayfabId;
+        else if (score2 > score1)
+            return player2_PlayfabId;
+        else
+            return "";
+    }
+    public string GetHasAbboned()
+    {
+        if (player1_abandon == "1")
+            return player1_PlayfabId;
+        if (player2_abandon == "1")
+            return player2_PlayfabId;
+
+        return "";
+    }
+    public bool WasTimout()
+    {
+        int score1 = 0;
+        int score2 = 0;
+        if (player1_score.Length > 0)
+            score1 = int.Parse(player1_score);
+        if (player2_score.Length > 0)
+            score2 = int.Parse(player2_score);
+
+        if(score1 == 0 || score2 == 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
     public string GetOtherPlayerPlayfab()
     {
         if (Startup._instance.MyPlayfabID == player1_PlayfabId)
@@ -1236,7 +1284,7 @@ public class Board : MonoBehaviour
         //    ShowExtraTiles2(true);
 
 
-        if ( SceneManager.GetActiveScene().name == "MenuScene")
+        if ( SceneManager.GetActiveScene().name == "MenuScene" || SceneManager.GetActiveScene().name == "testBasic")
         {
             return;
         }

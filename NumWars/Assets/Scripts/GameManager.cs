@@ -68,6 +68,7 @@ public class GameManager : MonoBehaviour
     public bool isFakeGame;
 
     public bool IsSendingData = false;
+    public Image BackButton;
 
     // Start is called before the first frame update
     void Start()
@@ -336,6 +337,18 @@ public class GameManager : MonoBehaviour
     {
         if (isFakeGame)
             return;
+
+
+        if(IsSendingData)
+        {
+            if(BackButton.gameObject.activeSelf)
+            BackButton.gameObject.SetActive(false);
+        }
+        else
+        {
+            if (!BackButton.gameObject.activeSelf)
+                BackButton.gameObject.SetActive(true);
+        }
 
         if (runSetupAfterTime != -1)
         {
