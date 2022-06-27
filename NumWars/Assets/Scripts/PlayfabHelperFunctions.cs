@@ -15,6 +15,8 @@ using LoginResult = PlayFab.ClientModels.LoginResult;
 using System.Text;
 using UnityEngine.SignInWithApple;
 using System;
+//using AppodealAds.Unity.Api;
+//using AppodealAds.Unity.Common;
 
 #if UNITY_IOS
 using Unity.Advertisement.IosSupport;
@@ -1455,8 +1457,7 @@ error => {
 
 
 
-                //if (TutorialController.instance == null && Random.Range(0,100) <50)
-                //    Appodeal.show(Appodeal.INTERSTITIAL);
+
             }
 
 

@@ -7,6 +7,8 @@ using PlayFab.ClientModels;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Photon.Pun;
+using Photon.Realtime;
 //using AppodealAds.Unity.Api;
 //using AppodealAds.Unity.Common;
 
@@ -73,7 +75,9 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        if(isFakeGame)
+        Startup.instance.limitFpsTimer = 10;
+       // PhotonNetwork.Disconnect();
+        if (isFakeGame)
         {
             PlayerPrefs.SetInt("BoardLayout", 0);
             Board.instance.Init();
@@ -245,6 +249,8 @@ public class GameManager : MonoBehaviour
         Board.instance.LoadLastUsedTiles(PlayerBoard.instance.myPlayer.myTiles);
 
 
+        _refreshTimer = 110;
+
 
     }
     public void SetOpponentData(string xp, string rank)
@@ -383,7 +389,7 @@ public class GameManager : MonoBehaviour
             else
             {
                 _refreshTimer += Time.deltaTime;
-                if (_refreshTimer > 10)
+                if (_refreshTimer > 120)
                 {
              
                     PlayfabHelperFunctions.instance.UpdateChatMessages(Startup._instance.GameToLoad.RoomName);

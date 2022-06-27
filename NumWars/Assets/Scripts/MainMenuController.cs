@@ -56,6 +56,7 @@ public class MainMenuController : MonoBehaviour
 
 
         SetBoardLayout(PlayerPrefs.GetInt("BoardLayout", 0));
+        UpdateTimer = 0;
     }
 
     public float UpdateTimer = 0;
@@ -75,7 +76,7 @@ public class MainMenuController : MonoBehaviour
 
         UpdateTimer += Time.deltaTime;
 
-        if(UpdateTimer>10)
+        if(UpdateTimer>60)
         {
             if(LoadingOverlay.instance.LoadingCall.Count<=0)
                 Startup._instance.Refresh();

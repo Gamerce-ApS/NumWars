@@ -83,13 +83,15 @@ public class Startup : MonoBehaviourPunCallbacks
     // Start is called before the first frame update
     void Start()
     {
+        Debug.Log("Start");
+        limitFpsTimer = 10;
        // Screen.SetResolution(Screen.width/2, Screen.height / 2, true);
 
         PlayFab.Internal.PlayFabWebRequest.CustomCertValidationHook = ValidateCertificate;
         PlayFab.Internal.PlayFabWebRequest.SkipCertificateValidation();
         //    PlayFab.Internal.PlayFabWebRequest.CustomCertValidationHook
 
-        QualitySettings.vSyncCount = 0;
+      //  QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = 60;
         // When the Menu starts, set the rendering to target 20fps
         OnDemandRendering.renderFrameInterval = 3;
@@ -103,7 +105,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
         GameAnalytics.Initialize();
-
+        //Debug.Log("InitAppodeal");
         //Appodeal.initialize("91f0aae11c6d5b4fe09000ad17edf290d41803497b6ff82f", Appodeal.INTERSTITIAL | Appodeal.REWARDED_VIDEO, true);
 
 
@@ -174,18 +176,20 @@ public class Startup : MonoBehaviourPunCallbacks
 
     void Pasued(bool pauseStatus)
     {
+        Debug.Log("Pause:" + pauseStatus);
         if(MainMenuController.instance != null)
         MainMenuController.instance.UpdateTimer = 0;
 
         if (!pauseStatus)
         {
+            limitFpsTimer = 10;
             //PhotonNetwork.Disconnect();
-            #if UNITY_IOS
+#if UNITY_IOS
             UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
             UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
-            #endif
+#endif
             PlayfabCallbackHandler.instance.CancelAllCalls();
-            if (PhotonNetwork.IsConnected)
+            if (PhotonNetwork.IsConnected || SceneManager.GetActiveScene().name == "GameScene")
             {
                 if (Startup._instance != null)
                 {
@@ -208,21 +212,31 @@ public class Startup : MonoBehaviourPunCallbacks
 
                 if (Startup._instance != null)
                 {
-                    if (LoadingOverlay.instance != null)
-                        LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+
                     //Startup._instance.Refresh(0.1f);
                     //if (Startup._instance.avatarURL != null)
                     //    if (Startup._instance.avatarURL.Length > 0)
                     //    {
                     //        PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
                     //    }
+
+                    if (LoadingOverlay.instance != null)
+                        LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+
                     SceneManager.LoadScene(0);
+                    StartCoroutine(StartLoading());
                 }
 
             }
 
         }
 
+    }
+    IEnumerator StartLoading()
+    {
+        yield return new WaitForSeconds(0.05f);
+        if (LoadingOverlay.instance != null)
+            LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
     }
     //void OnApplicationFocus(bool hasFocus)
     //{
@@ -303,6 +317,8 @@ public class Startup : MonoBehaviourPunCallbacks
         else
         {
             LoadingOverlay.instance.DoneLoading("Updating..");
+            SceneManager.LoadScene(0);
+            StartCoroutine(StartLoading());
         }
     }
     public void UpdateDisplayName()
@@ -311,20 +327,31 @@ public class Startup : MonoBehaviourPunCallbacks
     }
 
     float timer = 0;
+
+    public float limitFpsTimer = 0;
     // Update is called once per frame
     void Update()
     {
         if (Input.GetMouseButton(0) || (Input.touchCount > 0))
         {
+            if(SceneManager.GetActiveScene().name == "GameScene")
+                limitFpsTimer = 10;
+            else
+                limitFpsTimer = 5;
             // If the mouse button or touch detected render at 60 FPS (every frame).
             OnDemandRendering.renderFrameInterval = 1;
         }
         else
         {
+            limitFpsTimer -= Time.deltaTime;
             // If there is no mouse and no touch input then we can go back to 20 FPS (every 3 frames).
-            OnDemandRendering.renderFrameInterval = 3;
+         
         }
 
+        if(limitFpsTimer<=0)
+        {
+            OnDemandRendering.renderFrameInterval = 4;
+        }
 
         if (Input.GetKeyUp(KeyCode.O))
         {
@@ -333,18 +360,18 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
 
-        if (timer != -1)
-        if(!PhotonNetwork.IsConnected)
-        {
-            timer += Time.deltaTime;
-            if(timer>8)
-            {
-                PhotonNetwork.ConnectUsingSettings();
-                PhotonNetwork.GameVersion = "1";
-                timer = 0;
-            }
+        //if (timer != -1)
+        //if(!PhotonNetwork.IsConnected)
+        //{
+        //    timer += Time.deltaTime;
+        //    if(timer>8)
+        //    {
+        //        PhotonNetwork.ConnectUsingSettings();
+        //        PhotonNetwork.GameVersion = "1";
+        //        timer = 0;
+        //    }
 
-        }
+        //}
 
 
         if (Input.GetKeyUp(KeyCode.L))
@@ -371,6 +398,15 @@ public class Startup : MonoBehaviourPunCallbacks
 #region MonoBehaviourPunCallbacks CallBacks
     public override void OnConnectedToMaster()
     {
+        if(joinRandomRoom)
+        {
+            joinRandomRoom = false;
+            JoinRandomRoom();
+        }
+        
+
+
+
         if (LoadingOverlay.instance != null)
         LoadingOverlay.instance.DoneLoading("Connecting to photon");
         // we don't want to do anything if we are not attempting to join a room. 
@@ -414,6 +450,7 @@ public class Startup : MonoBehaviourPunCallbacks
         // Created room and added to players playfab list in shared data, now we wait for people to join
 
     }
+    public bool joinRandomRoom = false;
     public void JoinRandomRoom()
     {
         if (PhotonNetwork.NetworkClientState == ClientState.ConnectedToMasterServer)
@@ -424,7 +461,13 @@ public class Startup : MonoBehaviourPunCallbacks
         }
         else
         {
-         //   Debug.LogError("Can't join random room now, client is not ready");
+            //   Debug.LogError("Can't join random room now, client is not ready");
+
+            PhotonNetwork.ConnectUsingSettings();
+            PhotonNetwork.GameVersion = "1";
+
+            joinRandomRoom = true;
+
         }
 
 
@@ -459,6 +502,7 @@ public class Startup : MonoBehaviourPunCallbacks
                 SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
             }
             _PlayfabHelperFunctions.RemoveAbandonedGames();
+            FinishedGettingGameListCheckForOpenGames();
         }
         else
         {
@@ -623,6 +667,9 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
             SaveGameList();
+
+            if(PhotonNetwork.InRoom == false)
+                PhotonNetwork.Disconnect();
 
         }
 

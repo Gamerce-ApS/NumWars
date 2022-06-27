@@ -4,6 +4,7 @@ using UnityEngine;
 using DG.Tweening;
 using UnityEngine.UI;
 using System.Globalization;
+//using AppodealAds.Unity.Api;
 
 public class FakeTileData
 {
@@ -691,6 +692,11 @@ public class ScoreScreen : MonoBehaviour
         GameManager.instance.WaitingOverlay.SetActive(true);
         GameManager.instance.WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
         GameManager.instance.WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f* Speed).SetEase(Ease.InOutQuart);
+
+
+
+        //if (TutorialController.instance == null && UnityEngine.Random.Range(0, 100) < 50)
+        //    Appodeal.show(Appodeal.INTERSTITIAL);
 
     }
     public static Vector2 StringToVector2(string sVector)
