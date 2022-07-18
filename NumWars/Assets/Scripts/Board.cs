@@ -54,6 +54,9 @@ public  class BoardData
     public string player2_displayName = "";
     public string player1_abandon = "";
     public string player2_abandon = "";
+    public string player1_avatarURL = "";
+    public string player2_avatarURL = "";
+    
 
     public string EmptyTurns = "";
     public List<string> TilesLeft = new List<string>();
@@ -71,19 +74,20 @@ public  class BoardData
     {
         BoardData bd = JsonUtility.FromJson<BoardData>(aJson);
 
-          player1_PlayfabId = bd.player1_PlayfabId;
-          player2_PlayfabId = bd.player2_PlayfabId;
-          playerTurn = bd.playerTurn;
-          BoardTiles = bd.BoardTiles;
+        player1_PlayfabId = bd.player1_PlayfabId;
+        player2_PlayfabId = bd.player2_PlayfabId;
+        playerTurn = bd.playerTurn;
+        BoardTiles = bd.BoardTiles;
         History = bd.History;
-          RoomName = bd.RoomName;
+        RoomName = bd.RoomName;
         player1_displayName = bd.player1_displayName;
         player2_displayName = bd.player2_displayName;
         player1_score = bd.player1_score;
         player2_score = bd.player2_score;
         player1_abandon = bd.player1_abandon;
         player2_abandon = bd.player2_abandon;
-
+        player1_avatarURL = bd.player1_avatarURL;
+        player2_avatarURL = bd.player2_avatarURL;
         EmptyTurns = bd.EmptyTurns;
         TilesLeft = bd.TilesLeft;
         p1_tiles = bd.p1_tiles;
@@ -219,6 +223,91 @@ public  class BoardData
         }
     }
 
+
+    public bool CheckBoard()
+    {   
+
+        Dictionary<int, int> d = new Dictionary<int, int>();
+        for (int i = 0; i < BoardTiles.Count; i++)
+        {
+            StaticTile tl = new StaticTile();
+            tl.LoadFromJson(BoardTiles[i]);
+            {
+                if (tl.myTileType == StaticTile.TileType.NormalTile)
+                {
+                    if (d.ContainsKey((int)tl.GetValue()))
+                    {
+                        d[(int)tl.GetValue()]++;
+                    }
+                    else
+                        d.Add((int)tl.GetValue(), 1);
+
+                }
+            }
+        }
+
+        for (int i = 0; i < p2_tiles.Count; i++)
+        {
+            int val = int.Parse(p2_tiles[i]);
+            if (d.ContainsKey(val))
+            {
+                d[val]++;
+            }
+            else
+                d.Add(val, 1);
+        }
+        for (int i = 0; i < p1_tiles.Count; i++)
+        {
+            int val = int.Parse(p1_tiles[i]);
+            if (d.ContainsKey(val))
+            {
+                d[val]++;
+            }
+            else
+                d.Add(val, 1);
+        }
+        for (int i = 0; i < TilesLeft.Count; i++)
+        {
+            int val = int.Parse(TilesLeft[i]);
+            if (d.ContainsKey(val))
+            {
+                d[val]++;
+            }
+            else
+                d.Add(val, 1);
+        }
+
+        int tot = 0;
+        bool hasFailed = false;
+        foreach (KeyValuePair<int, int> v in d)
+        {
+            if (v.Key <= 10 && v.Value != 7)
+                hasFailed = true;
+
+            if (v.Key > 10)
+            {
+                if (v.Value != 1)
+                    hasFailed = true;
+            }
+
+            tot += v.Value;
+
+        }
+
+        if (hasFailed)
+            return false;
+
+
+
+
+
+
+
+
+
+
+        return true;
+    }
 
 
 };
@@ -518,6 +607,20 @@ public class Board : MonoBehaviour
         AllTilesNumbers.Clear();
         p1_tiles.Clear();
         p2_tiles.Clear();
+
+        if(SceneManager.GetActiveScene().name != "MenuScene")
+        {
+            for (int i = 0; i < BoardTiles.Count; i++)
+            {
+                BoardTiles[i].SetTile(TileType.EmptyTile, 0);
+            }
+            SetTile(6, 6, TileType.StartTile, 1);
+            SetTile(7, 6, TileType.StartTile, 2);
+            SetTile(6, 7, TileType.StartTile, 3);
+            SetTile(7, 7, TileType.StartTile, 4);
+        }
+
+
         for (int i = 1; i < 11; i++)
         {
             for (int j = 0; j < 7; j++)
@@ -1160,10 +1263,117 @@ public class Board : MonoBehaviour
             }
         }
     }
+    public bool TilesAndMoveValid()
+    {
+        Dictionary<int, int> d = new Dictionary<int, int>();
+        for (int i = 0; i < Board.instance.BoardTiles.Count; i++)
+        {
+            if (Board.instance.BoardTiles[i]._child != null)
+            {
+                if (Board.instance.BoardTiles[i].myTileType == StaticTile.TileType.NormalTile)
+                {
+                    if (d.ContainsKey((int)Board.instance.BoardTiles[i].GetValue()))
+                    {
+                        d[(int)Board.instance.BoardTiles[i].GetValue()]++;
+                    }
+                    else
+                        d.Add((int)Board.instance.BoardTiles[i].GetValue(), 1);
 
+                }
+            }
+        }
+
+        for (int i = 0; i < Startup.instance.GameToLoad.p2_tiles.Count; i++)
+        {
+            int val = int.Parse(Startup.instance.GameToLoad.p2_tiles[i]);
+            if (d.ContainsKey(val))
+            {
+                d[val]++;
+            }
+            else
+                d.Add(val, 1);
+        }
+        for (int i = 0; i < Startup.instance.GameToLoad.p1_tiles.Count; i++)
+        {
+            int val = int.Parse(Startup.instance.GameToLoad.p1_tiles[i]);
+            if (d.ContainsKey(val))
+            {
+                d[val]++;
+            }
+            else
+                d.Add(val, 1);
+        }
+        for (int i = 0; i < Board.instance.AllTilesNumbers.Count; i++)
+        {
+            int val = Board.instance.AllTilesNumbers[i];
+            if (d.ContainsKey(val))
+            {
+                d[val]++;
+            }
+            else
+                d.Add(val, 1);
+        }
+
+        int tot = 0;
+        bool hasFailed = false;
+        foreach (KeyValuePair<int, int> v in d)
+        {
+            if (v.Key <= 10 && v.Value != 7)
+                hasFailed = true;
+
+            if (v.Key > 10)
+            {
+                if (v.Value != 1)
+                    hasFailed = true;
+            }
+
+            tot += v.Value;
+
+        }
+
+        if (hasFailed)
+            return false;
+
+
+
+
+        for (int i = 0; i < PlayerBoard.instance.myPlayer.myTiles.Count; i++)
+        {
+            if(Startup.instance.GameToLoad.player2_PlayfabId == Startup.instance.MyPlayfabID)
+            {
+                if (Startup.instance.GameToLoad.p2_tiles.Contains(PlayerBoard.instance.myPlayer.myTiles[i].GetTileNumber()) == false)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (Startup.instance.GameToLoad.p1_tiles.Contains(PlayerBoard.instance.myPlayer.myTiles[i].GetTileNumber()) == false)
+                {
+                    return false;
+                }
+            }
+
+        
+        }
+
+
+
+
+
+        return true;
+    }
     public void PressContinue()
     {
 
+
+
+        if( Startup.instance.GameToLoad.RoomName != boardData.RoomName ||
+            Startup.instance.GameToLoad.player1_PlayfabId != boardData.player1_PlayfabId ||
+            Startup.instance.GameToLoad.player2_PlayfabId != boardData.player2_PlayfabId)
+           {
+            return;
+            }
 
 
         if (GameManager.instance.CheckIfMyTurn() == false)
@@ -1185,6 +1395,21 @@ public class Board : MonoBehaviour
         }
         if(allValid)
         {
+            if (TilesAndMoveValid())
+            {
+
+            }
+            else
+            {
+                SceneManager.LoadScene(0);
+                if (LoadingOverlay.instance != null)
+                    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+                Startup._instance.Refresh(0.1f);
+
+                return;
+            }
+
+
             List<Tile> scoreTiles = new List<Tile>();
             for (int i = 0; i < PlayerBoard.instance.myPlayer.myTiles.Count; i++)
             {
@@ -1192,6 +1417,7 @@ public class Board : MonoBehaviour
                     scoreTiles.Add(PlayerBoard.instance.myPlayer.myTiles[i]);
             }
             GameManager.instance.IsSendingData = true;
+            GameManager.instance.SendingDataDelay = 0;
             ScoreScreen.instance.ShowScore(scoreTiles, PlayerBoard.instance.myPlayer);
 
 
@@ -1317,7 +1543,10 @@ public class Board : MonoBehaviour
             dragCooldownTimer -= Time.deltaTime;
             return;
         }
+        if (GameManager.instance.aspect >= 1.4f)
+        {
 
+        
         if (Input.touchCount == 2)
         {
             var touchZero = Input.GetTouch(0);
@@ -1478,7 +1707,7 @@ public class Board : MonoBehaviour
             if (transform.localScale.x < 1.02f)
                 transform.localPosition = Vector3.Lerp(transform.localPosition, Vector3.zero, Time.deltaTime * 7);
         }
-
+        
 
 
         if (ScoreScreen.instance.bg.activeSelf )
@@ -1489,6 +1718,7 @@ public class Board : MonoBehaviour
             initialScale = new Vector3(1.017f, 1.017f, 1.017f);
             transform.transform.localScale = Vector3.Lerp(transform.transform.localScale, initialScale, Time.deltaTime * 5);
 
+        }
         }
 
     }

@@ -21,6 +21,20 @@ public class ScrollListBasedOnItems : MonoBehaviour
         //Application.targetFrameRate = 60;
     }
 
+    void OnEnable()
+    {
+        Reset();
+    }
+    public void Reset()
+    {
+        if (rectTranform != null)
+            rectTranform.transform.localPosition = new Vector3(rectTranform.transform.localPosition.x, 0, rectTranform.transform.localPosition.z);
+
+        //    RefreshLayout();
+
+
+
+    }
     // Update is called once per frame
     void Update()
     {
@@ -48,11 +62,17 @@ public class ScrollListBasedOnItems : MonoBehaviour
         //if (go != null)
         //    go.GetComponent<Text>().text = avgFrameRate.ToString() + " FPS";
 
-    
+        if(float.IsNaN( rectTranform.localPosition.y) )
+        {
+            rectTranform.transform.localPosition = new Vector3(0, 0, 0);
+            Startup.instance.Pasued(false);
+
+        }
+            
 
 
 
-}
+    }
     //int avgFrameRate = 0;
     public void RefreshLayout(float aTime)
     {
@@ -63,7 +83,15 @@ public class ScrollListBasedOnItems : MonoBehaviour
         yield return new WaitForSeconds(aTime);
         RefreshLayout();
     }
+    void OnGUI()
+    {
+     
+        //    GUILayout.TextField(rectTranform.sizeDelta.ToString());
+        //GUILayout.TextField(rectTranform.localPosition.ToString());
 
+
+
+    }
     public void RefreshLayout()
     {
         int amount = 0;
@@ -85,6 +113,6 @@ public class ScrollListBasedOnItems : MonoBehaviour
         if(rectTranform !=null)
         rectTranform.sizeDelta = new Vector2(rectTranform.sizeDelta.x, newContentWidth);
         if(visualImage != null)
-        visualImage.rectTransform.sizeDelta = new Vector2(visualImage.rectTransform.sizeDelta.x, rectTranform.sizeDelta.y - 1000);
+        visualImage.rectTransform.sizeDelta = new Vector2(visualImage.rectTransform.sizeDelta.x, rectTranform.sizeDelta.y - 1000f);
     }
 }

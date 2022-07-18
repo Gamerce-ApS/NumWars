@@ -23,7 +23,7 @@ public class MainMenuController : MonoBehaviour
     public GameObject NewGameWindow;
     public Vector3 _TextFlyInBoxoriginalPos;
 
-    public static MainMenuController instance;
+    public static MainMenuController instance=null;
 
     public InputField setNameTextLabel;
     public GameObject SetNameGO;
@@ -48,6 +48,7 @@ public class MainMenuController : MonoBehaviour
 
     public GameObject UpdateWindow;
 
+
     // Start is called before the first frame update
     void Start()
     {
@@ -63,10 +64,19 @@ public class MainMenuController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-    
+        if (LoadingOverlay.instance.LoadingCall.Count > 0)
+        {
+            buttonRefresh.GetComponent<Image>().enabled = (false);
+            spinningIcon.SetActive(true);
+        }
+        else
+        {
+            buttonRefresh.GetComponent<Image>().enabled =(true);
+            spinningIcon.SetActive(false);
+        }
 
 
-        if (SetNameGO.activeSelf ||
+            if (SetNameGO.activeSelf ||
             NewGameWindow.activeSelf||
             Startup._instance.DontAutoRefresh)
         {
@@ -195,6 +205,10 @@ public void PressOpenFriendsWindow()
             AppleButton.SetActive(false);
 
         }
+#if UNITY_ANDROID
+        AppleButton.SetActive(false);
+
+#endif
     }
     public void OpenProfileWindow()
     {
@@ -321,7 +335,12 @@ public void PressOpenFriendsWindow()
 
             LinkAppleButton.SetActive(true);
         }
+#if UNITY_ANDROID
+        AppleButton.SetActive(false);
+        UnlinkAppleButton.SetActive(false);
+        LinkAppleButton.SetActive(false);
 
+#endif
     }
     public void Share()
     {
@@ -502,7 +521,7 @@ public void PressOpenFriendsWindow()
 
             string subject = MyEscapeURL("Feedback / Ideas for Outnumber");
 
-            string body = MyEscapeURL("Hey!\r\nI love the game but have some comments/ideas/feedback: \r\n");
+            string body = MyEscapeURL("Hey! I love the game but have some comments/ideas/feedback:");
 
 
             Application.OpenURL("mailto:" + email + "?subject=" + subject + "&body=" + body);
@@ -516,6 +535,37 @@ public void PressOpenFriendsWindow()
     {
 
         return WWW.EscapeURL(url).Replace("+", "%20");
+
+    }
+    public GameObject buttonRefresh;
+    public GameObject spinningIcon;
+
+    public void RefreshList()
+    {
+        if (LoadingOverlay.instance.LoadingCall.Count <= 0)
+            Startup._instance.Refresh();
+
+        buttonRefresh.GetComponent<Image>().enabled = (false);
+        spinningIcon.SetActive(true);
+
+    }
+    public Text DebugText;
+    public void TogglweDebug()
+    {
+        Startup.DEBUG_TOOLS = !Startup.DEBUG_TOOLS;
+        if(Startup.DEBUG_TOOLS)
+        {
+            PlayerPrefs.SetInt("DebugMode", 1);
+            DebugText.text = "Debug: ON";
+        }
+
+       else
+        {
+            PlayerPrefs.SetInt("DebugMode", 0);
+            DebugText.text = "Debug: OFF";
+
+        }
+
 
     }
 }

@@ -9,6 +9,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Linq;
 //using AppodealAds.Unity.Api;
 //using AppodealAds.Unity.Common;
 
@@ -71,10 +72,16 @@ public class GameManager : MonoBehaviour
 
     public bool IsSendingData = false;
     public Image BackButton;
+    public float aspect;
+
+    public Text otherPlayerTurnText;
 
     // Start is called before the first frame update
     void Start()
     {
+
+        _TextFlyInBoxoriginalPos = _userInfoWindow.transform.GetChild(1).transform.position;
+
         Startup.instance.limitFpsTimer = 10;
        // PhotonNetwork.Disconnect();
         if (isFakeGame)
@@ -110,7 +117,7 @@ public class GameManager : MonoBehaviour
         }
 
 
-        float aspect = (float)Screen.height / (float)Screen.width;
+        aspect = (float)Screen.height / (float)Screen.width;
         Debug.Log("aspect:"+aspect);
         if (aspect<1.4f)
         SetIpadScreen();
@@ -157,13 +164,29 @@ public class GameManager : MonoBehaviour
             PlayfabHelperFunctions.instance.GetOtherUserData(Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
 
 
-            if(Startup._instance.GameToLoad.GetHasTimeout())
+            if(Startup._instance.GameToLoad.GetHasTimeout() )
             {
                 GameEndedOverlay.SetActive(true);
                 GameEndedOverlay.GetComponent<CanvasGroup>().alpha = 0;
                 GameEndedOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
+                WaitingOverlay.SetActive(false);
             }
 
+            for(int i = 0; i < Startup.instance.myOldGameList.Count;i++)
+            {
+                if(Startup.instance.myOldGameList[i].RoomName == Startup._instance.GameToLoad.RoomName)
+                {
+                    GameEndedOverlay.SetActive(true);
+                    GameEndedOverlay.GetComponent<CanvasGroup>().alpha = 0;
+                    GameEndedOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
+                    WaitingOverlay.SetActive(false);
+                }
+            }
+
+
+
+
+        
 
 
         }
@@ -225,10 +248,15 @@ public class GameManager : MonoBehaviour
 
         if(CurrentTurn == 1)
         {
-            WaitingOverlay.SetActive(true);
-            WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
-            WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
+            if(GameEndedOverlay.activeSelf == false)
+            {
+                WaitingOverlay.SetActive(true);
+                otherPlayerTurnText.text = "Waiting for " + thePlayers[1].Username + "..";
+                WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
+                WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
+            }
 
+            
             if (int.Parse(Startup._instance.GameToLoad.EmptyTurns) >= 4)
                 ScoreScreen.instance.ShowScoreLastPlay(true,Startup._instance.GameToLoad);
         }
@@ -251,6 +279,50 @@ public class GameManager : MonoBehaviour
 
         _refreshTimer = 110;
 
+
+
+
+        if (thePlayers[1].isAI == false)
+            _userInfoWindow.PreLoadData();
+
+
+        if(thePlayers[1].isAI)
+        {
+            if(PlayerPrefs.HasKey("AIGame") == false)
+            {
+
+                
+
+                BoardData updatedBoard = new BoardData(Startup._instance.MyPlayfabID, "", "1", Board.instance.BoardTiles, "AI_GAME", Board.instance.History, Board.instance.GetTilesLeft(), "0", thePlayers[0].GetMyTiles(), thePlayers[1].GetMyTiles(), System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
+
+                updatedBoard.player1_displayName = Startup._instance.displayName;
+                updatedBoard.player2_displayName = "AI";
+                updatedBoard.player1_score = GameManager.instance.p1_score.text;
+                updatedBoard.player2_score = GameManager.instance.p2_score.text;
+                updatedBoard.player1_abandon = "0";
+                updatedBoard.player2_abandon = "0";
+                updatedBoard.EmptyTurns = AIGAME_EMPTY_TURNS.ToString();
+
+                PlayerPrefs.SetString("AIGame", updatedBoard.GetJson());
+
+                int turn = Random.Range(0, 2);
+                if(turn>0)
+                {
+                    GameManager.instance.NextTurn(false);
+                }
+
+            }
+      
+        }
+
+        if (thePlayers[1].isAI == false)
+            if (Startup._instance != null && Startup._instance.GameToLoad != null && Startup._instance.GameToLoad.BoardTiles != null)
+                if (int.Parse(Startup._instance.GameToLoad.EmptyTurns) >= 4)
+                {
+                    //Board.instance.PressContinue();
+                    GameManager.instance.updateInProgress = false;
+                    GameManager.instance.EndGameAfterPasses(Startup._instance.GameToLoad);
+                }
 
     }
     public void SetOpponentData(string xp, string rank)
@@ -276,7 +348,8 @@ public class GameManager : MonoBehaviour
 
 
         WaitingOverlay.transform.localScale = new Vector3(0.81f, 0.81f, 0.81f);
-        
+       // GameObject.Find("Canvas").GetComponent<CanvasScaler>().referenceResolution = new Vector2(1100, 600);
+
     }
 
     public void AddScore(Player aPlayer, int aScore, int amountOfTiles , bool updateLast=true,bool isReplay = false,bool updateUI = true)
@@ -338,6 +411,8 @@ public class GameManager : MonoBehaviour
     private float _refreshTimer = 0;
     public bool updateInProgress = false;
     float runSetupAfterTime = 0.2f;
+    public float SendingDataDelay = 0;
+    public GameObject connectionissues;
     // Update is called once per frame
     void Update()
     {
@@ -349,11 +424,24 @@ public class GameManager : MonoBehaviour
         {
             if(BackButton.gameObject.activeSelf)
             BackButton.gameObject.SetActive(false);
+
+            SendingDataDelay += Time.deltaTime;
+
+            if(SendingDataDelay>15)
+            {
+                if (!BackButton.gameObject.activeSelf)
+                    BackButton.gameObject.SetActive(true);
+
+                connectionissues.SetActive(true);
+            }
         }
         else
         {
             if (!BackButton.gameObject.activeSelf)
                 BackButton.gameObject.SetActive(true);
+
+            connectionissues.SetActive(false);
+            SendingDataDelay = 0;
         }
 
         if (runSetupAfterTime != -1)
@@ -405,6 +493,108 @@ public class GameManager : MonoBehaviour
 
 
     }
+
+    private void OnGUI()
+    {
+        if (Startup.DEBUG_TOOLS == false)
+            return;
+
+        GUI.skin.textField.fontSize = 24;
+        GUILayout.BeginVertical(GUILayout.Height(Screen.height));
+        GUILayout.FlexibleSpace();
+
+
+ 
+
+
+        Dictionary<int, int> d = new Dictionary<int, int>();
+        for (int i = 0;i < Board.instance.BoardTiles.Count;i++)
+        {
+            if(Board.instance.BoardTiles[i]._child != null)
+            {
+                if(Board.instance.BoardTiles[i].myTileType == StaticTile.TileType.NormalTile)
+                {
+
+                    if( d.ContainsKey((int)Board.instance.BoardTiles[i].GetValue()) )
+                    {
+                        d[(int)Board.instance.BoardTiles[i].GetValue()]++;
+                    }
+                    else
+                    d.Add((int)Board.instance.BoardTiles[i].GetValue(), 1);
+                    
+                }
+            }
+        }
+        //for(int i = 0; i < thePlayers[0].myTiles.Count;i++)
+        //{
+        //    int val = int.Parse(thePlayers[0].myTiles[i].GetTileNumber());
+        //    if (d.ContainsKey(val))
+        //    {
+        //        d[val]++;
+        //    }
+        //    else
+        //        d.Add(val, 1);
+        //}
+        for (int i = 0; i < Startup.instance.GameToLoad.p2_tiles.Count; i++)
+        {
+            int val = int.Parse(Startup.instance.GameToLoad.p2_tiles[i]);
+            if (d.ContainsKey(val))
+            {
+                d[val]++;
+            }
+            else
+                d.Add(val, 1);
+        }
+        for (int i = 0; i < Startup.instance.GameToLoad.p1_tiles.Count; i++)
+        {
+            int val = int.Parse(Startup.instance.GameToLoad.p1_tiles[i]);
+            if (d.ContainsKey(val))
+            {
+                d[val]++;
+            }
+            else
+                d.Add(val, 1);
+        }
+        for (int i = 0; i < Board.instance.AllTilesNumbers.Count; i++)
+        {
+            int val = Board.instance.AllTilesNumbers[i];
+            if (d.ContainsKey(val))
+            {
+                d[val]++;
+            }
+            else
+                d.Add(val, 1);
+        }
+
+
+  
+
+        int tot = 0;
+        foreach (KeyValuePair<int, int> v in d.OrderBy(key => key.Key))
+        {
+            if(v.Key<=10 && v.Value != 7)
+                GUI.color = Color.red;
+            else
+                GUI.color = Color.white;
+
+
+
+            if (v.Key > 10)
+            {
+                if( v.Value != 1)
+                GUI.color = Color.red;
+                else
+                GUI.color = Color.white;
+            } 
+
+            tot += v.Value;
+            GUILayout.TextField(v.Key+" : "+ v.Value);
+  
+        }
+
+        GUILayout.TextField("Total:" + tot);
+        GUILayout.EndVertical();
+    }
     public void RefreshBackendCallback()
     {
         if (CheckIfMyTurn(false) == false)
@@ -440,7 +630,7 @@ public class GameManager : MonoBehaviour
             Startup._instance.AddXP(5);
             if (thePlayers[1].isAI)
             {
-
+                GameManager.instance.SendingDataDelay = 0;
                 thePlayers[1].DoAI();
 
                 if (isEmptyTurn) // you ended your turn with an empty move, it will not be stored until AI makes his move
@@ -468,6 +658,9 @@ public class GameManager : MonoBehaviour
                 BoardData updatedBoard = new BoardData(Startup._instance.GameToLoad.player1_PlayfabId, Startup._instance.GameToLoad.player2_PlayfabId, Startup._instance.GameToLoad.GetPlayerTurn(CurrentTurn).ToString(), Board.instance.BoardTiles, Startup._instance.GameToLoad.RoomName, Startup._instance.GameToLoad.History, Board.instance.GetTilesLeft(), Startup._instance.GameToLoad.EmptyTurns, p1_tiles, p2_tiles, System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
                 updatedBoard.player1_displayName = Startup._instance.GameToLoad.player1_displayName;
                 updatedBoard.player2_displayName = Startup._instance.GameToLoad.player2_displayName;
+                updatedBoard.player1_avatarURL = Startup._instance.GameToLoad.player1_avatarURL;
+                updatedBoard.player2_avatarURL = Startup._instance.GameToLoad.player2_avatarURL;
+                
                 updatedBoard.player1_score = Startup._instance.GameToLoad.player1_score;
                 updatedBoard.player2_score = Startup._instance.GameToLoad.player2_score;
                 updatedBoard.player1_abandon = Startup._instance.GameToLoad.player1_abandon;
@@ -500,7 +693,20 @@ public class GameManager : MonoBehaviour
 
 
                 updateInProgress = true;
-                PlayfabHelperFunctions.instance.SendNextTurn(updatedBoard, callback);
+                if( updatedBoard.CheckBoard() == true)
+                {
+                    PlayfabHelperFunctions.instance.SendNextTurn(updatedBoard, callback);
+                }
+                else
+                {
+                    SceneManager.LoadScene(0);
+                    if (LoadingOverlay.instance != null)
+                        LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+                    Startup._instance.Refresh(0.1f);
+
+                    return;
+                }
+
                 _refreshTimer = 0;
 
 
@@ -522,6 +728,7 @@ public class GameManager : MonoBehaviour
             if (thePlayers[1].isAI)
             {
                 WaitingOverlay.SetActive(true);
+                otherPlayerTurnText.text = "Waiting for " + thePlayers[1].Username + "..";
                 WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
                 WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f).SetEase(Ease.InOutQuart);
                 //if (TutorialController.instance == null && Random.Range(0, 100) < 50)
@@ -603,7 +810,8 @@ public class GameManager : MonoBehaviour
             {
                 EndGameAfterPasses(updatedBoard);
             }
-
+            GameManager.instance.IsSendingData = false;
+            GameManager.instance.SendingDataDelay = 0;
         }
     }
     public void HideThinkingOverlay()
@@ -612,6 +820,7 @@ public class GameManager : MonoBehaviour
 
     }
     public UserInfoWindow _userInfoWindow;
+    Vector3 _TextFlyInBoxoriginalPos;
     public void ClickProfile(int aUserId)
     {
         _userInfoWindow.gameObject.SetActive(true);
@@ -619,7 +828,11 @@ public class GameManager : MonoBehaviour
         _userInfoWindow.InitUser(aUserId);
 
 
-   
+        
+        Startup._instance.PlaySoundEffect(0);
+        _userInfoWindow.transform.GetChild(0).GetComponent<Image>().DOFade(157f / 255f, 0).SetEase(Ease.InOutQuart);
+        _userInfoWindow.transform.GetChild(1).transform.position += new Vector3(10, 0, 0);
+        _userInfoWindow.transform.GetChild(1).transform.DOMoveX(_TextFlyInBoxoriginalPos.x, 0.3f).SetEase(Ease.InOutQuart);
 
 
 

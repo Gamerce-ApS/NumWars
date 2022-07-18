@@ -205,23 +205,52 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             }
             else
             {
-                PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
-                {
-                    PlayFabId = otherPlayerID,
-                    ProfileConstraints = new PlayerProfileViewConstraints()
-                    {
-                        ShowDisplayName = true,
-                        ShowAvatarUrl = true
-                    }
-                }, result => {
+                //PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+                //{
+                //    PlayFabId = otherPlayerID,
+                //    ProfileConstraints = new PlayerProfileViewConstraints()
+                //    {
+                //        ShowDisplayName = true,
+                //        ShowAvatarUrl = true
+                //    }
+                //}, result => {
 
-                    LoadAvatarURL(result.PlayerProfile.AvatarUrl, otherPlayerID);
+                //    LoadAvatarURL(result.PlayerProfile.AvatarUrl, otherPlayerID);
 
 
-                }, (error) => {
-                    Debug.Log("Got error retrieving user data:");
-                    Debug.Log(error.GenerateErrorReport());
-                });
+                //}, (error) => {
+                //    Debug.Log("Got error retrieving user data:");
+                //    Debug.Log(error.GenerateErrorReport());
+                //});
+
+
+
+
+                //if (Startup.instance.StoredAvatarURLS.ContainsKey(otherPlayerID))
+                //{
+                //    object outV = "";
+                //    if (Startup.instance.StoredAvatarURLS.TryGetValue(otherPlayerID, out outV))
+                //    {
+                //        string t = outV.ToString();
+                //        LoadAvatarURL(t, otherPlayerID);
+                //    }
+
+
+                //}
+
+                StartCoroutine(PicCheck(otherPlayerID));
+
+
+                //PlayfabCallbackHandler.instance.GetOtherPlayerProfile(otherPlayerID, result2 =>
+                //{
+                //    LoadAvatarURL(result2.PlayerProfile.AvatarUrl, otherPlayerID);
+
+                //},
+                //    error =>
+                //    {
+                //        Debug.Log("error getting player info");
+                //    });
+
             }
  
         }
@@ -249,18 +278,45 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
 
     }
+    public IEnumerator PicCheck(string otherPlayerID)
+    {
+        yield return new WaitForSeconds(0.1f);
+        if (Startup.instance.StoredAvatarURLS.ContainsKey(otherPlayerID))
+        {
+            object outV = "";
+            if (Startup.instance.StoredAvatarURLS.TryGetValue(otherPlayerID, out outV))
+            {
+                string t = outV.ToString();
+                LoadAvatarURL(t, otherPlayerID);
+            }
 
+
+        }
+
+    }
     public void LoadAvatarURL(string aURL,string playfabID)
     {
+       // aURL is null so we need to know that so we dont get info each time.
+       //     add null entry for user in myprofiles
+
         if(this != null)
         {
             if (aURL != null)
             {
-                ProfilePictureManager.instance.SetPicture(aURL, playfabID, img);
                 if(OnPictureCallback != null)
                     ProfilePictureManager.instance.SetPicture(aURL, playfabID, OnPictureCallback.img);
-                
+                else
+                    ProfilePictureManager.instance.SetPicture(aURL, playfabID, img);
+
                 img.enabled = true;
+            }
+            else
+            {
+                ProfileData pf = new ProfileData();
+                pf.URL = aURL;
+                pf.theSprite = Sprite.Create((Texture2D)ProfilePictureManager.instance.StandardPicture, new Rect(0, 0, ProfilePictureManager.instance.StandardPicture.width, ProfilePictureManager.instance.StandardPicture.height), new Vector2());
+                pf.playfabID = playfabID;
+                ProfilePictureManager.instance.myPictures.Add(pf);
             }
 
             //StartCoroutine(GetFBProfilePicture(aURL, this));

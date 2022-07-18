@@ -76,7 +76,7 @@ public class ValidationScreen : MonoBehaviour
     {
 
         GameManager.instance.IsSendingData = true;
-
+        GameManager.instance.SendingDataDelay = 0;
 
         CloseWindow();
 

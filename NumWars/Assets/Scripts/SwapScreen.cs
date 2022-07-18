@@ -105,7 +105,7 @@ public class SwapScreen : MonoBehaviour
     public void SwapYes()
     {
         GameManager.instance.IsSendingData = true;
-
+        GameManager.instance.SendingDataDelay = 0;
 
         if (SelectedTiles.Count > Board.instance.AllTilesNumbers.Count)
         {
@@ -149,6 +149,7 @@ public class SwapScreen : MonoBehaviour
         GameManager.instance.IsSendingData = false;
 
         GameManager.instance.WaitingOverlay.SetActive(true);
+        GameManager.instance.otherPlayerTurnText.text = "Waiting for " + GameManager.instance.thePlayers[1].Username + "..";
         GameManager.instance.WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
         GameManager.instance.WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f * ScoreScreen.instance.Speed).SetEase(Ease.InOutQuart);
 

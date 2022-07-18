@@ -277,10 +277,6 @@ namespace PlayFab.ServerModels
         /// </summary>
         public string IPAddress;
         /// <summary>
-        /// The MAC address on which the ban was applied. May affect multiple players.
-        /// </summary>
-        public string MACAddress;
-        /// <summary>
         /// Unique PlayFab assigned ID of the user on whom the operation will be performed.
         /// </summary>
         public string PlayFabId;
@@ -1949,8 +1945,27 @@ namespace PlayFab.ServerModels
         ApiNotEnabledForTitle,
         DuplicateTitleNameForPublisher,
         AzureTitleCreationInProgress,
-        DuplicateAzureResourceId,
-        TitleContraintsPublisherDeletion,
+        TitleConstraintsPublisherDeletion,
+        InvalidPlayerAccountPoolId,
+        PlayerAccountPoolNotFound,
+        PlayerAccountPoolDeleted,
+        TitleCleanupInProgress,
+        AzureResourceConcurrentOperationInProgress,
+        TitlePublisherUpdateNotAllowed,
+        AzureResourceManagerNotSupportedInStamp,
+        ApiNotIncludedInAzurePlayFabFeatureSet,
+        GoogleServiceAccountFailedAuth,
+        GoogleAPIServiceUnavailable,
+        GoogleAPIServiceUnknownError,
+        NoValidIdentityForAad,
+        PlayerIdentityLinkNotFound,
+        PhotonApplicationIdAlreadyInUse,
+        CloudScriptUnableToDeleteProductionRevision,
+        CustomIdNotFound,
+        AutomationInvalidInput,
+        AutomationInvalidRuleName,
+        AutomationRuleAlreadyExists,
+        AutomationRuleLimitExceeded,
         MatchmakingEntityInvalid,
         MatchmakingPlayerAttributesInvalid,
         MatchmakingQueueNotFound,
@@ -1974,6 +1989,9 @@ namespace PlayFab.ServerModels
         MatchmakingBadRequest,
         PubSubFeatureNotEnabledForTitle,
         PubSubTooManyRequests,
+        PubSubConnectionNotFoundForEntity,
+        PubSubConnectionHandleInvalid,
+        PubSubSubscriptionLimitExceeded,
         TitleConfigNotFound,
         TitleConfigUpdateConflict,
         TitleConfigSerializationError,
@@ -2015,6 +2033,7 @@ namespace PlayFab.ServerModels
         ExportCannotParseQuery,
         ExportControlCommandsNotAllowed,
         ExportQueryMissingTableReference,
+        ExportInsightsV1Deprecated,
         ExplorerBasicInvalidQueryName,
         ExplorerBasicInvalidQueryDescription,
         ExplorerBasicInvalidQueryConditions,
@@ -2091,7 +2110,22 @@ namespace PlayFab.ServerModels
         EventSamplingInvalidRatio,
         EventSamplingInvalidEventNamespace,
         EventSamplingInvalidEventName,
-        EventSamplingRatioNotFound
+        EventSamplingRatioNotFound,
+        EventSinkConnectionInvalid,
+        EventSinkConnectionUnauthorized,
+        EventSinkRegionInvalid,
+        EventSinkLimitExceeded,
+        EventSinkSasTokenInvalid,
+        EventSinkNotFound,
+        EventSinkNameInvalid,
+        EventSinkSasTokenPermissionInvalid,
+        EventSinkSecretInvalid,
+        EventSinkTenantNotFound,
+        EventSinkAadNotFound,
+        EventSinkDatabaseNotFound,
+        OperationCanceled,
+        InvalidDisplayNameRandomSuffixLength,
+        AllowNonUniquePlayerDisplayNamesDisableNotAllowed
     }
 
     [Serializable]
@@ -3030,6 +3064,27 @@ namespace PlayFab.ServerModels
         /// Mapping of generic service identifiers to PlayFab identifiers.
         /// </summary>
         public List<GenericPlayFabIdPair> Data;
+    }
+
+    [Serializable]
+    public class GetPlayFabIDsFromNintendoServiceAccountIdsRequest : PlayFabRequestCommon
+    {
+        /// <summary>
+        /// Array of unique Nintendo Switch Account identifiers for which the title needs to get PlayFab identifiers.
+        /// </summary>
+        public List<string> NintendoAccountIds;
+    }
+
+    /// <summary>
+    /// For Nintendo Service Account identifiers which have not been linked to PlayFab accounts, null will be returned.
+    /// </summary>
+    [Serializable]
+    public class GetPlayFabIDsFromNintendoServiceAccountIdsResult : PlayFabResultCommon
+    {
+        /// <summary>
+        /// Mapping of Nintendo Switch Service Account identifiers to PlayFab identifiers.
+        /// </summary>
+        public List<NintendoServiceAccountPlayFabIdPair> Data;
     }
 
     [Serializable]
@@ -4346,6 +4401,20 @@ namespace PlayFab.ServerModels
     }
 
     [Serializable]
+    public class NintendoServiceAccountPlayFabIdPair : PlayFabBaseModel
+    {
+        /// <summary>
+        /// Unique Nintendo Switch Service Account identifier for a user.
+        /// </summary>
+        public string NintendoServiceAccountId;
+        /// <summary>
+        /// Unique PlayFab identifier for a user, or null if no PlayFab account is linked to the Nintendo Switch Service Account
+        /// identifier.
+        /// </summary>
+        public string PlayFabId;
+    }
+
+    [Serializable]
     public class NintendoSwitchPlayFabIdPair : PlayFabBaseModel
     {
         /// <summary>
@@ -5632,6 +5701,10 @@ namespace PlayFab.ServerModels
     public class SetTitleDataRequest : PlayFabRequestCommon
     {
         /// <summary>
+        /// The optional custom tags associated with the request (e.g. build number, external trace identifiers, etc.).
+        /// </summary>
+        public Dictionary<string,string> CustomTags;
+        /// <summary>
         /// key we want to set a value on (note, this is additive - will only replace an existing key's value if they are the same
         /// name.) Keys are trimmed of whitespace. Keys may not begin with the '!' character.
         /// </summary>
@@ -6825,6 +6898,10 @@ namespace PlayFab.ServerModels
         /// XBox user ID
         /// </summary>
         public string XboxUserId;
+        /// <summary>
+        /// XBox user sandbox
+        /// </summary>
+        public string XboxUserSandbox;
     }
 
     [Serializable]

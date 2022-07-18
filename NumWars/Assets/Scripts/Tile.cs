@@ -132,6 +132,10 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         }
         return textLabel.text;
     }
+    public string GetTileNumber()
+    {
+        return textLabel.text;
+    }
     public int GetMultipleValidPositions()
     {
         int amountValid = Board.instance.CheckAmountValid(PlacedOnTile, textLabel.text);

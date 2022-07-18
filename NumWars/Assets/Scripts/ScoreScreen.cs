@@ -107,18 +107,21 @@ public class ScoreScreen : MonoBehaviour
         {
             totalScore += lastMoves[i].ScoreValue;
         }
-
-        GameManager.instance.thePlayers[0].LastScore = totalScore;
+        int addition = 0;
+        if (lastMoves.Count == 6)
+            addition = 50;
+        GameManager.instance.thePlayers[0].LastScore = totalScore+ addition;
         GameManager.instance.UpdateUI();
 
     }
     // Replay functions
     public void ShowScoreLastPlay(bool isFromStart, BoardData _bd)
     {
-  
 
+        if (GameManager.instance.GameEndedOverlay.activeSelf == true)
+            return;
 
-        List<string> moveHistory = _bd.History;
+            List<string> moveHistory = _bd.History;
         List<FakeTileData> lastMoves = new List<FakeTileData>();
 
         int myBackednTurn = _bd.GetPlayerTurn(GameManager.instance.CurrentTurn);
@@ -127,7 +130,8 @@ public class ScoreScreen : MonoBehaviour
         if(moveHistory.Count>0)
         if(moveHistory[moveHistory.Count-1]== "#SWAP#")
         {
-            AlertText.instance.ShowAlert("Player swapped!",0.5f);
+                    
+            AlertText.instance.ShowAlert(GameManager.instance.thePlayers[1].Username+ " swapped!",0.8f);
             SetYourLastScore(_bd, moveHistory.Count - 1);
             return;
         }
@@ -135,7 +139,7 @@ public class ScoreScreen : MonoBehaviour
         if (moveHistory.Count > 0)
         if (moveHistory[moveHistory.Count - 1] == "#EMPTY#")
         {
-            AlertText.instance.ShowAlert("Empty turn!", 0.5f);
+            AlertText.instance.ShowAlert("No tiles placed!", 0.5f);
             SetYourLastScore(_bd, moveHistory.Count - 2);
             return;
         }
@@ -185,7 +189,14 @@ public class ScoreScreen : MonoBehaviour
 
         // if we come from start the score needs to be removed as it has not been updated
         if(isFromStart)
-        GameManager.instance.AddScore(GameManager.instance.thePlayers[1], -totalScore, lastMoves.Count, false,true);
+        {
+            int extra = 0;
+            if (lastMoves.Count == 6)
+                extra = 50;
+
+            GameManager.instance.AddScore(GameManager.instance.thePlayers[1], -totalScore- extra, lastMoves.Count, false, true);
+
+        }
 
         lastMoves.Sort(HelperFunctions.SortByScoreInverse);
 
@@ -322,7 +333,34 @@ public class ScoreScreen : MonoBehaviour
             if (createdPoints.Count > 1)
                 createdPoints[i].GetComponent<RectTransform>().DOScale(createdPoints[i].transform.localScale * 1.3f, 0.1f).SetEase(Ease.InOutQuart);
         }
+
+
+ 
+
         yield return new WaitForSeconds(.95f* Speed);
+
+
+
+        yield return new WaitForSeconds(.25f);
+        if (createdPoints.Count == 6)
+        {
+            bingo.SetActive(false);
+            bingo.SetActive(true);
+            totalScore += 50;
+            if (thePlayer.ID == 0)
+                AchivmentController.instance.Bingo();
+
+            yield return new WaitForSeconds(1.8f);
+            for (int i = 0; i < createdPoints.Count; i++)
+            {
+                createdPoints[i].transform.GetChild(0).Find("Text").GetComponent<Text>().text = totalScore.ToString();
+                if (createdPoints.Count > 1)
+                    createdPoints[i].GetComponent<RectTransform>().DOShakeScale(0.5f,0.9f, 8);
+            }
+            yield return new WaitForSeconds(1.0f);
+        }
+
+
         for (int i = 0; i < createdPoints.Count; i++)
         {
 
@@ -333,17 +371,14 @@ public class ScoreScreen : MonoBehaviour
         bg.GetComponent<Image>().DOFade(0, 1.5f* Speed).SetEase(Ease.InOutQuart); ;
 
 
+
+  
+
+
         yield return new WaitForSeconds(0.7f* Speed);
 
 
-        if(createdPoints.Count == 6)
-        {
-            bingo.SetActive(false);
-            bingo.SetActive(true);
-            totalScore += 50;
-            AchivmentController.instance.Bingo();
-
-        }
+  
         
         GameManager.instance.AddScore(thePlayer, totalScore , createdPoints.Count, true, true);
         //for (int i = 0; i < score.Count; i++)
@@ -564,7 +599,21 @@ public class ScoreScreen : MonoBehaviour
     public float Speed = 1;
     public void OnTurnWasSent()
     {
-        GameManager.instance.IsSendingData = false;
+        if(GameManager.instance.thePlayers[1].isAI)
+        {
+            if(GameManager.instance.CheckIfMyTurn(false))
+            {
+                //GameManager.instance.IsSendingData = false;
+                        
+            }
+            GameManager.instance.SendingDataDelay = 0;
+        }
+        else
+        {
+            GameManager.instance.IsSendingData = false;
+        }
+
+
 
         Speed = 1;
         for (int i = 0; i < currentscore.Count; i++)
@@ -622,17 +671,39 @@ public class ScoreScreen : MonoBehaviour
         yield return new WaitForSeconds(.95f* Speed);
 
 
+        yield return new WaitForSeconds(.25f);
         if (createdPoints.Count == 6)
         {
             bingo.SetActive(false);
             bingo.SetActive(true);
             totalScore += 50;
-            //if(AchivmentController.instance != null)
-            //AchivmentController.instance.Bingo();
-            yield return new WaitForSeconds(0.4f* Speed);
-            createdPoints[createdPoints.Count-1].transform.GetChild(0).Find("Text").GetComponent<Text>().text = totalScore.ToString();
-            yield return new WaitForSeconds(0.4f* Speed);
+
+            //yield return new WaitForSeconds(0.4f* Speed);
+            //createdPoints[createdPoints.Count-1].transform.GetChild(0).Find("Text").GetComponent<Text>().text = totalScore.ToString();
+            //yield return new WaitForSeconds(0.4f* Speed);
+
+
+            yield return new WaitForSeconds(1.8f);
+            for (int i = 0; i < createdPoints.Count; i++)
+            {
+                createdPoints[i].transform.GetChild(0).Find("Text").GetComponent<Text>().text = totalScore.ToString();
+                if (createdPoints.Count > 1)
+                    createdPoints[i].GetComponent<RectTransform>().DOShakeScale(0.5f, 0.9f, 8);
+            }
+            yield return new WaitForSeconds(1.0f);
+
         }
+
+
+
+
+
+
+
+
+
+
+
 
         for (int i = 0; i < createdPoints.Count; i++)
         {
@@ -690,6 +761,7 @@ public class ScoreScreen : MonoBehaviour
 
 
         GameManager.instance.WaitingOverlay.SetActive(true);
+        GameManager.instance.otherPlayerTurnText.text = "Waiting for " + GameManager.instance.thePlayers[1].Username + "..";
         GameManager.instance.WaitingOverlay.GetComponent<CanvasGroup>().alpha = 0;
         GameManager.instance.WaitingOverlay.GetComponent<CanvasGroup>().DOFade(1, 0.5f* Speed).SetEase(Ease.InOutQuart);
 

@@ -24,4 +24,4 @@ MonoBehaviour:
   LoggerHost: 
   LoggerPort: 0
   EnableRealTimeLogging: 0
-  LogCapLimit: 31
+  LogCapLimit: 30

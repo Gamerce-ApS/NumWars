@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using Photon.Pun;
 using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
-
+using UnityEngine.UI;
 
 public enum PlayfabCalls
 {
@@ -12,6 +14,9 @@ public enum PlayfabCalls
     GetPlayerProfile,
     GetSharedGroupData,
     GetUserData,
+    LoginWithIOSDeviceID,
+    GetOtherPlayerProfile,
+    SetPictureIE
 };
 
 public enum Status
@@ -35,6 +40,11 @@ public class PlayfabFunctionCall
     public System.Action<GetUserDataResult> onDoneGetUserDataResult;
     public System.Action<PlayFabError> onError;
     public bool shouldCancel = false;
+    public System.Action onDoneN;
+    public System.Action onErrorN;
+    public string aURL;
+    public Image aImage;
+
 
     public void Run()
     {
@@ -48,7 +58,13 @@ public class PlayfabFunctionCall
             GetSharedGroupData(SharedGroupId,onDoneGetSharedGroupDataResult, onError);
         else if (myType == PlayfabCalls.GetUserData)
             GetUserData(onDoneGetUserDataResult, onError);
-        
+        else if (myType == PlayfabCalls.LoginWithIOSDeviceID)
+            LoginWithIOSDeviceID(playerID, onDone, onError);
+        else if (myType == PlayfabCalls.GetOtherPlayerProfile)
+            GetOtherPlayerProfile(playerID, onDonePlayerProfileResult, onError);
+        else if (myType == PlayfabCalls.SetPictureIE)
+            SetPictureIE( aURL, playerID,  aImage, onDoneN, onErrorN);
+
 
 
     }
@@ -85,7 +101,47 @@ public class PlayfabFunctionCall
                   onError.Invoke(error);
               });
     }
+    void LoginWithIOSDeviceID(string playerID, System.Action<LoginResult> onDone, System.Action<PlayFabError> onError)
+    {
+        myStatus = Status.Running;
+        PlayFabClientAPI.LoginWithIOSDeviceID(new LoginWithIOSDeviceIDRequest()
+        {
 
+            TitleId = PlayFabSettings.TitleId,
+            DeviceId = SystemInfo.deviceUniqueIdentifier,
+            OS = SystemInfo.operatingSystem,
+            DeviceModel = SystemInfo.deviceModel,
+            CreateAccount = true,
+            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+            {
+                GetUserAccountInfo = true,
+                GetPlayerProfile = true
+            }
+        },
+result =>
+{
+    if (shouldCancel)
+        return;
+    myStatus = Status.Finished;
+    onDone(result);
+
+   // LoginSucess(result);
+},
+error =>
+{
+    if (shouldCancel)
+        return;
+    myStatus = Status.Finished;
+    onError.Invoke(error);
+});
+
+
+
+
+
+
+
+    }
     public void GetTitleData(System.Action<GetTitleDataResult> onDone, System.Action<PlayFabError> onError)
     {
         myStatus = Status.Running;
@@ -105,7 +161,35 @@ public class PlayfabFunctionCall
               );
     }
 
+    public void GetOtherPlayerProfile(string aPlayfabID, System.Action<GetPlayerProfileResult> onDone, System.Action<PlayFabError> onError)
+    {
+        myStatus = Status.Running;
+        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        {
+            PlayFabId = aPlayfabID,
+            ProfileConstraints = new PlayerProfileViewConstraints()
+            {
+                ShowDisplayName = true,
+                ShowAvatarUrl = true
+            }
+        },
+        result =>
+        {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            onDone.Invoke(result);
+        },
+        error =>
+        {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            onError.Invoke(error);
+        }
 
+        );
+    }
     public void GetPlayerProfile(System.Action<GetPlayerProfileResult> onDone, System.Action<PlayFabError> onError)
     {
         myStatus = Status.Running;
@@ -178,6 +262,38 @@ public class PlayfabFunctionCall
             onError.Invoke(error);
         });
     }
+    public void SetPictureIE(string aURL, string playfabID, Image aImage, System.Action onDone, System.Action onError)
+    {
+        myStatus = Status.Running;
+
+        //PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+        //{
+        //    PlayFabId = Startup._instance.MyPlayfabID,
+        //    Keys = null
+        //}, result => {
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+        //    onDone.Invoke(result);
+
+        //}, (error) => {
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+        //    onError.Invoke(error);
+        //});
+
+        PlayfabCallbackHandler.instance.SetPictureIEC(aURL, playfabID, aImage, () =>
+        {
+            myStatus = Status.Finished;
+        }, onError);
+
+
+
+    }
+
+
+     
 
 
 }
@@ -206,6 +322,14 @@ public class PlayfabCallbackHandler : MonoBehaviour
         for(int i = 0; i < myPlayfabFunctionCall.Count;i++)
         {
             if( myPlayfabFunctionCall[i].myType == PlayfabCalls.GetSharedGroupData)
+            {
+                return true;
+            }
+            if (myPlayfabFunctionCall[i].myType == PlayfabCalls.GetUserData)
+            {
+                return true;
+            }
+            if (myPlayfabFunctionCall[i].myType == PlayfabCalls.GetPlayerProfile)
             {
                 return true;
             }
@@ -249,18 +373,46 @@ public class PlayfabCallbackHandler : MonoBehaviour
     }
     void OnGUI()
     {
-        //for (int i = myPlayfabFunctionCall.Count - 1; i >= 0; i--)
-        //{
-        //    GUILayout.TextField(myPlayfabFunctionCall[i].myType.ToString());
-        //}
+        if (Startup.DEBUG_TOOLS == false)
+            return;
 
- 
+        var style = GUI.skin.GetStyle("label");
+        style.fontSize = 24; // whatever you set
+
+
+        for (int i = myPlayfabFunctionCall.Count - 1; i >= 0; i--)
+        {
+            GUILayout.TextField(myPlayfabFunctionCall[i].myType.ToString(), style);
+        }
+
+        
+        GUILayout.TextField("PhotonNetwork.IsConnected"+ PhotonNetwork.IsConnected, style);
+        GUILayout.TextField("PlayFabClientAPI.IsClientLoggedIn()" + PlayFabClientAPI.IsClientLoggedIn(), style);
+
+        GUI.color = Color.black;
+        GUILayout.TextField("AmountOfCalls:", style);
+
+        for (int i = 0; i < PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls.Count; i++)
+        {
+            GUILayout.TextField( PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls[i], style);
+        }
+
+
     }
 
     public void LoginWithCustomID(string playerID, System.Action<LoginResult> onDone, System.Action<PlayFabError> onError)
     {
         PlayfabFunctionCall a = new PlayfabFunctionCall();
         a.myType = PlayfabCalls.LoginWithCustomID;
+        a.playerID = playerID;
+        a.onDone = onDone;
+        a.onError = onError;
+        myPlayfabFunctionCall.Add(a);
+    }
+    public void LoginWithIOSDeviceID(string playerID, System.Action<LoginResult> onDone, System.Action<PlayFabError> onError)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.myType = PlayfabCalls.LoginWithIOSDeviceID;
         a.playerID = playerID;
         a.onDone = onDone;
         a.onError = onError;
@@ -283,6 +435,16 @@ public class PlayfabCallbackHandler : MonoBehaviour
         a.onError = onError;
         myPlayfabFunctionCall.Add(a);
     }
+    public void GetOtherPlayerProfile(string aPlayfab, System.Action<GetPlayerProfileResult> onDone, System.Action<PlayFabError> onError)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.myType = PlayfabCalls.GetOtherPlayerProfile;
+        a.onDonePlayerProfileResult = onDone;
+        a.onError = onError;
+        a.playerID = aPlayfab;
+        myPlayfabFunctionCall.Add(a);
+    }
+    
     public void GetSharedGroupData(string aSharedGroupId, System.Action<GetSharedGroupDataResult> onDone, System.Action<PlayFabError> onError)
     {
         PlayfabFunctionCall a = new PlayfabFunctionCall();
@@ -299,6 +461,75 @@ public class PlayfabCallbackHandler : MonoBehaviour
         a.onDoneGetUserDataResult = onDone;
         a.onError = onError;
         myPlayfabFunctionCall.Add(a);
+    }
+    public void SetPictureIE(string aURL, string playfabID, Image aImage, System.Action onDoneN, System.Action onErrorN)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.aURL = aURL;
+        a.playerID = playfabID;
+        a.aImage = aImage;
+        a.myType = PlayfabCalls.SetPictureIE;
+        a.onDoneN = onDoneN;
+        a.onErrorN = onErrorN ;
+        myPlayfabFunctionCall.Add(a);
+    }
+    public void SetPictureIEC(string aURL, string playfabID, Image aImage, System.Action onDone, System.Action onError)
+    {
+        StartCoroutine(SetPictureIE2(aURL,  playfabID,  aImage,  onDone, onError));
+    }
+    public IEnumerator SetPictureIE2(string aURL, string playfabID, Image aImage, System.Action onDone, System.Action onError)
+    {
+        var profilePic = new Texture2D(2, 2, TextureFormat.RGBA32, false, false)
+        {
+            wrapMode = TextureWrapMode.Clamp
+        };
+
+        var fileName = Path.Combine(Application.persistentDataPath, playfabID + ".png");
+        Debug.Log(fileName);
+        if( File.Exists(fileName))
+        {
+            byte[] bytes = File.ReadAllBytes(fileName);
+
+            profilePic.LoadImage(bytes);
+
+        }
+        else
+        {
+
+            WWW www = new WWW(aURL + "&access_token=GG|817150566351647|GXmlbSYVrHYJ1h7CJj7t9cGxwrE");
+            yield return www;
+
+             profilePic = www.texture;
+
+            if (www.error != null)
+                profilePic = ProfilePictureManager.instance.StandardPicture;
+        }
+
+
+
+
+
+
+        //If texture is null add a standard one.. This is for facebook error
+        ProfileData pf = new ProfileData();
+        pf.URL = aURL;
+        pf.theSprite = Sprite.Create((Texture2D)profilePic, new Rect(0, 0, profilePic.width, profilePic.height), new Vector2());
+        pf.playfabID = playfabID;
+        ProfilePictureManager.instance.myPictures.Add(pf);
+        if (aImage != null && pf != null)
+        {
+            aImage.sprite = pf.theSprite;
+            aImage.rectTransform.sizeDelta = new Vector2(88, 88);
+
+ 
+        }
+
+        if (onDone != null)
+            onDone.Invoke();
+
+
+        File.WriteAllBytes(Application.persistentDataPath + "/"+playfabID+".png", profilePic.EncodeToPNG());
+
     }
 
 

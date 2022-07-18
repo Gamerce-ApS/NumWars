@@ -19,6 +19,7 @@ public class LoadingOverlay : MonoBehaviour
 
     public List<string> LoadingCall = new List<string>();
     public Text log;
+    public Text log2;
     float timer = -1;
 
     public GameObject LoadingGOList;
@@ -64,7 +65,7 @@ public class LoadingOverlay : MonoBehaviour
         else
             laodingTimer = 0;
 
-        if(laodingTimer > 7)
+        if(laodingTimer > 15)
         {
             badConnection.SetActive(true);
         }
@@ -96,10 +97,13 @@ public class LoadingOverlay : MonoBehaviour
     float loadingTick = 0;
     public void ClickRetry()
     {
+
         LoadingCall.Clear();
         PlayfabHelperFunctions.instance.ReLogin();
         SceneManager.LoadScene(0);
         Startup._instance.Refresh(0.1f);
+        if (LoadingOverlay.instance != null)
+            LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
     }
     public void ShowLoading(string function)
     {
@@ -109,7 +113,8 @@ public class LoadingOverlay : MonoBehaviour
      //   transform.GetChild(0).gameObject.SetActive(true);
      //   LoadingGOList.SetActive(true);
         LoadingCall.Add(function);
-       // log.text = "Start:" + function;
+        if (Startup.DEBUG_TOOLS)
+        log2.text = "Start:" + function;
 
         //float loadingTime = ((float)laodingTimer / 7.1f);
         //if (loadingTime > 1)
@@ -119,11 +124,16 @@ public class LoadingOverlay : MonoBehaviour
     public void DoneLoading(string aFunction)
     {
         LoadingCall.Remove(aFunction);
-        if(LoadingCall.Count<=0)
+        LoadingCall.Remove(aFunction);
+        LoadingCall.Remove(aFunction);
+        LoadingCall.Remove(aFunction);
+        if (LoadingCall.Count<=0)
         {
             timer = 0.50f;
+            laodingTimer = 0;
         }
-     //   log.text = "Done:" + aFunction;
+        if (Startup.DEBUG_TOOLS)
+            log2.text = "Done:" + aFunction;
     }
     public void ShowLoadingFullscreen(string function)
     {
@@ -134,7 +144,8 @@ public class LoadingOverlay : MonoBehaviour
         targetAlpha = 1;
         LoadingGOList.SetActive(true);
         LoadingCall.Add(function);
-        //log.text = "Start:" + function;
+        if (Startup.DEBUG_TOOLS)
+            log2.text = "Start:" + function;
 
         //float loadingTime = ((float)LoadingCall.Count / 15f);
         //if (loadingTime > 1)

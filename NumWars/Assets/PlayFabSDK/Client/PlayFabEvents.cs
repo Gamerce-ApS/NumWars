@@ -111,6 +111,8 @@ namespace PlayFab.Events
         public event PlayFabResultEvent<GetPlayFabIDsFromGoogleIDsResult> OnGetPlayFabIDsFromGoogleIDsResultEvent;
         public event PlayFabRequestEvent<GetPlayFabIDsFromKongregateIDsRequest> OnGetPlayFabIDsFromKongregateIDsRequestEvent;
         public event PlayFabResultEvent<GetPlayFabIDsFromKongregateIDsResult> OnGetPlayFabIDsFromKongregateIDsResultEvent;
+        public event PlayFabRequestEvent<GetPlayFabIDsFromNintendoServiceAccountIdsRequest> OnGetPlayFabIDsFromNintendoServiceAccountIdsRequestEvent;
+        public event PlayFabResultEvent<GetPlayFabIDsFromNintendoServiceAccountIdsResult> OnGetPlayFabIDsFromNintendoServiceAccountIdsResultEvent;
         public event PlayFabRequestEvent<GetPlayFabIDsFromNintendoSwitchDeviceIdsRequest> OnGetPlayFabIDsFromNintendoSwitchDeviceIdsRequestEvent;
         public event PlayFabResultEvent<GetPlayFabIDsFromNintendoSwitchDeviceIdsResult> OnGetPlayFabIDsFromNintendoSwitchDeviceIdsResultEvent;
         public event PlayFabRequestEvent<GetPlayFabIDsFromPSNAccountIDsRequest> OnGetPlayFabIDsFromPSNAccountIDsRequestEvent;
@@ -241,8 +243,6 @@ namespace PlayFab.Events
         public event PlayFabResultEvent<SetFriendTagsResult> OnSetFriendTagsResultEvent;
         public event PlayFabRequestEvent<SetPlayerSecretRequest> OnSetPlayerSecretRequestEvent;
         public event PlayFabResultEvent<SetPlayerSecretResult> OnSetPlayerSecretResultEvent;
-        public event PlayFabRequestEvent<StartGameRequest> OnStartGameRequestEvent;
-        public event PlayFabResultEvent<StartGameResult> OnStartGameResultEvent;
         public event PlayFabRequestEvent<StartPurchaseRequest> OnStartPurchaseRequestEvent;
         public event PlayFabResultEvent<StartPurchaseResult> OnStartPurchaseResultEvent;
         public event PlayFabRequestEvent<SubtractUserVirtualCurrencyRequest> OnSubtractUserVirtualCurrencyRequestEvent;

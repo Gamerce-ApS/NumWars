@@ -128,7 +128,6 @@ namespace PlayFab.Internal
             Action<PlayFabError> errorCallback, object customData = null, Dictionary<string, string> extraHeaders = null, PlayFabAuthenticationContext authenticationContext = null, PlayFabApiSettings apiSettings = null, IPlayFabInstanceApi instanceApi = null)
             where TResult : PlayFabResultCommon
         {
-
             apiSettings = apiSettings ?? PlayFabSettings.staticSettings;
             var fullUrl = apiSettings.GetFullUrl(apiEndpoint, apiSettings.RequestGetParams);
             _MakeApiCall(apiEndpoint, fullUrl, request, authType, resultCallback, errorCallback, customData, extraHeaders, false, authenticationContext, apiSettings, instanceApi);
@@ -185,7 +184,7 @@ namespace PlayFab.Internal
             reqContainer.RequestHeaders["X-PlayFabSDK"] = PlayFabSettings.VersionString; // Tell PlayFab which SDK this is
             switch (authType)
             {
-#if ENABLE_PLAYFABSERVER_API || ENABLE_PLAYFABADMIN_API || UNITY_EDITOR
+#if ENABLE_PLAYFABSERVER_API || ENABLE_PLAYFABADMIN_API || UNITY_EDITOR || ENABLE_PLAYFAB_SECRETKEY
                 case AuthType.DevSecretKey:
                     if (apiSettings.DeveloperSecretKey == null) throw new PlayFabException(PlayFabExceptionCode.DeveloperKeyNotSet, "DeveloperSecretKey is not found in Request, Server Instance or PlayFabSettings");
                     reqContainer.RequestHeaders["X-SecretKey"] = apiSettings.DeveloperSecretKey; break;
@@ -238,11 +237,13 @@ namespace PlayFab.Internal
             var result = reqContainer.ApiResult;
 
 #if !DISABLE_PLAYFABENTITY_API
+
             var entRes = result as AuthenticationModels.GetEntityTokenResponse;
             if (entRes != null)
             {
                 PlayFabSettings.staticPlayer.EntityToken = entRes.EntityToken;
             }
+
 #endif
 #if !DISABLE_PLAYFABCLIENT_API
             var logRes = result as ClientModels.LoginResult;

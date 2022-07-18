@@ -37,7 +37,7 @@ public Text p1_name;
 
     public List<GameObject> ElementsToMoveOut = new List<GameObject>();
 
-
+    BoardData lastBF;
 
     // Start is called before the first frame update
     void Start()
@@ -71,6 +71,7 @@ public Text p1_name;
     }
     public void Show(BoardData bf)
     {
+        lastBF = bf;
         bool isOpenGame = false;
         for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
         {
@@ -202,14 +203,115 @@ public Text p1_name;
     }
     public void PressContinue()
     {
+        //SceneManager.LoadScene(0);
+        //Startup._instance.Refresh(0.1f);
+        //if (Startup._instance.avatarURL != null)
+        //    if (Startup._instance.avatarURL.Length > 0)
+        //    {
+        //        PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+        //    }
+
+
+        //PlayerPrefs.SetString("ChallengePlayerAgain", lastBF.GetOtherPlayerPlayfab());
+
+        
+
+
+        bool hasActiveGame = false;
+        for (int i = 0; i < Startup.instance.openGamesList.Count; i++)
+        {
+            if ((Startup.instance.openGamesList[i].player1_PlayfabId == lastBF.GetOtherPlayerPlayfab() || Startup.instance.openGamesList[i].player2_PlayfabId == lastBF.GetOtherPlayerPlayfab())
+                && lastBF.RoomName != Startup.instance.openGamesList[i].RoomName)
+            {
+                hasActiveGame = true;
+            }
+        }
+
+        if (hasActiveGame == false)
+        {
+            challengeWindow.SetActive(true);
+
+            float posX = challengeWindow.transform.GetChild(0).transform.position.x;
+            challengeWindow.transform.GetChild(0).transform.position -= new Vector3(10, 0, 0);
+            challengeWindow.transform.GetChild(0).DOMoveX(posX, 0.5f).SetEase(Ease.InOutQuart);
+
+            challengeWindow.GetComponent<Image>().color = new Color(0, 0, 0, 0);
+            challengeWindow.GetComponent<Image>().DOFade(107f / 255f, 0.5f).SetEase(Ease.InOutQuart).SetDelay(0.1f);
+
+
+
+            float posX2 = transform.GetChild(0).transform.position.x;
+            transform.GetChild(0).DOMoveX(posX2 + 10, 0.5f).SetEase(Ease.InOutQuart);
+        }
+        else
+        {
+            SceneManager.LoadScene(0);
+            Startup._instance.Refresh(0.1f);
+            if (Startup._instance.avatarURL != null)
+                if (Startup._instance.avatarURL.Length > 0)
+                {
+                    PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+                }
+        }
+
+
+
+
+
+    }
+    public GameObject challengeWindow;
+    public void ChallengeAgainYes()
+    {
+
+       // LoadingOverlay.instance.ShowLoadingFullscreen("Challenge in progress..");
+        string newRoomName = string.Format("{0}-{1}", Startup._instance.displayName + "_" + Startup._instance.MyPlayfabID + "_", Random.Range(0, 1000000).ToString()) + Random.Range(0, 1000000).ToString();
+        //PlayfabHelperFunctions.instance.SetPlayfabCreatedRoom(Startup._instance.MyPlayfabID, newRoomName);
+
+
+        
+
+        PlayfabHelperFunctions.instance.ChallengePlayer(Startup._instance.MyPlayfabID, lastBF.GetOtherPlayerPlayfab(), lastBF.GetOtherPlayer(), newRoomName);
+        PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(lastBF.GetOtherPlayerPlayfab(), newRoomName);
+        PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(Startup._instance.MyPlayfabID, newRoomName);
+
+        StartCoroutine(ChallengeProgress());
+
+
+        challengeWindow.transform.GetChild(0).GetChild(1).gameObject.SetActive(false);
+        challengeWindow.transform.GetChild(0).GetChild(2).gameObject.SetActive(false);
+        challengeWindow.transform.GetChild(0).GetChild(3).gameObject.SetActive(true);
+
+
+
+    }
+
+    public IEnumerator ChallengeProgress()
+    {
+
+        yield return new WaitForSeconds(5);
 
 
         SceneManager.LoadScene(0);
         Startup._instance.Refresh(0.1f);
-        if(Startup._instance.avatarURL != null)
-        if (Startup._instance.avatarURL.Length > 0)
-        {
-            PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
-        }
+        if (Startup._instance.avatarURL != null)
+            if (Startup._instance.avatarURL.Length > 0)
+            {
+                PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+            }
+
+
+    }
+
+    public void ChallengeAgainNo()
+    {
+
+
+        SceneManager.LoadScene(0);
+        Startup._instance.Refresh(0.1f);
+        if (Startup._instance.avatarURL != null)
+            if (Startup._instance.avatarURL.Length > 0)
+            {
+                PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+            }
     }
 }

@@ -55,7 +55,7 @@ public class Player : MonoBehaviour
         List<string> tileListString = new List<string>();
         for (int i = 0; i < myTiles.Count; i++)
         {
-            tileListString.Add(myTiles[i].GetValue());
+            tileListString.Add(myTiles[i].GetTileNumber());
         }
         return tileListString;
     }
@@ -96,9 +96,9 @@ public class Player : MonoBehaviour
         //yield return new WaitForSeconds(4.5f);
         //GameManager.instance.NextTurn(true);
         //yield break;
-
+        GameManager.instance.SendingDataDelay = 0;
         yield return new WaitForSeconds(3.0f);
-
+        GameManager.instance.SendingDataDelay = 0;
         int placedTiles = 0;
 
         for (int i = 0; i < myTiles.Count; i++)
@@ -177,9 +177,9 @@ public class Player : MonoBehaviour
             ScoreScreen.instance.ShowScore(scoreTiles, this);
         }
 
-
+        GameManager.instance.SendingDataDelay = 0;
         yield return new WaitForSeconds(1.0f);
-
+        GameManager.instance.SendingDataDelay = 0;
 
 
 

@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DevAccountEmail: info@gamerce.net
   DevAccountToken: ghpf1fc5p3ptdrz4m7ubuhm8h6emjfnp5je1inji3yeaqjhbryfcrf7qetru5o5737s6jm9s7psboxtndpgt7iomek8ex935qnzb3imbs8fqgp6dib88g8qyyn736pibuzncns744k5x4jzdpm7osancyktwrtta5izcnax5ipxorzgqkpks9hubeicqk9tehkiy8ymy
-  SelectedStudio: 
+  SelectedStudio: NumWars
   SdkPath: Assets/PlayFabSDK
   EdExPath: 
   LocalCloudScriptPath: 
   PanelIsShown: 0
-  curMainMenuIdx: 1
+  curMainMenuIdx: 2
   curSubMenuIdx: 0

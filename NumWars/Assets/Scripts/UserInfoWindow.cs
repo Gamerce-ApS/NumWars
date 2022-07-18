@@ -4,6 +4,7 @@ using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
 using UnityEngine.UI;
+using static PlayfabHelperFunctions;
 
 public class UserInfoWindow : MonoBehaviour
 {
@@ -27,6 +28,99 @@ public PlayerProfileModel theProfile;
 
     public bool isAIInfo = false;
 
+
+    public void PreLoadData()
+    {
+
+        PlayfabHelperFunctions.instance._StoredDataProfiles.Clear();
+        PlayfabHelperFunctions.instance.storedRecords.Clear();
+
+  
+
+        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+        {
+            PlayFabId = Startup._instance.GameToLoad.GetOtherPlayerPlayfab(),
+            Keys = null
+        }, result =>
+        {
+            StoredData st = new StoredData();
+            st.theData = result.Data;
+            st.playfabID = Startup._instance.GameToLoad.GetOtherPlayerPlayfab();
+            PlayfabHelperFunctions.instance.storedRecords.Add(st);
+
+        }, (error) => {
+            Debug.Log("Got error retrieving user data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
+
+
+
+        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        {
+            PlayFabId = Startup._instance.GameToLoad.GetOtherPlayerPlayfab(),
+            ProfileConstraints = new PlayerProfileViewConstraints()
+            {
+                ShowDisplayName = true,
+                ShowAvatarUrl = true
+            }
+        }, result => {
+
+            StoredDataProfiles st = new StoredDataProfiles();
+            st.playfabID = Startup._instance.GameToLoad.GetOtherPlayerPlayfab();
+            st.theData = result.PlayerProfile;
+            PlayfabHelperFunctions.instance._StoredDataProfiles.Add(st);
+
+        }, (error) => {
+            Debug.Log("Got error retrieving user data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
+
+
+
+
+        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+        {
+            PlayFabId = Startup._instance.MyPlayfabID,
+            Keys = null
+        }, result =>
+        {
+            StoredData st = new StoredData();
+            st.theData = result.Data;
+            st.playfabID = Startup._instance.MyPlayfabID;
+            PlayfabHelperFunctions.instance.storedRecords.Add(st);
+
+        }, (error) => {
+            Debug.Log("Got error retrieving user data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
+
+
+
+        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        {
+            PlayFabId = Startup._instance.MyPlayfabID,
+            ProfileConstraints = new PlayerProfileViewConstraints()
+            {
+                ShowDisplayName = true,
+                ShowAvatarUrl = true
+            }
+        }, result => {
+
+            StoredDataProfiles st = new StoredDataProfiles();
+            st.playfabID = Startup._instance.MyPlayfabID;
+            st.theData = result.PlayerProfile;
+            PlayfabHelperFunctions.instance._StoredDataProfiles.Add(st);
+
+        }, (error) => {
+            Debug.Log("Got error retrieving user data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
+
+
+
+
+    }
+
     public void InitUser(int aUserId)
     {
         _name.text = "";
@@ -44,6 +138,14 @@ public PlayerProfileModel theProfile;
 
         if (aUserId == 1 && GameManager.instance.thePlayers[1].isAI == false)
         {
+            PlayerProfileModel pf = PlayfabHelperFunctions.instance.GetPlayerProfileModel(Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
+            if (pf != null)
+            {
+                theProfile = pf;
+                InitUserAfterDataSet(aUserId);
+                return;
+            }
+
             PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
             {
                 PlayFabId = Startup._instance.GameToLoad.GetOtherPlayerPlayfab(),
@@ -54,6 +156,11 @@ public PlayerProfileModel theProfile;
                  }
             }, result => {
 
+                StoredDataProfiles st = new StoredDataProfiles();
+                st.playfabID = Startup._instance.GameToLoad.GetOtherPlayerPlayfab();
+                st.theData = result.PlayerProfile;
+                PlayfabHelperFunctions.instance._StoredDataProfiles.Add(st);
+
                 theProfile = result.PlayerProfile;
                 InitUserAfterDataSet(aUserId);
 
@@ -61,6 +168,9 @@ public PlayerProfileModel theProfile;
                 Debug.Log("Got error retrieving user data:");
                 Debug.Log(error.GenerateErrorReport());
             });
+
+
+
         }
         else
         {

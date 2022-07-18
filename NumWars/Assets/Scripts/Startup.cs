@@ -44,9 +44,14 @@ public class Startup : MonoBehaviourPunCallbacks
 
     PlayfabHelperFunctions _PlayfabHelperFunctions;
 
+    public static bool DEBUG_TOOLS = false;
 
     public bool isTutorialGame = false;
     public BoardData GameToLoad = null;
+
+    public int CurrentCalls = 0;
+
+    public PlayFab.Json.JsonObject StoredAvatarURLS =null;
 
     //public static Startup _instance=null;
     public static Startup _instance = null;
@@ -65,7 +70,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public static long TIMEOUT = 60 * 60 * 24 * 2;
 
-    public static string LIVE_VERSION = "6";
+    public static string LIVE_VERSION = "10";
 
     // public static long TIMEOUT = 60+60+60;
 
@@ -83,6 +88,18 @@ public class Startup : MonoBehaviourPunCallbacks
     // Start is called before the first frame update
     void Start()
     {
+
+        if (PlayerPrefs.GetInt("DebugMode", 0) == 1)
+            DEBUG_TOOLS = true;
+        
+        float aspect = (float)Screen.height / (float)Screen.width;
+        Debug.Log("aspect:" + aspect);
+        if (aspect < 1.4f)
+        {
+            GameObject.Find("Canvas").GetComponent<CanvasScaler>().referenceResolution = new Vector2(1100, 600);
+        }
+
+
         Debug.Log("Start");
         limitFpsTimer = 10;
        // Screen.SetResolution(Screen.width/2, Screen.height / 2, true);
@@ -132,10 +149,21 @@ public class Startup : MonoBehaviourPunCallbacks
         _PlayfabHelperFunctions = gameObject.GetComponent<PlayfabHelperFunctions>();
         Board.instance.Init();
 
-        LoadingOverlay.instance.ShowLoadingFullscreen("Connecting to photon");
+        if (LoadingOverlay.instance != null)
+            LoadingOverlay.instance.ShowLoadingFullscreen("Connecting to photon");
 
         if (PhotonNetwork.IsConnected)
-        {}else{
+        {
+            if (LoadingOverlay.instance != null)
+                LoadingOverlay.instance.DoneLoading("Connecting to photon");
+
+            timer = -1;
+            if (LoadingOverlay.instance != null)
+                LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+            _PlayfabHelperFunctions.Login();
+
+        }
+        else{
             // #Critical, we must first and foremost connect to Photon Online Server.
             PhotonNetwork.ConnectUsingSettings();
             PhotonNetwork.GameVersion = "1";
@@ -144,11 +172,13 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
 #if UNITY_IOS
-        UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert | UnityEngine.iOS.NotificationType.Badge | UnityEngine.iOS.NotificationType.Sound, true);
+
+        StartCoroutine(RequestAuthorization());
+       // UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert | UnityEngine.iOS.NotificationType.Badge | UnityEngine.iOS.NotificationType.Sound, true);
 #endif
 
 
-        StartCoroutine(RegisterPush());
+ 
 
 
         if (PlayerPrefs.GetInt("Music", 1) == 0)
@@ -163,72 +193,144 @@ public class Startup : MonoBehaviourPunCallbacks
 
     }
 
+    string pushToken = "";
 
-    //private void OnApplicationPause(bool pause)
-    //{
-    //    Pasued(pause);
-    //}
-
-    private void OnApplicationFocus(bool focus)
+#if UNITY_IOS
+    IEnumerator RequestAuthorization()
     {
-        Pasued(!focus);
+
+        var authorizationOption = AuthorizationOption.Alert | AuthorizationOption.Badge;
+        using (var req = new AuthorizationRequest(authorizationOption, true))
+        {
+            while (!req.IsFinished)
+            {
+                yield return null;
+            };
+
+            string res = "\n RequestAuthorization:";
+            res += "\n finished: " + req.IsFinished;
+            res += "\n granted :  " + req.Granted;
+            res += "\n error:  " + req.Error;
+            res += "\n deviceToken:  " + req.DeviceToken;
+            pushToken = req.DeviceToken;
+            Debug.Log(res);
+
+            
+        }
+
+}
+#endif
+    public void StartPushSer()
+    {
+        StartCoroutine(RegisterPush());
+    }
+    float timeSinceFocus = 0;
+    private void OnApplicationPause(bool pause)
+    {
+        Pasued(pause);
     }
 
-    void Pasued(bool pauseStatus)
+    //private void OnApplicationFocus(bool focus)
+    //{
+    //    Pasued(!focus);
+    //}
+
+    public void Pasued(bool pauseStatus)
     {
+
+
+
+
+
+
         Debug.Log("Pause:" + pauseStatus);
-        if(MainMenuController.instance != null)
-        MainMenuController.instance.UpdateTimer = 0;
+
 
         if (!pauseStatus)
         {
+
+
+
+            //if (timeSinceFocus <= 0.06f)
+            //    return;
+            //timeSinceFocus = 0;
+
+            if (MainMenuController.instance != null)
+                MainMenuController.instance.UpdateTimer = 0;
+
+            //Startup._instance = null;
+            //PlayfabHelperFunctions.instance = null;
+            //Destroy(gameObject);
+
+            //SceneManager.LoadScene(0);
+
+
             limitFpsTimer = 10;
             //PhotonNetwork.Disconnect();
 #if UNITY_IOS
             UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
             UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
+
+
+
+
+
+
+
 #endif
             PlayfabCallbackHandler.instance.CancelAllCalls();
-            if (PhotonNetwork.IsConnected || SceneManager.GetActiveScene().name == "GameScene")
-            {
-                if (Startup._instance != null)
-                {
-                    if(LoadingOverlay.instance != null)
-                    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
-                    Startup._instance.Refresh(0.1f);
-                }
-            }
-            else
-            {
-                //if (Startup._instance != null)
-                //{
-                //    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
-                //    Startup._instance.Refresh(0.1f);
-                //}
+                        if (PhotonNetwork.IsConnected&& PlayFabClientAPI.IsClientLoggedIn() || SceneManager.GetActiveScene().name == "GameScene" && PlayFabClientAPI.IsClientLoggedIn())
+                        {
+                            if (Startup._instance != null)
+                            {
+                                if (LoadingOverlay.instance != null)
+                                    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+                                Startup._instance.Refresh(0.1f);
+                            }
+                        }
+                        else
+                        {
+                            //if (Startup._instance != null)
+                            //{
+                            //    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+                            //    Startup._instance.Refresh(0.1f);
+                            //}
 
-                // #Critical, we must first and foremost connect to Photon Online Server.
-                PhotonNetwork.ConnectUsingSettings();
-                PhotonNetwork.GameVersion = "1";
+                            if(!PhotonNetwork.IsConnected)
+                            {
+                                LoadingOverlay.instance.ShowLoadingFullscreen("Connecting to photon");
+                                // #Critical, we must first and foremost connect to Photon Online Server.
+                                PhotonNetwork.ConnectUsingSettings();
+                                PhotonNetwork.GameVersion = "1";
+                            }
+                            else
+                            {
+                                timer = -1;
+                                _PlayfabHelperFunctions.Login();
+                            }
 
-                if (Startup._instance != null)
-                {
 
-                    //Startup._instance.Refresh(0.1f);
-                    //if (Startup._instance.avatarURL != null)
-                    //    if (Startup._instance.avatarURL.Length > 0)
-                    //    {
-                    //        PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
-                    //    }
+                            //if (Startup._instance != null)
+                            //{
 
-                    if (LoadingOverlay.instance != null)
-                        LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+                            //    //Startup._instance.Refresh(0.1f);
+                            //    //if (Startup._instance.avatarURL != null)
+                            //    //    if (Startup._instance.avatarURL.Length > 0)
+                            //    //    {
+                            //    //        PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+                            //    //    }
 
-                    SceneManager.LoadScene(0);
-                    StartCoroutine(StartLoading());
-                }
+                            //    //if (LoadingOverlay.instance != null)
+                            //    //    LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
 
-            }
+                            //    //SceneManager.LoadScene(0);
+                            //    //StartCoroutine(StartLoading());
+                            //}
 
+                        }
+
+            if(FindObjectOfType<ScrollListBasedOnItems>() != null)
+            FindObjectOfType<ScrollListBasedOnItems>().Reset();
         }
 
     }
@@ -248,51 +350,36 @@ public class Startup : MonoBehaviourPunCallbacks
     {
         yield return new WaitForSeconds(3);
 #if UNITY_IOS
-        byte[] token = UnityEngine.iOS.NotificationServices.deviceToken;
-        if (token != null)
+        if(PlayFabClientAPI.IsClientLoggedIn())
         {
-            RegisterForIOSPushNotificationRequest request = new RegisterForIOSPushNotificationRequest();
-            request.DeviceToken = System.BitConverter.ToString(token).Replace("-", "").ToLower();
-            PlayFabClientAPI.RegisterForIOSPushNotification(request, (RegisterForIOSPushNotificationResult result) =>
-            {
-                Debug.Log("Push Registration Successful");
-            }, error =>
-            {
-                Debug.Log("Got error registering Push");
+            byte[] token = UnityEngine.iOS.NotificationServices.deviceToken;
 
 
-            });
+
+            if (token != null)
+            {
+                RegisterForIOSPushNotificationRequest request = new RegisterForIOSPushNotificationRequest();
+                if (pushToken.Length <= 0)
+                    request.DeviceToken = System.BitConverter.ToString(token).Replace("-", "").ToLower();
+                else
+                    request.DeviceToken = pushToken.Replace("-", "").ToLower();
+
+                PlayFabClientAPI.RegisterForIOSPushNotification(request, (RegisterForIOSPushNotificationResult result) =>
+                {
+                    Debug.Log("Push Registration Successful");
+                }, error =>
+                {
+                    Debug.Log("Got error registering Push");
+
+
+                });
+            }
+            else
+            {
+                Debug.Log("Push Token was null!");
+            }
+
         }
-        else
-        {
-            Debug.Log("Push Token was null!");
-        }
-
-
-
-        // this is for if we get a message while the app is runnings // as playfab cant set ShowInForeground
-        iOSNotificationCenter.OnRemoteNotificationReceived += remoteNotification =>
-        {
-            // When a remote notification is received, modify its contents and show it after 1 second.
-            var timeTrigger = new iOSNotificationTimeIntervalTrigger()
-            {
-                TimeInterval = new System.TimeSpan(0, 0, 1),
-                Repeats = false
-            };
-
-            iOSNotification notification = new iOSNotification()
-            {
-                Title =  remoteNotification.Title,
-                Body =  remoteNotification.Body,
-                Subtitle =  remoteNotification.Subtitle,
-                ShowInForeground = true,
-                ForegroundPresentationOption = PresentationOption.Sound | PresentationOption.Alert,
-                CategoryIdentifier = remoteNotification.CategoryIdentifier,
-                ThreadIdentifier = remoteNotification.ThreadIdentifier,
-                Trigger = timeTrigger,
-            };
-            iOSNotificationCenter.ScheduleNotification(notification);
-        };
 
 #endif
 
@@ -332,12 +419,25 @@ public class Startup : MonoBehaviourPunCallbacks
     // Update is called once per frame
     void Update()
     {
+
+
+        //if(Input.GetKeyUp(KeyCode.R))
+        //OnApplicationPause(false);
+
+
+        //if (Input.GetKeyUp(KeyCode.T))
+        //    OnApplicationFocus(true);
+
+
+        if (timeSinceFocus<1)
+            timeSinceFocus += Time.deltaTime;
+       
         if (Input.GetMouseButton(0) || (Input.touchCount > 0))
         {
             if(SceneManager.GetActiveScene().name == "GameScene")
-                limitFpsTimer = 10;
+                limitFpsTimer = 15;
             else
-                limitFpsTimer = 5;
+                limitFpsTimer = 8;
             // If the mouse button or touch detected render at 60 FPS (every frame).
             OnDemandRendering.renderFrameInterval = 1;
         }
@@ -536,7 +636,7 @@ public class Startup : MonoBehaviourPunCallbacks
         {
             if (openGamesList[i].player1_PlayfabId == MyPlayfabID && openGamesList[i].player2_PlayfabId == "")
             {
-                if(PhotonNetwork.InRoom == false)
+                if(PhotonNetwork.InRoom == false && PhotonNetwork.NetworkClientState == ClientState.ConnectedToMasterServer)
                 {
                     PhotonNetwork.JoinRoom(openGamesList[i].RoomName);
                     return;
@@ -671,21 +771,59 @@ public class Startup : MonoBehaviourPunCallbacks
             if(PhotonNetwork.InRoom == false)
                 PhotonNetwork.Disconnect();
 
+            if(FindObjectOfType<ScrollListBasedOnItems>()!=null)
+                FindObjectOfType<ScrollListBasedOnItems>().Reset();
+
+            
         }
 
 
+#if UNITY_IOS
+        iOSNotification not = iOSNotificationCenter.GetLastRespondedNotification();
 
 
 
+        if (not != null)
+        {
+            
+            if(pushHandled.Contains(not.Identifier) == false)
+            {
+                iOSNotificationCenter.RemoveAllDeliveredNotifications();
+                UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
+                UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
+                pushHandled.Add(not.Identifier);
+                string theM = not.Body;
 
-     
+                if (theM.Contains("It's your turn against"))
+                {
+       
+                    theM = theM.Replace("It's your turn against ", "");
+                    //Debug.LogError(theM);
+                    theM = theM.Remove(theM.Length - 1);
+                    //Debug.LogError(theM);
 
+                    for (int i = 0; i < openGamesList.Count; i++)
+                    {
+                        if (openGamesList[i].player1_displayName == theM || openGamesList[i].player2_displayName == theM)
+                        {
+                            Startup._instance.GameToLoad = openGamesList[i];
+                            SceneManager.LoadScene(1);
+                            return;
 
+                        }
+                    }
+                }
+                
+            }
+      
+        }
+
+#endif
 
 
 
     }
-
+    public List<string> pushHandled = new List<string>();
     [System.Serializable]
     public class BoardList
     {

@@ -3,6 +3,7 @@
 using PlayFab.SharedModels;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -81,7 +82,7 @@ namespace PlayFab.Internal
                 yield return request.Send();
 #endif
 
-#if Unity_2021_1_OR_NEWER
+#if UNITY_2021_1_OR_NEWER
                 if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
 #else
                 if (request.isNetworkError || request.isHttpError)
@@ -93,12 +94,16 @@ namespace PlayFab.Internal
                 {
                     successCallback(request.downloadHandler.data);
                 }
+
+                request.Dispose();
             }
         }
-
+        public static List<string> AmountOfCalls=new List<string>();
         public void MakeApiCall(object reqContainerObj)
         {
+
             CallRequestContainer reqContainer = (CallRequestContainer)reqContainerObj;
+            AmountOfCalls.Add( reqContainer.ApiRequest.ToString());
             reqContainer.RequestHeaders["Content-Type"] = "application/json";
 
             // Start the www corouting to Post, and get a response or error which is then passed to the callbacks.
@@ -143,7 +148,7 @@ namespace PlayFab.Internal
             };
             PlayFabHttp.SendRequestTiming(timing);
 #endif
-
+            AmountOfCalls.Remove(reqContainer.ApiRequest.ToString());
             if (!string.IsNullOrEmpty(www.error))
             {
                 OnError(www.error, reqContainer);

@@ -183,6 +183,8 @@ public class AchivmentController
       
         for (int i = 0; i< myStatistics.Count;i++)
         {
+            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.AGS)
+                return myStatistics[i].current;
             if (myStatistics[i].myAchivmentType == aStats)
                 return myStatistics[i].current;
         }
@@ -315,7 +317,10 @@ public class AchivmentController
         {
             if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.AGS)
             {
-                myStatistics[i].current = (int) (totalScore / totalGames);
+                if (totalGames == 0 || totalScore==0)
+                    myStatistics[i].current = 0;
+                else
+                    myStatistics[i].current = (int) (totalScore / totalGames);
             }
         }
 
@@ -372,7 +377,10 @@ public class AchivmentController
         {
             if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.AGS)
             {
-                myStatistics[i].current = (int)(totalScore / totalGames);
+                if (totalGames == 0 || totalScore == 0)
+                    myStatistics[i].current = 0;
+                else
+                    myStatistics[i].current = (int)(totalScore / totalGames);
             }
         }
         UpdatePlayfab();
@@ -527,6 +535,8 @@ public class AchivmentController
 
     public void CheckWithLocal()
     {
+        if (Startup.instance.myOldGameList.Count <= 0)
+            return;
         int totalWins = 0;
         for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
         {
@@ -615,7 +625,49 @@ public class AchivmentController
 
             }  
         }
-        if(shouldUpdate)
+
+
+        for (int i = 0; i < myAchivments.Count; i++)
+        {
+            if (myAchivments[i].myAchivmentType == AchivmentTypeEnum.WIN)
+            {
+                if (totalWins != myAchivments[i].current)
+                {
+                    shouldUpdate = true;
+                    myAchivments[i].current = totalWins;
+
+                }
+            }
+            if (myAchivments[i].myAchivmentType == AchivmentTypeEnum.LOST)
+            {
+                if (totalLosts != myAchivments[i].current)
+                {
+                    shouldUpdate = true;
+                    myAchivments[i].current = totalLosts;
+                }
+
+            }
+            if (myAchivments[i].myAchivmentType == AchivmentTypeEnum.TIMEOUT)
+            {
+                if (totalTime != myAchivments[i].current)
+                {
+                    shouldUpdate = true;
+                    myAchivments[i].current = totalTime;
+                }
+
+            }
+            if (myAchivments[i].myAchivmentType == AchivmentTypeEnum.RESIGN)
+            {
+                if (totalAban != myAchivments[i].current)
+                {
+                    shouldUpdate = true;
+                    myAchivments[i].current = totalAban;
+                }
+
+            }
+        }
+
+        if (shouldUpdate)
             UpdatePlayfab();
 
 
