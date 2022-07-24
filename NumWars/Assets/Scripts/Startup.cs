@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using DG.Tweening;
-using GameAnalyticsSDK;
+//using GameAnalyticsSDK;
 using Photon.Pun;
 using Photon.Realtime;
 using PlayFab;
 using PlayFab.ClientModels;
 using PlayFab.CloudScriptModels;
+using PlayFab.DataModels;
 #if UNITY_IOS
 using Unity.Notifications.iOS;
 #endif
@@ -70,7 +72,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public static long TIMEOUT = 60 * 60 * 24 * 2;
 
-    public static string LIVE_VERSION = "10";
+    public static string LIVE_VERSION = "11";
 
     // public static long TIMEOUT = 60+60+60;
 
@@ -84,10 +86,42 @@ public class Startup : MonoBehaviourPunCallbacks
         return true;
         //return IsCertificateValid(certificate, chain, sslPolicyErrors);
     }
-
+#if UNITY_ANDROID
+    Firebase.FirebaseApp app;
+#endif
     // Start is called before the first frame update
     void Start()
     {
+
+
+
+#if UNITY_ANDROID
+        Firebase.FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
+        {
+            var dependencyStatus = task.Result;
+            if (dependencyStatus == Firebase.DependencyStatus.Available)
+            {
+                // Create and hold a reference to your FirebaseApp,
+                // where app is a Firebase.FirebaseApp property of your application class.
+                app = Firebase.FirebaseApp.DefaultInstance;
+
+                // Set a flag here to indicate whether Firebase is ready to use by your app.
+
+                Firebase.Messaging.FirebaseMessaging.TokenReceived += OnTokenReceived;
+                Firebase.Messaging.FirebaseMessaging.MessageReceived += OnMessageReceived;
+            }
+            else
+            {
+                UnityEngine.Debug.LogError(System.String.Format(
+                  "Could not resolve all Firebase dependencies: {0}", dependencyStatus));
+                // Firebase Unity SDK is not safe to use here.
+            }
+        });
+
+
+
+#endif
+
 
         if (PlayerPrefs.GetInt("DebugMode", 0) == 1)
             DEBUG_TOOLS = true;
@@ -102,16 +136,17 @@ public class Startup : MonoBehaviourPunCallbacks
 
         Debug.Log("Start");
         limitFpsTimer = 10;
-       // Screen.SetResolution(Screen.width/2, Screen.height / 2, true);
+        //Screen.SetResolution(Screen.width/2, Screen.height / 2, true);
 
-        PlayFab.Internal.PlayFabWebRequest.CustomCertValidationHook = ValidateCertificate;
-        PlayFab.Internal.PlayFabWebRequest.SkipCertificateValidation();
-        //    PlayFab.Internal.PlayFabWebRequest.CustomCertValidationHook
 
-      //  QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = 60;
+       // PlayFab.Internal.PlayFabWebRequest.CustomCertValidationHook = ValidateCertificate;
+       PlayFab.Internal.PlayFabWebRequest.SkipCertificateValidation();
+       //    PlayFab.Internal.PlayFabWebRequest.CustomCertValidationHook
+
+        //  QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 30;
         // When the Menu starts, set the rendering to target 20fps
-        OnDemandRendering.renderFrameInterval = 3;
+        OnDemandRendering.renderFrameInterval = 1;
 
 
 #if UNITY_IOS
@@ -121,7 +156,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
 
-        GameAnalytics.Initialize();
+     //   GameAnalytics.Initialize();
         //Debug.Log("InitAppodeal");
         //Appodeal.initialize("91f0aae11c6d5b4fe09000ad17edf290d41803497b6ff82f", Appodeal.INTERSTITIAL | Appodeal.REWARDED_VIDEO, true);
 
@@ -220,6 +255,45 @@ public class Startup : MonoBehaviourPunCallbacks
 
 }
 #endif
+
+
+#if UNITY_ANDROID
+
+    private void OnTokenReceived(object sender, Firebase.Messaging.TokenReceivedEventArgs token)
+    {
+        Debug.Log("PlayFab: Received Registration Token: " + token.Token);
+        pushToken = token.Token;
+        RegisterForPush();
+    }
+
+    public void OnMessageReceived(object sender, Firebase.Messaging.MessageReceivedEventArgs e)
+    {
+        UnityEngine.Debug.Log("Received a new message from: " + e.Message.From);
+    }
+    public void RegisterForPush()
+    {
+        if (string.IsNullOrEmpty(pushToken) )
+            return;
+
+        var request = new AndroidDevicePushNotificationRegistrationRequest
+        {
+            DeviceToken = pushToken,
+            SendPushNotificationConfirmation = true,
+            ConfirmationMessage = "Push notifications registered successfully"
+        };
+        PlayFabClientAPI.AndroidDevicePushNotificationRegistration(request, OnPfAndroidReg, OnPfFail);
+
+    }
+    private void OnPfFail(PlayFabError error)
+    {
+        Debug.Log("PlayFab: api error: " + error.GenerateErrorReport());
+    }
+    private void OnPfAndroidReg(AndroidDevicePushNotificationRegistrationResult result)
+    {
+        Debug.Log("PlayFab: Push Registration Successful");
+    }
+
+#endif
     public void StartPushSer()
     {
         StartCoroutine(RegisterPush());
@@ -237,6 +311,8 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public void Pasued(bool pauseStatus)
     {
+
+
 
 
 
@@ -265,7 +341,7 @@ public class Startup : MonoBehaviourPunCallbacks
             //SceneManager.LoadScene(0);
 
 
-            limitFpsTimer = 10;
+            limitFpsTimer = 15;
             //PhotonNetwork.Disconnect();
 #if UNITY_IOS
             UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
@@ -421,6 +497,11 @@ public class Startup : MonoBehaviourPunCallbacks
     {
 
 
+
+   
+
+
+
         //if(Input.GetKeyUp(KeyCode.R))
         //OnApplicationPause(false);
 
@@ -450,8 +531,10 @@ public class Startup : MonoBehaviourPunCallbacks
 
         if(limitFpsTimer<=0)
         {
-            OnDemandRendering.renderFrameInterval = 4;
+            OnDemandRendering.renderFrameInterval = 3;
         }
+        else
+            OnDemandRendering.renderFrameInterval = 1;
 
         if (Input.GetKeyUp(KeyCode.O))
         {
@@ -712,7 +795,49 @@ public class Startup : MonoBehaviourPunCallbacks
             GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent_updating);
 
             string[] stringSeparators = new string[] { "[splitter]" };
-            string[] oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
+
+
+
+            string[] oldGameList =null;
+            if (GetComponent<Startup>().myData.ContainsKey("OldGames"))
+            {
+                oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
+            }
+            else if(PlayerPrefs.HasKey("OldGames"))
+            {
+                oldGameList = PlayerPrefs.GetString("OldGames").Split(stringSeparators, System.StringSplitOptions.None);
+            }
+            else
+            {
+                //Need to load old games from online
+                if (LoadingOverlay.instance != null)
+                    LoadingOverlay.instance.ShowLoadingFullscreen("Getting old games!");
+
+                PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+                {
+                    PlayFabId = Startup._instance.MyPlayfabID,
+                    Keys = new List<string> { "OldGames" },
+                }, result => {
+
+                    if (LoadingOverlay.instance != null)
+                        LoadingOverlay.instance.DoneLoading("Getting old games!");
+
+                    PlayerPrefs.SetString("OldGames", result.Data["OldGames"].Value );
+
+                    Refresh();
+
+
+                }, (error) => {
+                    if (LoadingOverlay.instance != null)
+                        LoadingOverlay.instance.DoneLoading("Getting old games!");
+
+                    Debug.LogError("BUG GETTING OLD GAMES!");
+                });
+                return;
+            }
+
+
+
             for (int i = oldGameList.Length-1; i > oldGameList.Length - 10; i--)
             {
 
@@ -942,12 +1067,12 @@ public class Startup : MonoBehaviourPunCallbacks
 
         foreach (Transform child in children)
         {
-            child.parent = null;
+            child.SetParent(null);
         }
 
         foreach (Transform child in children)
         {
-            child.parent = MainMenuController.instance._GameListParent;
+            child.SetParent(MainMenuController.instance._GameListParent);
 
             Vector3 rc = child.GetComponent<RectTransform>().localPosition;
             child.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
@@ -959,8 +1084,19 @@ public class Startup : MonoBehaviourPunCallbacks
 
         GameObject obj = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._FinishedTitleListItem, MainMenuController.instance._GameListParent);
 
-            string[] stringSeparators = new string[] { "[splitter]" };
-            string[] oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
+
+
+        string[] stringSeparators = new string[] { "[splitter]" };
+        string[] oldGameList = null;
+        if (GetComponent<Startup>().myData.ContainsKey("OldGames"))
+        {
+            oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
+        }
+        else if (PlayerPrefs.HasKey("OldGames"))
+        {
+            oldGameList = PlayerPrefs.GetString("OldGames").Split(stringSeparators, System.StringSplitOptions.None);
+        }
+
             for (int i = oldGameList.Length - 1; i > oldGameList.Length - 10; i--)
             {
 

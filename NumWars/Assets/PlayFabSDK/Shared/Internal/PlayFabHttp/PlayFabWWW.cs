@@ -98,6 +98,8 @@ namespace PlayFab.Internal
             CallRequestContainer reqContainer = (CallRequestContainer)reqContainerObj;
             reqContainer.RequestHeaders["Content-Type"] = "application/json";
 
+            PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls.Add("www:"+reqContainer.ApiRequest.ToString());
+
             //Debug.LogFormat("Posting {0} to Url: {1}", req.Trim(), url);
             var www = new WWW(reqContainer.FullUrl, reqContainer.Payload, reqContainer.RequestHeaders);
 
@@ -148,6 +150,9 @@ namespace PlayFab.Internal
                         };
                         PlayFabHttp.SendRequestTiming(timing);
 #endif
+
+            PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls.Remove("www:"+reqContainer.ApiRequest.ToString());
+
                         try
                         {
                             reqContainer.InvokeSuccessCallback();

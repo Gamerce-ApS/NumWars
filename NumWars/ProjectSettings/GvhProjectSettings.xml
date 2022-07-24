@@ -2,6 +2,8 @@
 <projectSettings>
   <projectSetting name="com.google.external-dependency-managerAnalyticsCookie" value="bc98b0e30b914051bee4ec509980b664" />
   <projectSetting name="com.google.external-dependency-managerAnalyticsEnabled" value="True" />
+  <projectSetting name="com.google.firebaseAnalyticsCookie" value="5ee41414825941ebb081067b16481218" />
+  <projectSetting name="com.google.firebaseAnalyticsEnabled" value="True" />
   <projectSetting name="com.google.unity.oss.play_services_resolverAnalyticsCookie" value="3ae786b72db0489e8be9685fbfe772b9" />
   <projectSetting name="com.google.unity.oss.play_services_resolverAnalyticsEnabled" value="True" />
   <projectSetting name="Google.IOSResolver.AutoPodToolInstallInEditor" value="True" />

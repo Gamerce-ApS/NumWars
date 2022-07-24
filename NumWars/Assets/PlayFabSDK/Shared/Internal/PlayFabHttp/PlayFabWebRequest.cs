@@ -197,7 +197,7 @@ namespace PlayFab.Internal
         {
             CallRequestContainer reqContainer = (CallRequestContainer)reqContainerObj;
             reqContainer.HttpState = HttpRequestState.Idle;
-
+            PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls.Add(reqContainer.ApiRequest.ToString());
             lock (ActiveRequests)
             {
                 ActiveRequests.Insert(0, reqContainer);
@@ -251,7 +251,7 @@ namespace PlayFab.Internal
                             case HttpRequestState.Idle:
                                 Post(localActiveRequests[i]); break;
                             case HttpRequestState.Sent:
-                                if (localActiveRequests[i].HttpRequest.HaveResponse) // Else we'll try again next tick
+                                if (localActiveRequests[i].HttpRequest.GetResponse() != null) // Else we'll try again next tick
                                     ProcessHttpResponse(localActiveRequests[i]);
                                 break;
                             case HttpRequestState.Received:
@@ -343,6 +343,8 @@ namespace PlayFab.Internal
 
         private static void ProcessHttpResponse(CallRequestContainer reqContainer)
         {
+            PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls.Remove(reqContainer.ApiRequest.ToString());
+
             try
             {
 #if PLAYFAB_REQUEST_TIMING
@@ -414,6 +416,7 @@ namespace PlayFab.Internal
                     QueueRequestError(reqContainer);
                     return;
                 }
+                Debug.Log(reqContainer.ApiRequest+ " : " + System.Text.ASCIIEncoding.ASCII.GetByteCount(httpResult.data.ToString()));
 
                 reqContainer.JsonResponse = serializer.SerializeObject(httpResult.data);
                 reqContainer.DeserializeResultJson(); // Assigns Result with a properly typed object

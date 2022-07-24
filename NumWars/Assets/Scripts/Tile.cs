@@ -160,7 +160,11 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         get
         {
             if (dragObject == null)
+            {
+                dragObject = (transform as RectTransform);
                 return (transform as RectTransform);
+            }
+
             else
                 return dragObject;
         }

@@ -62,9 +62,9 @@ public class HighscoreWindow : MonoBehaviour
         {
             GameObject go =  GameObject.Instantiate(templateItem, _parent);
 
-            go.transform.GetChild(2).GetComponent<Text>().text = result.Leaderboard[i].DisplayName;
-            go.transform.GetChild(4).GetComponent<Text>().text = (result.Leaderboard[i].Position+1).ToString()+".";
-            go.transform.GetChild(1).GetComponent<Text>().text = result.Leaderboard[i].StatValue.ToString();
+            go.transform.GetChild(4).GetComponent<Text>().text = result.Leaderboard[i].DisplayName;
+            go.transform.GetChild(6).GetComponent<Text>().text = (result.Leaderboard[i].Position+1).ToString()+".";
+            go.transform.GetChild(3).GetComponent<Text>().text = result.Leaderboard[i].StatValue.ToString();
 
 
 
@@ -73,7 +73,7 @@ public class HighscoreWindow : MonoBehaviour
             if(result.Leaderboard[i].Profile.AvatarUrl != null)
             avatarURL = result.Leaderboard[i].Profile.AvatarUrl;
 
-            Image img = go.transform.GetChild(0).GetChild(0).GetComponent<Image>();
+            Image img = go.transform.GetChild(2).GetChild(0).GetComponent<Image>();
 
             if (avatarURL.Length>0)
             {
@@ -87,7 +87,7 @@ public class HighscoreWindow : MonoBehaviour
             {
                 if (result.Leaderboard[i].Profile.Statistics[j].Name == "Experience")
                 {
-                    go.transform.GetChild(5).GetChild(0).GetComponent<Text>().text = HelperFunctions.XPtoLevel(result.Leaderboard[i].Profile.Statistics[1].Value.ToString()).ToString();
+                    go.transform.GetChild(6).GetComponent<Text>().text = HelperFunctions.XPtoLevel(result.Leaderboard[i].Profile.Statistics[1].Value.ToString()).ToString();
                     hasFoundxp = true;
                 }
             }

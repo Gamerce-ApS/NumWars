@@ -187,7 +187,10 @@ public Text p1_name;
 
         if(isOpenGame)
         {
-            PlayfabHelperFunctions.instance.RemoveRoomFromList(bf.RoomName, bf.GetJson(), PlayfabHelperFunctions.instance.RemoveAbandonedGamesCO);
+            contineAfterCallButton.enabled = false;
+            contineAfterCallButton.transform.GetChild(0).GetComponent<Text>().text = "Loading..";
+
+            PlayfabHelperFunctions.instance.RemoveRoomFromList(bf.RoomName, bf.GetJson(), WhenRemovedGameDone);
             for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
             {
                 if (Startup._instance.openGamesList[i].RoomName == bf.RoomName)
@@ -197,10 +200,18 @@ public Text p1_name;
                 }
             }
         }
-     
-        
-
     }
+
+    public void WhenRemovedGameDone()
+    {
+        contineAfterCallButton.enabled = true;
+        contineAfterCallButton.transform.GetChild(0).GetComponent<Text>().text = "Continue";
+
+        PlayfabHelperFunctions.instance.RemoveAbandonedGamesCO();
+    }
+
+
+    public Button contineAfterCallButton;
     public void PressContinue()
     {
         //SceneManager.LoadScene(0);

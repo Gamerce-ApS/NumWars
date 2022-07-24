@@ -11,9 +11,14 @@ public class LoadingOverlay : MonoBehaviour
     {
         get
         {
-            
-            return FindObjectOfType<LoadingOverlay>();
-           
+            if (_instance != null)
+                return _instance;
+            else
+            {
+                _instance= FindObjectOfType<LoadingOverlay>(); ;
+            }
+            return _instance;
+
         }
     }
 

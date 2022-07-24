@@ -58,6 +58,8 @@ public class MainMenuController : MonoBehaviour
 
         SetBoardLayout(PlayerPrefs.GetInt("BoardLayout", 0));
         UpdateTimer = 0;
+
+        buttonRefreshIMG = buttonRefresh.GetComponent<Image>();
     }
 
     public float UpdateTimer = 0;
@@ -66,13 +68,18 @@ public class MainMenuController : MonoBehaviour
     {
         if (LoadingOverlay.instance.LoadingCall.Count > 0)
         {
-            buttonRefresh.GetComponent<Image>().enabled = (false);
-            spinningIcon.SetActive(true);
+            if(buttonRefreshIMG.enabled)
+                buttonRefreshIMG.enabled = (false);
+            if(!spinningIcon.activeSelf)
+             spinningIcon.SetActive(true);
         }
         else
         {
-            buttonRefresh.GetComponent<Image>().enabled =(true);
-            spinningIcon.SetActive(false);
+            if(!buttonRefreshIMG.enabled)
+                buttonRefreshIMG.enabled =(true);
+
+            if (spinningIcon.activeSelf)
+                spinningIcon.SetActive(false);
         }
 
 
@@ -240,13 +247,25 @@ public void PressOpenFriendsWindow()
 
     public void ClearData()
     {
+
+
+    }
+    public void DeleteAccountYes()
+    {
+
+        PlayfabHelperFunctions.instance.FacebookUnLink();
+        PlayfabHelperFunctions.instance.AppleUnLink();
+        PlayFabClientAPI.UnlinkIOSDeviceID(new UnlinkIOSDeviceIDRequest { }, OnUnlinkediOS, null);
+
+    }
+    private void OnUnlinkediOS(UnlinkIOSDeviceIDResult res)
+    {
+
         Startup._instance.PlaySoundEffect(0);
         PlayerPrefs.DeleteAll();
         SceneManager.LoadScene(0);
         Startup._instance.Refresh(0.1f);
-
     }
-
     public void ClickLoginWithFacebook()
     {
         Startup._instance.PlaySoundEffect(0);
@@ -539,6 +558,8 @@ public void PressOpenFriendsWindow()
     }
     public GameObject buttonRefresh;
     public GameObject spinningIcon;
+    public Image buttonRefreshIMG;
+
 
     public void RefreshList()
     {

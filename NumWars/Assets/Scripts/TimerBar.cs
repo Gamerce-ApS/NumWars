@@ -16,11 +16,17 @@ public class TimerBar : MonoBehaviour
     }
 
 
-
+    float timer = 0;
     // Update is called once per frame
     void Update()
     {
-        SetTime();
+        timer += Time.deltaTime;
+        if(timer>1)
+        {
+            timer = 0;
+            SetTime();
+        }
+    
     }
 
     public void SetTime()

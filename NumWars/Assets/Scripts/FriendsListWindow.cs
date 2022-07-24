@@ -165,9 +165,9 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
             {
                 GameObject go = GameObject.Instantiate(templateItem, _parent);
 
-                go.transform.GetChild(2).GetComponent<Text>().text = result.Friends[i].Profile.DisplayName;
-                go.transform.GetChild(4).GetComponent<Text>().text = "";
-                go.transform.GetChild(1).GetComponent<Text>().text = "";
+                go.transform.GetChild(4).GetComponent<Text>().text = result.Friends[i].Profile.DisplayName;
+                go.transform.GetChild(3).GetComponent<Text>().text = "";
+                go.transform.GetChild(6).GetComponent<Text>().text = "";
                 //   go.transform.GetChild(5).GetChild(0).GetComponent<Text>().text = HelperFunctions.XPtoLevel();
 
 
@@ -175,7 +175,7 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
                 {
                     if (result2.Leaderboard[j].PlayFabId == result.Friends[i].FriendPlayFabId)
                     {
-                        go.transform.GetChild(1).GetComponent<Text>().text = result2.Leaderboard[j].StatValue.ToString();
+                        go.transform.GetChild(3).GetComponent<Text>().text = result2.Leaderboard[j].StatValue.ToString();
                     }
                 }
 
@@ -187,8 +187,8 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
                 if (result.Friends[i].Profile.AvatarUrl != null)
                     avatarURL = result.Friends[i].Profile.AvatarUrl;
 
-                Image img = go.transform.GetChild(0).GetChild(0).GetComponent<Image>();
-                go.GetComponent<FriendListItem>().Init(result.Friends[i].Profile, result.Friends[i].Profile.DisplayName, go.transform.GetChild(1).GetComponent<Text>().text, img);
+                Image img = go.transform.GetChild(2).GetChild(0).GetComponent<Image>();
+                go.GetComponent<FriendListItem>().Init(result.Friends[i].Profile, result.Friends[i].Profile.DisplayName, go.transform.GetChild(3).GetComponent<Text>().text, img);
 
                 if (avatarURL.Length > 0)
                 {
@@ -204,7 +204,7 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
                 {
                     if (result.Friends[i].Profile.Statistics[j].Name == "Experience")
                     {
-                        go.transform.GetChild(5).GetChild(0).GetComponent<Text>().text = HelperFunctions.XPtoLevel(result.Friends[i].Profile.Statistics[1].Value.ToString()).ToString();
+                        go.transform.GetChild(6).GetComponent<Text>().text = HelperFunctions.XPtoLevel(result.Friends[i].Profile.Statistics[1].Value.ToString()).ToString();
                         hasFoundxp = true;
                     }
                 }
@@ -212,7 +212,7 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
 
                 if (hasFoundxp == false)
                 {
-                    go.transform.GetChild(5).gameObject.SetActive(false);
+                    go.transform.GetChild(6).gameObject.SetActive(false);
                 }
 
 

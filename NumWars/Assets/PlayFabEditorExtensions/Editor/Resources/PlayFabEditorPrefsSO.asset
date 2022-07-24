@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: PlayFabEditorPrefsSO
   m_EditorClassIdentifier: 
   DevAccountEmail: info@gamerce.net
-  DevAccountToken: ghpf1fc5p3ptdrz4m7ubuhm8h6emjfnp5je1inji3yeaqjhbryfcrf7qetru5o5737s6jm9s7psboxtndpgt7iomek8ex935qnzb3imbs8fqgp6dib88g8qyyn736pibuzncns744k5x4jzdpm7osancyktwrtta5izcnax5ipxorzgqkpks9hubeicqk9tehkiy8ymy
-  SelectedStudio: NumWars
+  DevAccountToken: uwdo1uxzqzey7xufwbbx85aba681azf1nj6whb8xi7zss95iwcu6byifmw39kmcijsa75q6oftk5sqbgke5m4tngk9c67yjujiwupopp8wwx3txbz9cgaw9a39ygme1k8z98e5yopjrhdtk7k3k8fehxi4bekm7r6rkunup8zjma8tzfqrgbd71mptsdwk15gxyaeyzn
+  SelectedStudio: 
   SdkPath: Assets/PlayFabSDK
   EdExPath: 
   LocalCloudScriptPath: 
   PanelIsShown: 0
-  curMainMenuIdx: 2
+  curMainMenuIdx: 1
   curSubMenuIdx: 0

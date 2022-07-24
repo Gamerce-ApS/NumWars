@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "930960298559",
+    "project_id": "outnumber-508ec",
+    "storage_bucket": "outnumber-508ec.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:930960298559:android:48edfb0b8eafd0a3fe9e8a",
+        "android_client_info": {
+          "package_name": "com.Gamerce.Outnumber"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "930960298559-as4adr4277eqveueu9micododqhtdlop.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAnYjs0XqcuFbodHycfl-CN5Ft9i2nVQ4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "930960298559-as4adr4277eqveueu9micododqhtdlop.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

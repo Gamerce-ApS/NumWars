@@ -19,7 +19,7 @@ MonoBehaviour:
   DisableDeviceInfo: 0
   DisableFocusTimeCollection: 0
   RequestTimeout: 2000
-  RequestKeepAlive: 1
+  RequestKeepAlive: 0
   LogLevel: 12
   LoggerHost: 
   LoggerPort: 0

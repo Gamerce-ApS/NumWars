@@ -161,8 +161,6 @@ public class GameManager : MonoBehaviour
 
 
 
-            PlayfabHelperFunctions.instance.GetOtherUserData(Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
-
 
             if(Startup._instance.GameToLoad.GetHasTimeout() )
             {
@@ -282,8 +280,7 @@ public class GameManager : MonoBehaviour
 
 
 
-        if (thePlayers[1].isAI == false)
-            _userInfoWindow.PreLoadData();
+
 
 
         if(thePlayers[1].isAI)
@@ -315,6 +312,7 @@ public class GameManager : MonoBehaviour
       
         }
 
+        bool gameEnded = false;
         if (thePlayers[1].isAI == false)
             if (Startup._instance != null && Startup._instance.GameToLoad != null && Startup._instance.GameToLoad.BoardTiles != null)
                 if (int.Parse(Startup._instance.GameToLoad.EmptyTurns) >= 4)
@@ -322,7 +320,22 @@ public class GameManager : MonoBehaviour
                     //Board.instance.PressContinue();
                     GameManager.instance.updateInProgress = false;
                     GameManager.instance.EndGameAfterPasses(Startup._instance.GameToLoad);
+                    gameEnded = true;
                 }
+
+
+        if(gameEnded == false)
+        {
+            if (thePlayers[1].isAI == false)
+                _userInfoWindow.PreLoadData();
+
+            if (Startup._instance != null && Startup._instance.GameToLoad != null && Startup._instance.GameToLoad.BoardTiles != null)
+                PlayfabHelperFunctions.instance.GetOtherUserData(Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
+
+        }
+
+
+
 
     }
     public void SetOpponentData(string xp, string rank)

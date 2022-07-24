@@ -16,7 +16,13 @@ public enum PlayfabCalls
     GetUserData,
     LoginWithIOSDeviceID,
     GetOtherPlayerProfile,
-    SetPictureIE
+    SetPictureIE,
+    UpdateUserData,
+    UpdatePlayerStatistics,
+    RemoveSharedGroupMembers,
+    GetUserDataOldGames,
+    UpdateUserDataGames
+
 };
 
 public enum Status
@@ -45,6 +51,18 @@ public class PlayfabFunctionCall
     public string aURL;
     public Image aImage;
 
+    public string aEntry;
+
+    public string aValue;
+
+    public int PlayerScore;
+    public string myTable;
+
+    public List<string> PlayFabIds;
+
+    public string aGames;
+    public string aOldGames;
+
 
     public void Run()
     {
@@ -55,7 +73,7 @@ public class PlayfabFunctionCall
         else if (myType == PlayfabCalls.GetPlayerProfile)
             GetPlayerProfile(onDonePlayerProfileResult, onError);
         else if (myType == PlayfabCalls.GetSharedGroupData)
-            GetSharedGroupData(SharedGroupId,onDoneGetSharedGroupDataResult, onError);
+            GetSharedGroupData(SharedGroupId, onDoneGetSharedGroupDataResult, onError);
         else if (myType == PlayfabCalls.GetUserData)
             GetUserData(onDoneGetUserDataResult, onError);
         else if (myType == PlayfabCalls.LoginWithIOSDeviceID)
@@ -63,7 +81,20 @@ public class PlayfabFunctionCall
         else if (myType == PlayfabCalls.GetOtherPlayerProfile)
             GetOtherPlayerProfile(playerID, onDonePlayerProfileResult, onError);
         else if (myType == PlayfabCalls.SetPictureIE)
-            SetPictureIE( aURL, playerID,  aImage, onDoneN, onErrorN);
+            SetPictureIE(aURL, playerID, aImage, onDoneN, onErrorN);
+        else if (myType == PlayfabCalls.UpdateUserData)
+            UpdateUserData(aEntry, aValue, onDoneN, onErrorN);
+        else if (myType == PlayfabCalls.UpdatePlayerStatistics)
+            UpdatePlayerStatistics(PlayerScore, myTable, onDoneN, onErrorN);
+        else if (myType == PlayfabCalls.RemoveSharedGroupMembers)
+            RemoveSharedGroupMembers(SharedGroupId, PlayFabIds, onDoneN, onErrorN);
+        else if (myType == PlayfabCalls.GetUserDataOldGames)
+            GetUserDataOldGames(onDoneGetUserDataResult, onError);
+        else if (myType == PlayfabCalls.UpdateUserDataGames)
+            GetUserDataOldGames(aGames, aOldGames, onDoneN, onErrorN);
+        
+
+
 
 
 
@@ -91,6 +122,8 @@ public class PlayfabFunctionCall
                       return;
                   myStatus = Status.Finished;
                   onDone(result);
+
+
 
               },
               error =>
@@ -120,6 +153,10 @@ public class PlayfabFunctionCall
         },
 result =>
 {
+
+
+
+
     if (shouldCancel)
         return;
     myStatus = Status.Finished;
@@ -151,6 +188,8 @@ error =>
                           return;
                       myStatus = Status.Finished;
                       onDone.Invoke(result2);
+
+
                   },
                   error => {
                       if (shouldCancel)
@@ -160,6 +199,137 @@ error =>
                   }
               );
     }
+    public void UpdateUserData(string aEntry, string aValue, System.Action onDone, System.Action onError)
+    {
+        myStatus = Status.Running;
+        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+        {
+            Data = new Dictionary<string, string>() {
+                {aEntry, aValue}
+
+            },
+            Permission = UserDataPermission.Public,
+        },
+        result =>
+        {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            Debug.Log("Successfully updated user data");
+            if (onDone != null)
+                onDone.Invoke();
+               },
+        error => {
+            if (shouldCancel)
+                return;
+            Debug.Log("Got error setting user data Ancestor to Arthur");
+           Debug.Log(error.GenerateErrorReport());
+            myStatus = Status.Finished;
+            if (onError != null)
+                onError.Invoke();
+        });
+    }
+
+    public void GetUserDataOldGames(string aGames, string aOldGames, System.Action onDone, System.Action onError)
+    {
+        myStatus = Status.Running;
+        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+        {
+            Data = new Dictionary<string, string>() {
+                                        {"MyGames",aGames},
+                                        {"OldGames",aOldGames},
+                                    }
+        },
+        result =>
+        {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            Debug.Log("Successfully updated user data");
+            if (onDone != null)
+                onDone.Invoke();
+        },
+        error => {
+            if (shouldCancel)
+                return;
+            Debug.Log("Got error setting user data Ancestor to Arthur");
+            Debug.Log(error.GenerateErrorReport());
+            myStatus = Status.Finished;
+            if (onError != null)
+                onError.Invoke();
+        });
+    }
+
+
+    
+    public void UpdatePlayerStatistics(int aPlayerStats,string aTable, System.Action onDone, System.Action onError)
+    {
+
+
+
+        myStatus = Status.Running;
+        PlayFabClientAPI.UpdatePlayerStatistics(new UpdatePlayerStatisticsRequest
+        {
+            Statistics = new List<StatisticUpdate> {
+            new StatisticUpdate {
+                StatisticName = aTable,
+                Value = aPlayerStats
+            }
+        }
+        }, result =>
+        {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            Debug.Log("Successfully submitted high score");
+            if(onDone != null)
+            onDone.Invoke();
+        },
+        error => {
+            if (shouldCancel)
+                return;
+            Debug.Log("Got error setting stats");
+            Debug.Log(error.GenerateErrorReport());
+            myStatus = Status.Finished;
+            if (onError != null)
+                onError.Invoke();
+        });
+    }
+
+    public void RemoveSharedGroupMembers(string SharedGroupId, List<string> aPlayfabId, System.Action onDone, System.Action onError)
+    {
+        myStatus = Status.Running;
+
+        PlayFabClientAPI.RemoveSharedGroupMembers(new RemoveSharedGroupMembersRequest()
+        {
+            SharedGroupId = SharedGroupId,
+            PlayFabIds = aPlayfabId
+        }, result => {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            Debug.Log("Successfully RemoveSharedGroupMembers");
+            if (onDone != null)
+                onDone.Invoke();
+
+        }, error => {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            Debug.Log("Got error setting stats");
+            Debug.Log(error.GenerateErrorReport());
+            if (onError != null)
+                onError.Invoke();
+        });
+
+
+
+
+    }
+
+
+    
+
 
     public void GetOtherPlayerProfile(string aPlayfabID, System.Action<GetPlayerProfileResult> onDone, System.Action<PlayFabError> onError)
     {
@@ -178,14 +348,17 @@ error =>
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
-            onDone.Invoke(result);
+
+            if (onDone != null)
+                onDone.Invoke(result);
         },
         error =>
         {
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
-            onError.Invoke(error);
+            if (onError != null)
+                onError.Invoke(error);
         }
 
         );
@@ -206,6 +379,9 @@ error =>
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
+
+
+
             onDone.Invoke(result);
         },
         error =>
@@ -230,6 +406,7 @@ error =>
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
+
             onDone.Invoke(result);
 
         }, (error) =>
@@ -248,11 +425,36 @@ error =>
         PlayFabClientAPI.GetUserData(new GetUserDataRequest()
         {
             PlayFabId = Startup._instance.MyPlayfabID,
-            Keys = null
+            Keys = new List<string> { "Achivments", "MyGames", "Ranking", "StatsData","XP" },
         }, result => {
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
+
+
+            onDone.Invoke(result);
+
+        }, (error) => {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            onError.Invoke(error);
+        });
+    }
+    public void GetUserDataOldGames(System.Action<GetUserDataResult> onDone, System.Action<PlayFabError> onError)
+    {
+        myStatus = Status.Running;
+
+        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+        {
+            PlayFabId = Startup._instance.MyPlayfabID,
+            Keys = new List<string> { "OldGames" },
+        }, result => {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+
+
             onDone.Invoke(result);
 
         }, (error) => {
@@ -394,7 +596,7 @@ public class PlayfabCallbackHandler : MonoBehaviour
 
         for (int i = 0; i < PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls.Count; i++)
         {
-            GUILayout.TextField( PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls[i], style);
+            GUILayout.TextField(PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls[i], style);
         }
 
 
@@ -462,6 +664,15 @@ public class PlayfabCallbackHandler : MonoBehaviour
         a.onError = onError;
         myPlayfabFunctionCall.Add(a);
     }
+    public void GetUserDataOldGames(System.Action<GetUserDataResult> onDone, System.Action<PlayFabError> onError)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.myType = PlayfabCalls.GetUserDataOldGames;
+        a.onDoneGetUserDataResult = onDone;
+        a.onError = onError;
+        myPlayfabFunctionCall.Add(a);
+    }
+    
     public void SetPictureIE(string aURL, string playfabID, Image aImage, System.Action onDoneN, System.Action onErrorN)
     {
         PlayfabFunctionCall a = new PlayfabFunctionCall();
@@ -473,6 +684,53 @@ public class PlayfabCallbackHandler : MonoBehaviour
         a.onErrorN = onErrorN ;
         myPlayfabFunctionCall.Add(a);
     }
+    public void UpdateUserData(string aEntry, string aValue, System.Action onDoneN, System.Action onErrorN)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.aEntry = aEntry;
+        a.aValue = aValue;
+        a.myType = PlayfabCalls.UpdateUserData;
+
+        a.onDoneN = onDoneN;
+        a.onErrorN = onErrorN;
+        myPlayfabFunctionCall.Add(a);
+    }
+    public void UpdateUserDataGames(string aGames, string aOldGames, System.Action onDoneN, System.Action onErrorN)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.aGames = aGames;
+        a.aOldGames = aOldGames;
+        a.myType = PlayfabCalls.UpdateUserDataGames;
+
+        a.onDoneN = onDoneN;
+        a.onErrorN = onErrorN;
+        myPlayfabFunctionCall.Add(a);
+    }
+    
+    public void UpdatePlayerStatistics(int playerScore,string aTable, System.Action onDoneN, System.Action onErrorN)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.PlayerScore = playerScore;
+        a.myType = PlayfabCalls.UpdatePlayerStatistics;
+        a.myTable = aTable;
+        a.onDoneN = onDoneN;
+        a.onErrorN = onErrorN;
+        myPlayfabFunctionCall.Add(a);
+    }
+    public void RemoveSharedGroupMembers(string SharedGroupId, List<string> aPlayfabID, System.Action onDoneN, System.Action onErrorN)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.SharedGroupId = SharedGroupId;
+        a.myType = PlayfabCalls.RemoveSharedGroupMembers;
+        a.PlayFabIds = aPlayfabID;
+        a.onDoneN = onDoneN;
+        a.onErrorN = onErrorN;
+        myPlayfabFunctionCall.Add(a);
+    }
+
+    
+
+
     public void SetPictureIEC(string aURL, string playfabID, Image aImage, System.Action onDone, System.Action onError)
     {
         StartCoroutine(SetPictureIE2(aURL,  playfabID,  aImage,  onDone, onError));

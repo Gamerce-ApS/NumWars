@@ -183,8 +183,9 @@ public class AchivmentController
       
         for (int i = 0; i< myStatistics.Count;i++)
         {
-            if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.AGS)
-                return myStatistics[i].current;
+            //if (myStatistics[i].myAchivmentType == AchivmentTypeEnum.AGS)
+            //    return myStatistics[i].current;
+
             if (myStatistics[i].myAchivmentType == aStats)
                 return myStatistics[i].current;
         }

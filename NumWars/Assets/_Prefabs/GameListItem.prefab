@@ -811,6 +811,8 @@ MonoBehaviour:
     player2_displayName: 
     player1_abandon: 
     player2_abandon: 
+    player1_avatarURL: 
+    player2_avatarURL: 
     EmptyTurns: 
     TilesLeft: []
     LastMoveTimeStamp: 

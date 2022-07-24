@@ -82,7 +82,7 @@ namespace PlayFab.Internal
                 yield return request.Send();
 #endif
 
-#if UNITY_2021_1_OR_NEWER
+#if UNITY_2020_1_OR_NEWER
                 if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
 #else
                 if (request.isNetworkError || request.isHttpError)
@@ -98,13 +98,16 @@ namespace PlayFab.Internal
                 request.Dispose();
             }
         }
-        public static List<string> AmountOfCalls=new List<string>();
+        public static List<string> AmountOfCalls = new List<string>();
         public void MakeApiCall(object reqContainerObj)
         {
-
             CallRequestContainer reqContainer = (CallRequestContainer)reqContainerObj;
-            AmountOfCalls.Add( reqContainer.ApiRequest.ToString());
             reqContainer.RequestHeaders["Content-Type"] = "application/json";
+            AmountOfCalls.Add(reqContainer.ApiRequest.ToString());
+
+            Debug.LogWarning("Send:"+reqContainer.ApiRequest + " : " + (reqContainer.Payload.Length));
+
+            PlayFabHttp.instance.OnPlayFabApiResult(reqContainer);
 
             // Start the www corouting to Post, and get a response or error which is then passed to the callbacks.
             PlayFabHttp.instance.StartCoroutine(Post(reqContainer));
@@ -117,7 +120,7 @@ namespace PlayFab.Internal
             var startTime = DateTime.UtcNow;
 #endif
 
-            var www = new UnityWebRequest(reqContainer.FullUrl)
+            using var www = new UnityWebRequest(reqContainer.FullUrl)
             {
                 uploadHandler = new UploadHandlerRaw(reqContainer.Payload),
                 downloadHandler = new DownloadHandlerBuffer(),
@@ -191,6 +194,7 @@ namespace PlayFab.Internal
                     reqContainer.DeserializeResultJson();
                     reqContainer.ApiResult.Request = reqContainer.ApiRequest;
                     reqContainer.ApiResult.CustomData = reqContainer.CustomData;
+                    Debug.LogWarning(reqContainer.ApiRequest + " : " + System.Text.ASCIIEncoding.ASCII.GetByteCount(httpResult.data.ToString()));
 
                     PlayFabHttp.instance.OnPlayFabApiResult(reqContainer);
 #if !DISABLE_PLAYFABCLIENT_API

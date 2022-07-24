@@ -81,7 +81,7 @@ public PlayerProfileModel theProfile;
         PlayFabClientAPI.GetUserData(new GetUserDataRequest()
         {
             PlayFabId = Startup._instance.MyPlayfabID,
-            Keys = null
+            Keys = new List<string> { "Achivments", "XP", "Ranking", "MyGames" }
         }, result =>
         {
             StoredData st = new StoredData();
