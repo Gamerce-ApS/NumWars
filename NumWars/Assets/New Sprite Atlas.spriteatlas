@@ -153,7 +153,6 @@ SpriteAtlas:
   - {fileID: 21300000, guid: aade9e8c671c74c6cbb0ceec485745a6, type: 3}
   - {fileID: 21300000, guid: f5da629c881c841eb85ef6dc91f1fd12, type: 3}
   - {fileID: 21300000, guid: 78cc78ac5b24a4370ab6283fea91e200, type: 3}
-  - {fileID: 21300000, guid: c47346bc77de64e10bbcb98c13d48566, type: 3}
   - {fileID: 21300000, guid: d41a3fbc4d7ac47e786311db91aca30e, type: 3}
   - {fileID: 21300000, guid: 3a8d93dc931934eebafe9f25f1b7f82b, type: 3}
   - {fileID: 21300000, guid: 758fb0fc196e04713a3e6ac372d6bf72, type: 3}
@@ -281,7 +280,6 @@ SpriteAtlas:
   - loggo
   - game_end_bar
   - 4-2
-  - star
   - bg
   - tile_addition
   - bar_bottom

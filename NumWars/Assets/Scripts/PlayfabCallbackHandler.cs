@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Photon.Pun;
 using PlayFab;
 using PlayFab.ClientModels;
+using PlayFab.Internal;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,7 +23,13 @@ public enum PlayfabCalls
     UpdatePlayerStatistics,
     RemoveSharedGroupMembers,
     GetUserDataOldGames,
-    UpdateUserDataGames
+    UpdateUserDataGames,
+    GetFilesRequest,
+    InitiateFileUploads,
+    GetAllAvatarGrouped,
+    GetSharedDataGrouped2,
+    UpdateUserDataGrouped,
+    UpdatePlayerStatisticsGrouped,
 
 };
 
@@ -51,6 +59,11 @@ public class PlayfabFunctionCall
     public string aURL;
     public Image aImage;
 
+    public System.Action<string> OnDoneOnGetFileMeta;
+    public System.Action<string> onErrorOnSharedFailure;
+
+
+
     public string aEntry;
 
     public string aValue;
@@ -63,6 +76,10 @@ public class PlayfabFunctionCall
     public string aGames;
     public string aOldGames;
 
+    public System.Action<ExecuteCloudScriptResult> GetAllAvatarGroupedResult;
+    public Dictionary<string, string> GroupedData;
+    public List<StatisticUpdate> GroupedStatsData;
+    
 
     public void Run()
     {
@@ -90,11 +107,20 @@ public class PlayfabFunctionCall
             RemoveSharedGroupMembers(SharedGroupId, PlayFabIds, onDoneN, onErrorN);
         else if (myType == PlayfabCalls.GetUserDataOldGames)
             GetUserDataOldGames(onDoneGetUserDataResult, onError);
-        else if (myType == PlayfabCalls.UpdateUserDataGames)
-            GetUserDataOldGames(aGames, aOldGames, onDoneN, onErrorN);
+        else if (myType == PlayfabCalls.GetFilesRequest)
+            GetFilesRequest(OnDoneOnGetFileMeta, onErrorOnSharedFailure);
+        else if (myType == PlayfabCalls.InitiateFileUploads)
+            InitiateFileUploads(OnDoneOnGetFileMeta, onErrorOnSharedFailure);
+        else if (myType == PlayfabCalls.GetAllAvatarGrouped)
+            GetAllAvatarGrouped(GetAllAvatarGroupedResult, onError);
+        else if (myType == PlayfabCalls.GetSharedDataGrouped2)
+            GetSharedDataGrouped2(playerID, GetAllAvatarGroupedResult, onError);
+        else if (myType == PlayfabCalls.UpdateUserDataGrouped)
+            UpdateUserDataGrouped(GroupedData, onDoneN, onErrorN);
+        else if (myType == PlayfabCalls.UpdatePlayerStatisticsGrouped)
+            UpdatePlayerStatisticsGrouped(GroupedStatsData, onDoneN, onErrorN);
+
         
-
-
 
 
 
@@ -199,6 +225,62 @@ error =>
                   }
               );
     }
+    public void GetAllAvatarGrouped(System.Action<ExecuteCloudScriptResult> onDone, System.Action<PlayFabError> onError)
+    {
+        myStatus = Status.Running;
+        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        {
+            FunctionName = "GetAllAvatarGrouped",
+            FunctionParameter = new Dictionary<string, object>() {
+            { "PlayFabId", Startup.instance.MyPlayfabID }
+        }
+        }, result2 => {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            onDone.Invoke(result2);
+
+
+        },
+        error => {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            onError.Invoke(error);
+        }
+    );
+    }
+
+    public void GetSharedDataGrouped2(string aID, System.Action<ExecuteCloudScriptResult> onDone, System.Action<PlayFabError> onError)
+    {
+        myStatus = Status.Running;
+
+
+        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        {
+            FunctionName = "GetSharedDataGrouped2",
+            FunctionParameter = new Dictionary<string, object>() {
+            { "PlayFabId", aID }
+        }
+        }, result2 => {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            onDone.Invoke(result2);
+
+
+        },
+        error => {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            onError.Invoke(error);
+        }
+    );
+    }
+
+
+
     public void UpdateUserData(string aEntry, string aValue, System.Action onDone, System.Action onError)
     {
         myStatus = Status.Running;
@@ -229,7 +311,37 @@ error =>
                 onError.Invoke();
         });
     }
+    public void UpdateUserDataGrouped(Dictionary<string, string> aEntry, System.Action onDone, System.Action onError)
+    {
+        myStatus = Status.Running;
+        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+        {
+            Data = aEntry,
+            Permission = UserDataPermission.Public,
+        },
+        result =>
+        {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            Debug.Log("Successfully updated user data");
+            if (onDone != null)
+                onDone.Invoke();
+        },
+        error => {
+            if (shouldCancel)
+                return;
+            Debug.Log("Got error setting user data Ancestor to Arthur");
+            Debug.Log(error.GenerateErrorReport());
+            myStatus = Status.Finished;
+            if (onError != null)
+                onError.Invoke();
+        });
+    }
 
+
+
+    
     public void GetUserDataOldGames(string aGames, string aOldGames, System.Action onDone, System.Action onError)
     {
         myStatus = Status.Running;
@@ -295,7 +407,34 @@ error =>
                 onError.Invoke();
         });
     }
+    public void UpdatePlayerStatisticsGrouped(List<StatisticUpdate> aEntry, System.Action onDone, System.Action onError)
+    {
 
+        myStatus = Status.Running;
+        PlayFabClientAPI.UpdatePlayerStatistics(new UpdatePlayerStatisticsRequest
+        {
+            Statistics = aEntry
+        }, result =>
+        {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            Debug.Log("Successfully submitted high score");
+            if (onDone != null)
+                onDone.Invoke();
+        },
+        error => {
+            if (shouldCancel)
+                return;
+            Debug.Log("Got error setting stats");
+            Debug.Log(error.GenerateErrorReport());
+            myStatus = Status.Finished;
+            if (onError != null)
+                onError.Invoke();
+        });
+    }
+
+    
     public void RemoveSharedGroupMembers(string SharedGroupId, List<string> aPlayfabId, System.Action onDone, System.Action onError)
     {
         myStatus = Status.Running;
@@ -363,6 +502,137 @@ error =>
 
         );
     }
+    public void GetFilesRequest(System.Action<string> onDone, System.Action<string> onError)
+    {
+        myStatus = Status.Running;
+
+
+       var request = new PlayFab.DataModels.GetFilesRequest { Entity = new PlayFab.DataModels.EntityKey { Id = PlayfabHelperFunctions.instance.entityId, Type = PlayfabHelperFunctions.instance.entityType } };
+       PlayFabDataAPI.GetFiles(request, (OnGetFileMeta)=>
+       {
+           Debug.Log("Loading " + OnGetFileMeta.Metadata.Count + " files");
+
+           foreach (var eachFilePair in OnGetFileMeta.Metadata)
+           {
+               PlayFabHttp.SimpleGetCall(eachFilePair.Value.DownloadUrl,
+                result =>
+                {
+                    myStatus = Status.Finished;
+
+                    if (onDone != null)
+                        onDone.Invoke(Encoding.UTF8.GetString(result));
+                }, 
+                error =>
+                {
+                    myStatus = Status.Finished;
+                    Debug.Log(error);
+                    if (onError != null)
+                        onError.Invoke(error);
+
+                }
+            );
+
+
+           }
+
+
+           if(OnGetFileMeta.Metadata.Count==0)
+           {
+               myStatus = Status.Finished;
+               if (onError != null)
+                   onError.Invoke("Error!!!");
+           }
+
+
+       }, (res)=> {
+           Debug.LogError(res.GenerateErrorReport());
+           myStatus = Status.Finished;
+           if (onError != null)
+               onError.Invoke("Error!!!");
+       });
+
+    }
+    public void InitiateFileUploads(System.Action<string> onDone, System.Action<string> onError)
+    {
+        myStatus = Status.Running;
+
+        var request = new PlayFab.DataModels.InitiateFileUploadsRequest
+        {
+            Entity = new PlayFab.DataModels.EntityKey { Id = PlayfabHelperFunctions.instance.entityId, Type = PlayfabHelperFunctions.instance.entityType },
+            FileNames = new List<string> { "OldGamesData" },
+        };
+        PlayFabDataAPI.InitiateFileUploads(request, (response) => {
+
+
+            string payloadStr = PlayerPrefs.GetString("OldGames");
+            var payload = Encoding.UTF8.GetBytes(payloadStr);
+
+                PlayFabHttp.SimplePutCall(response.UploadDetails[0].UploadUrl,
+                    payload,
+                    (data) =>
+                    {
+                        var request = new PlayFab.DataModels.FinalizeFileUploadsRequest
+                        {
+                            Entity = new PlayFab.DataModels.EntityKey { Id = PlayfabHelperFunctions.instance.entityId, Type = PlayfabHelperFunctions.instance.entityType },
+                            FileNames = new List<string> { "OldGamesData" },
+                        };
+                        PlayFabDataAPI.FinalizeFileUploads(request, (OnUploadSuccess)=> {
+                            Debug.Log("File upload success: " + "OldGamesData");
+
+                            myStatus = Status.Finished;
+
+                            if (onDone != null)
+                                onDone.Invoke("1");
+
+
+                        }, (error) => {
+                            Debug.LogError(error.GenerateErrorReport());
+                            myStatus = Status.Finished;
+                            if (onError != null)
+                                onError.Invoke(error.ErrorMessage);
+                        });
+                    },
+                    error => { Debug.Log(error);
+                        myStatus = Status.Finished;
+                        if (onError != null)
+                            onError.Invoke(error);
+                    }
+                );
+
+
+        }, (error) =>
+        {
+            if (error.Error == PlayFabErrorCode.EntityFileOperationPending)
+            {
+                // This is an error you should handle when calling InitiateFileUploads, but your resolution path may vary
+                var request = new PlayFab.DataModels.AbortFileUploadsRequest
+                {
+                    Entity = new PlayFab.DataModels.EntityKey { Id = PlayfabHelperFunctions.instance.entityId, Type = PlayfabHelperFunctions.instance.entityType },
+                    FileNames = new List<string> { "OldGamesData" },
+                };
+                PlayFabDataAPI.AbortFileUploads(request, (result) => {
+
+                    //   PlayfabCallbackHandler.instance.InitiateFileUploads(onDone, onError);
+                    Debug.LogError(result);
+
+                }, (OnSharedFailure) => { Debug.LogError(error.GenerateErrorReport()); });
+
+            }
+            else
+            {
+                Debug.LogError(error.GenerateErrorReport());
+                myStatus = Status.Finished;
+                if (onError != null)
+                    onError.Invoke("Error!!!");
+            }
+
+
+        });
+    }
+
+
+
+
     public void GetPlayerProfile(System.Action<GetPlayerProfileResult> onDone, System.Action<PlayFabError> onError)
     {
         myStatus = Status.Running;
@@ -494,8 +764,30 @@ error =>
 
     }
 
+    //void OnGetFileMeta(PlayFab.DataModels.GetFilesResponse result)
+    //{
+    //    Debug.Log("Loading " + result.Metadata.Count + " files");
 
-     
+    //    foreach (var eachFilePair in result.Metadata)
+    //    {
+    //        GetActualFile(eachFilePair.Value);
+    //    }
+
+    //}
+    //void GetActualFile(PlayFab.DataModels.GetFileMetadata fileData)
+    //{
+
+    //    PlayFabHttp.SimpleGetCall(fileData.DownloadUrl,
+    //        result => {
+
+    //            Debug.Log(Encoding.UTF8.GetString(result));
+
+    //        }, // Finish Each SimpleGetCall
+    //        error => { Debug.Log(error); }
+    //    );
+    //}
+   
+
 
 
 }
@@ -656,6 +948,24 @@ public class PlayfabCallbackHandler : MonoBehaviour
         a.onError = onError;
         myPlayfabFunctionCall.Add(a);
     }
+    public void GetAllAvatarGrouped( System.Action<ExecuteCloudScriptResult> onDone, System.Action<PlayFabError> onError)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.myType = PlayfabCalls.GetAllAvatarGrouped;
+        a.GetAllAvatarGroupedResult = onDone;
+        a.onError = onError;
+        myPlayfabFunctionCall.Add(a);
+    }
+    public void GetSharedDataGrouped2(string aID, System.Action<ExecuteCloudScriptResult> onDone, System.Action<PlayFabError> onError)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.playerID = aID;
+        a.myType = PlayfabCalls.GetSharedDataGrouped2;
+        a.GetAllAvatarGroupedResult = onDone;
+        a.onError = onError;
+        myPlayfabFunctionCall.Add(a);
+    }
+    
     public void GetUserData(System.Action<GetUserDataResult> onDone, System.Action<PlayFabError> onError)
     {
         PlayfabFunctionCall a = new PlayfabFunctionCall();
@@ -695,6 +1005,18 @@ public class PlayfabCallbackHandler : MonoBehaviour
         a.onErrorN = onErrorN;
         myPlayfabFunctionCall.Add(a);
     }
+    public void UpdateUserDataGrouped(Dictionary<string, string> aEntry, System.Action onDoneN, System.Action onErrorN)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.GroupedData = aEntry;
+        a.myType = PlayfabCalls.UpdateUserDataGrouped;
+
+        a.onDoneN = onDoneN;
+        a.onErrorN = onErrorN;
+        myPlayfabFunctionCall.Add(a);
+    }
+
+    
     public void UpdateUserDataGames(string aGames, string aOldGames, System.Action onDoneN, System.Action onErrorN)
     {
         PlayfabFunctionCall a = new PlayfabFunctionCall();
@@ -717,6 +1039,15 @@ public class PlayfabCallbackHandler : MonoBehaviour
         a.onErrorN = onErrorN;
         myPlayfabFunctionCall.Add(a);
     }
+    public void UpdatePlayerStatisticsGrouped(List<StatisticUpdate> aEntry, System.Action onDoneN, System.Action onErrorN)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.GroupedStatsData = aEntry;
+        a.myType = PlayfabCalls.UpdatePlayerStatisticsGrouped;
+        a.onDoneN = onDoneN;
+        a.onErrorN = onErrorN;
+        myPlayfabFunctionCall.Add(a);
+    }
     public void RemoveSharedGroupMembers(string SharedGroupId, List<string> aPlayfabID, System.Action onDoneN, System.Action onErrorN)
     {
         PlayfabFunctionCall a = new PlayfabFunctionCall();
@@ -728,7 +1059,7 @@ public class PlayfabCallbackHandler : MonoBehaviour
         myPlayfabFunctionCall.Add(a);
     }
 
-    
+
 
 
     public void SetPictureIEC(string aURL, string playfabID, Image aImage, System.Action onDone, System.Action onError)
@@ -789,6 +1120,35 @@ public class PlayfabCallbackHandler : MonoBehaviour
         File.WriteAllBytes(Application.persistentDataPath + "/"+playfabID+".png", profilePic.EncodeToPNG());
 
     }
+
+    public void GetFilesRequest(System.Action<string> onDoneN, System.Action<string> onErrorN)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.myType = PlayfabCalls.GetFilesRequest;
+        a.OnDoneOnGetFileMeta = onDoneN;
+        a.onErrorOnSharedFailure = onErrorN;
+        myPlayfabFunctionCall.Add(a);
+    }
+    public void InitiateFileUploads(System.Action<string> onDoneN, System.Action<string> onErrorN)
+    {
+        PlayfabFunctionCall a = new PlayfabFunctionCall();
+        a.myType = PlayfabCalls.InitiateFileUploads;
+        a.OnDoneOnGetFileMeta = onDoneN;
+        a.onErrorOnSharedFailure = onErrorN;
+        myPlayfabFunctionCall.Add(a);
+    }
+    //public void GetFilesRequest()
+    //{
+    //    var request = new PlayFab.DataModels.GetFilesRequest { Entity = new PlayFab.DataModels.EntityKey { Id = PlayfabHelperFunctions.instance.entityId, Type = PlayfabHelperFunctions.instance.entityType } };
+    //    PlayFabDataAPI.GetFiles(request, OnGetFileMeta, OnSharedFailure);
+    //}
+    public void SetOldGameDataFromPlayerPrefs()
+    {
+
+    }
+
+
+
 
 
 }

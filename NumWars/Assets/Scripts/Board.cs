@@ -735,56 +735,261 @@ public class Board : MonoBehaviour
 
 
     }
+
+    public List<FakeTileData> GetLastMoves()
+    {
+
+        List<string> moveHistory = History;
+        List<FakeTileData> lastMoves = new List<FakeTileData>();
+
+        int myBackednTurn = Board.instance.boardData.GetPlayerTurn(GameManager.instance.CurrentTurn);
+
+        int LastMoveIndex = 0;
+        for (int i = moveHistory.Count - 1; i >= 0; i--)
+        {
+            if (moveHistory[i].Contains("#SWAP#") || moveHistory[i] == "#EMPTY#" || moveHistory[i].Contains("#TILESONHAND"))
+            {
+                break;
+            }
+            string[] moveInfo = moveHistory[i].Split('#');
+            FakeTileData ftd = new FakeTileData();
+            ftd.Position = ScoreScreen.StringToVector2(moveInfo[0]);
+            ftd.Number = int.Parse(moveInfo[1]);
+            ftd.ScoreValue = int.Parse(moveInfo[2]);
+            ftd.Player = int.Parse(moveInfo[3]);
+            ftd.SpecialTypeTile = 0;
+            if (moveInfo.Length > 4)
+                ftd.SpecialTypeTile = int.Parse(moveInfo[4]);
+
+
+
+            if (myBackednTurn != ftd.Player)
+            {
+                lastMoves.Add(ftd);
+            }
+            else
+            {
+                break;
+            }
+            LastMoveIndex = i;
+        }
+
+
+        if (GameManager.instance.CurrentTurn == 1)
+            return lastMoves;
+
+
+
+        lastMoves.Clear();
+        if (moveHistory != null)
+            if (moveHistory.Count > 0)
+                if (moveHistory[moveHistory.Count - 1].Contains("#SWAP#"))
+                {
+
+                    LastMoveIndex = moveHistory.Count - 0;
+
+                }
+        if (moveHistory != null)
+            if (moveHistory.Count > 0)
+                if (moveHistory[moveHistory.Count - 1] == "#EMPTY#")
+                {
+
+                    LastMoveIndex = moveHistory.Count - 1;
+
+                }
+
+        for (int i = LastMoveIndex - 2; i >= 0; i--)
+        {
+            if (moveHistory[i].Contains("#SWAP#") || moveHistory[i] == "#EMPTY#" || moveHistory[i].Contains("#TILESONHAND"))
+            {
+                break;
+            }
+            string[] moveInfo = moveHistory[i].Split('#');
+            FakeTileData ftd = new FakeTileData();
+            ftd.Position = ScoreScreen.StringToVector2(moveInfo[0]);
+            ftd.Number = int.Parse(moveInfo[1]);
+            ftd.ScoreValue = int.Parse(moveInfo[2]);
+            ftd.Player = int.Parse(moveInfo[3]);
+            ftd.SpecialTypeTile = 0;
+            if (moveInfo.Length > 4)
+                ftd.SpecialTypeTile = int.Parse(moveInfo[4]);
+
+
+
+            if (myBackednTurn == ftd.Player)
+            {
+                lastMoves.Add(ftd);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return lastMoves;
+
+
+
+    }
+
+
+
     public void LoadLastUsedTiles(List<Tile> myTiles)
     {
+
+        // Last placed tiles
+        // Tiles on hand before
+        // Tiles on hand after
+
+
+
+
+        List<FakeTileData>  lastMoves = GetLastMoves();
+        // List<string> tiles = PlayerBoard.instance.myPlayer.GetMyTiles();
+
+
+        //for (int i = 0; i < lastMoves.Count; i++)
+        //{
+        //    for (int j = 0; j < myTiles.Count; j++)
+        //    {
+
+
+        //    }
+        //}
+
+
+
+        //if (lastMoves[i].Number == int.Parse(myTiles[j].textLabel.text))
+        //{
+
+        //}
+
+        
+
+      
+
+
+     //   return;
+
+
+        /////// OLD APPROACH
+
         List<List<string>> tilesOnHandHistory = new List<List<string>>();
         for (int i = History.Count - 1; i >= 0; i--)
         {
-            if (History[i].Contains("#TILESONHAND_"+Startup._instance.MyPlayfabID+"#"))
+            if (History[i].Contains("#TILESONHAND_" + Startup._instance.MyPlayfabID + "#"))
             {
                 ListContainer tileList = JsonUtility.FromJson<ListContainer>(History[i].Replace("#TILESONHAND_" + Startup._instance.MyPlayfabID + "#", ""));
                 tilesOnHandHistory.Add(tileList.Data);
             }
+            if (History[i].Contains("#SWAP#" + Startup.instance.MyPlayfabID + "#"))
+            {
+                string val = History[i].Replace("#SWAP#" + Startup.instance.MyPlayfabID + "#", "");
+                string[] numberA = val.Split(',');
+                List<string> listOfNumbers = new List<string>();
+                //for (int j = 0; j < numberA.Length; j++)
+                //{
+                //    if (numberA[j].Length > 0 && numberA[j] != ",")
+                //    {
+                //        listOfNumbers.Add(numberA[j]);
+                //    }
+                //}
+                //tilesOnHandHistory.Add(listOfNumbers);
+                List<Tile> myTiles2 = new List<Tile>(myTiles);
+
+                if (tilesOnHandHistory.Count==0)
+                {
+                    for (int j = 0; j < numberA.Length; j++)
+                    {
+                        if (numberA[j].Length > 0 && numberA[j] != ",")
+                        {
+                            for (int k = 0; k < myTiles2.Count; k++)
+                            {
+                                string a = numberA[j];
+                                string b = myTiles2[k].GetValue();
+                                if (a == b)
+                                {
+                                    Color col;
+                                    ColorUtility.TryParseHtmlString("#6EFFB0", out col);
+                                    Sequence mySequence = DOTween.Sequence();
+                                    mySequence
+                                      .Append(myTiles2[k].GetComponent<Image>().DOColor(col, 0.5f))
+                                      .PrependInterval(1)
+                                      .Append(myTiles2[k].GetComponent<Image>().DOColor(Color.white, 0.5f));
+
+                                    myTiles2.RemoveAt(k);
+                                    break;
+                                }
+                            }
+
+
+                        }
+                    }
+                    return;
+                }
+
+
+            }
 
         }
 
-        if(tilesOnHandHistory.Count >0)
+        if (tilesOnHandHistory.Count > 0)
         {
-            List<string> newTiles = ComparDif(PlayerBoard.instance.myPlayer.GetMyTiles(), tilesOnHandHistory[0]);
+            List<string> tiles = PlayerBoard.instance.myPlayer.GetMyTiles();
+            List<string> newTiles = ComparDif(tiles, tilesOnHandHistory[0]);
 
 
-
+            List<Tile> myTiles2 = new List<Tile>(myTiles);
             for (int i = 0; i < newTiles.Count; i++)
             {
-                for (int j = 0; j < myTiles.Count; j++)
+                for (int j = 0; j < myTiles2.Count; j++)
                 {
                     string a = newTiles[i];
-                    string b = myTiles[j].GetValue();
+                    string b = myTiles2[j].GetValue();
                     if (a == b)
                     {
                         Color col;
                         ColorUtility.TryParseHtmlString("#6EFFB0", out col);
-                       // myTiles[j].GetComponent<Image>().color = col;
-
-
-
-                        //myTiles[j].GetComponent<Image>().DOColor(Color.white,1).SetDelay(2f);
-
-
-
-
                         Sequence mySequence = DOTween.Sequence();
                         mySequence
-                          .Append(myTiles[j].GetComponent<Image>().DOColor(col, 0.5f))
+                          .Append(myTiles2[j].GetComponent<Image>().DOColor(col, 0.5f))
                           .PrependInterval(1)
-                          .Append(myTiles[j].GetComponent<Image>().DOColor(Color.white, 0.5f));
+                          .Append(myTiles2[j].GetComponent<Image>().DOColor(Color.white, 0.5f));
 
-
-                        continue;
+                        myTiles2.RemoveAt(j);
+                        break;
                     }
                 }
             }
+
+            // this is to check if you go the same tile so we check if we placed it and it is new
+            for(int i = 0; i < lastMoves.Count;i++)
+            {
+                for (int j = 0; j < myTiles2.Count; j++)
+                {
+                    string a = lastMoves[i].Number.ToString();
+                    string b = myTiles2[j].GetValue();
+                    if (a == b)
+                    {
+                        Color col;
+                        ColorUtility.TryParseHtmlString("#6EFFB0", out col);
+                        Sequence mySequence = DOTween.Sequence();
+                        mySequence
+                          .Append(myTiles2[j].GetComponent<Image>().DOColor(col, 0.5f))
+                          .PrependInterval(1)
+                          .Append(myTiles2[j].GetComponent<Image>().DOColor(Color.white, 0.5f));
+
+                        myTiles2.RemoveAt(j);
+                        break;
+                    }
+                }  
+            }
+
+
         }
+
+
+
 
 
 
@@ -793,13 +998,21 @@ public class Board : MonoBehaviour
     {
         List<string> dif = new List<string>();
 
-        for(int i = 0; i < newL.Count;i++)
+        List<string> workingOldList = oldl;
+
+        for (int i = 0; i < newL.Count;i++)
         {
             if(oldl.Contains( newL[i] ) == false)
             {
                 dif.Add(newL[i]);
             }
+            else
+            {
+                workingOldList.Remove(newL[i]);
+            }
         }
+
+
         return dif;
     }
     public int CheckAmountValid(StaticTile aTile, string aStringNumber)
@@ -1265,7 +1478,10 @@ public class Board : MonoBehaviour
     }
     public bool TilesAndMoveValid()
     {
-        Dictionary<int, int> d = new Dictionary<int, int>();
+        if (GameManager.instance.thePlayers[1].isAI)
+            return true;
+
+            Dictionary<int, int> d = new Dictionary<int, int>();
         for (int i = 0; i < Board.instance.BoardTiles.Count; i++)
         {
             if (Board.instance.BoardTiles[i]._child != null)
@@ -1367,13 +1583,16 @@ public class Board : MonoBehaviour
     {
 
 
-
-        if( Startup.instance.GameToLoad.RoomName != boardData.RoomName ||
-            Startup.instance.GameToLoad.player1_PlayfabId != boardData.player1_PlayfabId ||
-            Startup.instance.GameToLoad.player2_PlayfabId != boardData.player2_PlayfabId)
-           {
-            return;
+        if(Startup.instance.GameToLoad != null)
+        {
+            if (Startup.instance.GameToLoad.RoomName != boardData.RoomName ||
+                 Startup.instance.GameToLoad.player1_PlayfabId != boardData.player1_PlayfabId ||
+                 Startup.instance.GameToLoad.player2_PlayfabId != boardData.player2_PlayfabId)
+            {
+                return;
             }
+        }
+ 
 
 
         if (GameManager.instance.CheckIfMyTurn() == false)

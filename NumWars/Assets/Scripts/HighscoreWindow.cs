@@ -8,7 +8,10 @@ using UnityEngine.UI;
 public class HighscoreWindow : MonoBehaviour
 {
     public GameObject templateItem;
+    public GameObject templateMore;
     public Transform _parent;
+
+    public GameObject me;
     // Start is called before the first frame update
     void Start()
     {
@@ -16,6 +19,7 @@ public class HighscoreWindow : MonoBehaviour
     }
     void OnEnable()
     {
+        StartNumber = 0;
         RequestLeaderboard();
     }
     // Update is called once per frame
@@ -27,11 +31,11 @@ public class HighscoreWindow : MonoBehaviour
     //Get the players with the top 10 high scores in the game
     public void RequestLeaderboard()
     {
-        PlayFabClientAPI.GetLeaderboardAroundPlayer(new GetLeaderboardAroundPlayerRequest
-        {
-            PlayFabId=Startup._instance.MyPlayfabID,
+        PlayFabClientAPI.GetLeaderboard(new GetLeaderboardRequest
+        { 
+            //PlayFabId=Startup._instance.MyPlayfabID,
             StatisticName = "Highscore",
-          
+            StartPosition=StartNumber,
             MaxResultsCount = 20,
              ProfileConstraints = new PlayerProfileViewConstraints()
              {
@@ -41,16 +45,65 @@ public class HighscoreWindow : MonoBehaviour
              }
 
         }, result => DisplayLeaderboard(result), FailureCallback);
+
+
+
+        PlayFabClientAPI.GetLeaderboardAroundPlayer(new GetLeaderboardAroundPlayerRequest
+        { 
+            StatisticName =  "Highscore" ,
+            MaxResultsCount = 1,
+
+        }, result => DisplayMyStats(result), FailureCallback);
+
+    }
+    public void DisplayMyStats(GetLeaderboardAroundPlayerResult result)
+    {
+        _parent.GetComponent<ScrollListBasedOnItems>().Reset();
+        for (int i = 0; i < result.Leaderboard.Count; i++)
+        {
+
+
+            me.transform.GetChild(4).GetComponent<Text>().text = result.Leaderboard[i].DisplayName;
+            me.transform.GetChild(5).GetComponent<Text>().text = (result.Leaderboard[i].Position + 1).ToString() + ".";
+            me.transform.GetChild(3).GetComponent<Text>().text = result.Leaderboard[i].StatValue.ToString();
+
+
+
+            string avatarURL = Startup.instance.avatarURL;
+
+
+            Image img = me.transform.GetChild(2).GetChild(0).GetComponent<Image>();
+
+            if (avatarURL != null && avatarURL.Length > 0)
+            {
+                ProfilePictureManager.instance.SetPicture(avatarURL, Startup.instance.MyPlayfabID, img);
+                //StartCoroutine(SetPicture(avatarURL, img));
+
+            }
+
+ 
+     
+                    me.transform.GetChild(6).GetComponent<Text>().text = HelperFunctions.XPtoLevel(Startup._instance.myData["XP"].Value).ToString();
+  
+
+
+
+        }
     }
 
-
+    public int StartNumber = 0;
+    public void ClickLoadMore()
+    {
+        StartNumber += 20;
+        RequestLeaderboard();
+    }
     private void FailureCallback(PlayFabError error)
     {
         Debug.LogWarning("Something went wrong with your API call. Here's some debug information:");
         Debug.LogError(error.GenerateErrorReport());
     }
 
-    public void DisplayLeaderboard(GetLeaderboardAroundPlayerResult result)
+    public void DisplayLeaderboard(GetLeaderboardResult result)
     {
         foreach (Transform child in _parent)
         {
@@ -63,7 +116,7 @@ public class HighscoreWindow : MonoBehaviour
             GameObject go =  GameObject.Instantiate(templateItem, _parent);
 
             go.transform.GetChild(4).GetComponent<Text>().text = result.Leaderboard[i].DisplayName;
-            go.transform.GetChild(6).GetComponent<Text>().text = (result.Leaderboard[i].Position+1).ToString()+".";
+            go.transform.GetChild(5).GetComponent<Text>().text = (result.Leaderboard[i].Position+1).ToString()+".";
             go.transform.GetChild(3).GetComponent<Text>().text = result.Leaderboard[i].StatValue.ToString();
 
 
@@ -95,7 +148,7 @@ public class HighscoreWindow : MonoBehaviour
                 
             if(hasFoundxp == false)
             {
-                    go.transform.GetChild(5).gameObject.SetActive(false);
+                    go.transform.GetChild(6).gameObject.SetActive(false);
             }
                     
             
@@ -103,6 +156,9 @@ public class HighscoreWindow : MonoBehaviour
 
 
         }
+
+        GameObject.Instantiate(templateMore, _parent);
+        
 
     }
 

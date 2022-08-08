@@ -185,7 +185,7 @@ public class Player : MonoBehaviour
 
     }
 
-    public void AddNewPlayerTiles()
+    public List<int> AddNewPlayerTiles( bool shouldHighlight = true)
     {
 
         //Board.instance.AllTilesNumbers[0] = (2);
@@ -194,6 +194,8 @@ public class Player : MonoBehaviour
         //Board.instance.AllTilesNumbers[3]=(10);
         //Board.instance.AllTilesNumbers[4] =(4);
         //Board.instance.AllTilesNumbers[5]=(3);
+
+        List<int> addedTiles = new List<int>();
 
         if (Startup._instance.isFake)
         {
@@ -215,18 +217,21 @@ public class Player : MonoBehaviour
                     myTiles.Add(go.GetComponent<Tile>());
                     go.GetComponent<Tile>().Init(Board.instance.AllTilesNumbers[0]);
                 go.GetComponent<Tile>().TileParent = tileParent;
+                addedTiles.Add(Board.instance.AllTilesNumbers[0]);
+
                 Board.instance.AllTilesNumbers.RemoveAt(0);
+
                 }
 
             }
             GameManager.instance.tileLeft.text = Board.instance.AllTilesNumbers.Count.ToString();
 
-        if(PlayerBoard.instance.myPlayer == this)
+        if(PlayerBoard.instance.myPlayer == this && shouldHighlight)
             Board.instance.LoadLastUsedTiles(PlayerBoard.instance.myPlayer.myTiles);
 
 
 
- 
+        return addedTiles;
 
 
     }

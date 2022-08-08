@@ -47,6 +47,134 @@ public class ScoreScreen : MonoBehaviour
         if(Input.GetMouseButtonUp(0))
             Speed = 0.5f;
     }
+
+    public void GetLastMoveForUser(BoardData _bd, int aTurn)
+    {
+
+
+    }
+    public void SetLastScoreNotYournTurn(BoardData _bd)
+    {
+        List<string> moveHistory = _bd.History;
+        List<FakeTileData> lastMoves = new List<FakeTileData>();
+
+        int myBackednTurn = _bd.GetPlayerTurn(GameManager.instance.CurrentTurn);
+
+        if (moveHistory == null)
+            return;
+
+
+        int LastMoveIndex = 0;
+        for (int i = moveHistory.Count - 1; i >= 0; i--)
+        {
+            if (moveHistory[i].Contains( "#SWAP#") || moveHistory[i] == "#EMPTY#" || moveHistory[i].Contains("#TILESONHAND"))
+            {
+                break;
+            }
+            string[] moveInfo = moveHistory[i].Split('#');
+            FakeTileData ftd = new FakeTileData();
+            ftd.Position = StringToVector2(moveInfo[0]);
+            ftd.Number = int.Parse(moveInfo[1]);
+            ftd.ScoreValue = int.Parse(moveInfo[2]);
+            ftd.Player = int.Parse(moveInfo[3]);
+            ftd.SpecialTypeTile = 0;
+            if (moveInfo.Length > 4)
+                ftd.SpecialTypeTile = int.Parse(moveInfo[4]);
+
+
+
+            if (myBackednTurn != ftd.Player)
+            {
+                lastMoves.Add(ftd);
+            }
+            else
+            {
+                break;
+            }
+            LastMoveIndex = i;
+        }
+
+
+        int totalScore1 = 0;
+        for (int i = 0; i < lastMoves.Count; i++)
+        {
+            totalScore1 += lastMoves[i].ScoreValue;
+        }
+        int addition1 = 0;
+        if (lastMoves.Count == 6)
+            addition1 = 50;
+        GameManager.instance.thePlayers[0].LastScore = totalScore1 + addition1;
+
+
+        lastMoves.Clear();
+        if (moveHistory != null)
+            if (moveHistory.Count > 0)
+                if (moveHistory[moveHistory.Count - 1].Contains( "#SWAP#"))
+                {
+
+                    LastMoveIndex = moveHistory.Count - 0;
+
+                }
+        if (moveHistory != null)
+            if (moveHistory.Count > 0)
+                if (moveHistory[moveHistory.Count - 1] == "#EMPTY#")
+                {
+
+                    LastMoveIndex = moveHistory.Count - 1;
+
+                }
+
+        for (int i = LastMoveIndex - 2; i >= 0; i--)
+        {
+            if (moveHistory[i].Contains( "#SWAP#") || moveHistory[i] == "#EMPTY#" || moveHistory[i].Contains("#TILESONHAND"))
+            {
+                break;
+            }
+            string[] moveInfo = moveHistory[i].Split('#');
+            FakeTileData ftd = new FakeTileData();
+            ftd.Position = StringToVector2(moveInfo[0]);
+            ftd.Number = int.Parse(moveInfo[1]);
+            ftd.ScoreValue = int.Parse(moveInfo[2]);
+            ftd.Player = int.Parse(moveInfo[3]);
+            ftd.SpecialTypeTile = 0;
+            if (moveInfo.Length > 4)
+                ftd.SpecialTypeTile = int.Parse(moveInfo[4]);
+
+
+
+            if (myBackednTurn == ftd.Player)
+            {
+                lastMoves.Add(ftd);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        int totalScore = 0;
+        for (int i = 0; i < lastMoves.Count; i++)
+        {
+            totalScore += lastMoves[i].ScoreValue;
+        }
+        int addition = 0;
+        if (lastMoves.Count == 6)
+            addition = 50;
+        GameManager.instance.thePlayers[1].LastScore = totalScore + addition;
+        GameManager.instance.UpdateUI();
+
+
+
+
+
+
+
+
+
+
+
+
+    }
     public void SetYourLastScore(BoardData _bd, int lastMoveIndex)
     {
         List<string> moveHistory = _bd.History;
@@ -76,7 +204,7 @@ public class ScoreScreen : MonoBehaviour
 
         for (int i = lastMoveIndex-1; i >= 0; i--)
         {
-            if (moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#" || moveHistory[i].Contains("#TILESONHAND"))
+            if (moveHistory[i].Contains( "#SWAP#") || moveHistory[i] == "#EMPTY#" || moveHistory[i].Contains("#TILESONHAND"))
             {
                 break;
             }
@@ -128,7 +256,7 @@ public class ScoreScreen : MonoBehaviour
 
         if(moveHistory != null)
         if(moveHistory.Count>0)
-        if(moveHistory[moveHistory.Count-1]== "#SWAP#")
+        if(moveHistory[moveHistory.Count-1].Contains( "#SWAP#"))
         {
                     
             AlertText.instance.ShowAlert(GameManager.instance.thePlayers[1].Username+ " swapped!",0.8f);
@@ -139,7 +267,8 @@ public class ScoreScreen : MonoBehaviour
         if (moveHistory.Count > 0)
         if (moveHistory[moveHistory.Count - 1] == "#EMPTY#")
         {
-            AlertText.instance.ShowAlert("No tiles placed!", 0.5f);
+                    
+            AlertText.instance.ShowAlert(_bd.GetOtherPlayer()+" placed no tiles!", 0.5f);
             SetYourLastScore(_bd, moveHistory.Count - 2);
             return;
         }
@@ -150,7 +279,7 @@ public class ScoreScreen : MonoBehaviour
         int LastMoveIndex = 0;
         for (int i = moveHistory.Count-1; i>=0 ;i--)
         {
-            if (moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#" || moveHistory[i].Contains("#TILESONHAND"))
+            if (moveHistory[i].Contains( "#SWAP#") || moveHistory[i] == "#EMPTY#" || moveHistory[i].Contains("#TILESONHAND"))
             {
                 break;
             }
@@ -553,7 +682,7 @@ public class ScoreScreen : MonoBehaviour
         Board.instance.LoadLastUsedTiles(PlayerBoard.instance.myPlayer.myTiles);
         // yield return new WaitForSeconds(1.0f);
         yield return new WaitForSeconds(0.1f);
-        thePlayer.AddNewPlayerTiles();
+        thePlayer.AddNewPlayerTiles(false);
         PlayerBoard.instance.RefreshLayout();
         yield return new WaitForSeconds(0.1f);
         bool isEmptyTurn = false;
@@ -590,6 +719,9 @@ public class ScoreScreen : MonoBehaviour
         {
             OnTurnWasSent();
         }
+
+        if (PlayerBoard.instance.myPlayer == thePlayer)
+            Board.instance.LoadLastUsedTiles(PlayerBoard.instance.myPlayer.myTiles);
 
     }
 

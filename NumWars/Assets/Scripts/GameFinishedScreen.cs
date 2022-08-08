@@ -115,7 +115,7 @@ public Text p1_name;
             p2_score.text = bf.player2_score;
             p2_wins.text = "-";
 
-            if (bf.hasFinished == false && isOpenGame)
+            if (bf.hasFinished == false && isOpenGame && bf.player2_displayName != "AI")
             {
                 if (int.Parse(bf.player1_score) > int.Parse(bf.player2_score))
                     Startup._instance.AdjustThropies(30, bf.player2_PlayfabId, bf.player2_displayName, int.Parse(bf.player1_score));
@@ -139,7 +139,7 @@ public Text p1_name;
             p1_score.text = bf.player2_score;
             p1_wins.text = "-";
 
-            if (bf.hasFinished == false && isOpenGame)
+            if (bf.hasFinished == false && isOpenGame && bf.player2_displayName != "AI")
             {
                 if (int.Parse(bf.player2_score) > int.Parse(bf.player1_score))
                     Startup._instance.AdjustThropies(30, bf.player1_PlayfabId, bf.player1_displayName, int.Parse(bf.player2_score));
@@ -225,45 +225,125 @@ public Text p1_name;
 
         //PlayerPrefs.SetString("ChallengePlayerAgain", lastBF.GetOtherPlayerPlayfab());
 
-        
+
+        contineAfterCallButton.enabled = false;
+        contineAfterCallButton.transform.GetChild(0).GetComponent<Text>().text = "Loading...";
 
 
-        bool hasActiveGame = false;
-        for (int i = 0; i < Startup.instance.openGamesList.Count; i++)
-        {
-            if ((Startup.instance.openGamesList[i].player1_PlayfabId == lastBF.GetOtherPlayerPlayfab() || Startup.instance.openGamesList[i].player2_PlayfabId == lastBF.GetOtherPlayerPlayfab())
-                && lastBF.RoomName != Startup.instance.openGamesList[i].RoomName)
+        PlayfabCallbackHandler.instance.GetSharedDataGrouped2(Startup.instance.MyPlayfabID, result2 => {
+
+            IEnumerable test = (IEnumerable)result2.FunctionResult;
+            List<BoardData> gameList = new List<BoardData>();
+            foreach (IEnumerable item in test)
             {
-                hasActiveGame = true;
-            }
-        }
 
-        if (hasActiveGame == false)
-        {
-            challengeWindow.SetActive(true);
-
-            float posX = challengeWindow.transform.GetChild(0).transform.position.x;
-            challengeWindow.transform.GetChild(0).transform.position -= new Vector3(10, 0, 0);
-            challengeWindow.transform.GetChild(0).DOMoveX(posX, 0.5f).SetEase(Ease.InOutQuart);
-
-            challengeWindow.GetComponent<Image>().color = new Color(0, 0, 0, 0);
-            challengeWindow.GetComponent<Image>().DOFade(107f / 255f, 0.5f).SetEase(Ease.InOutQuart).SetDelay(0.1f);
-
-
-
-            float posX2 = transform.GetChild(0).transform.position.x;
-            transform.GetChild(0).DOMoveX(posX2 + 10, 0.5f).SetEase(Ease.InOutQuart);
-        }
-        else
-        {
-            SceneManager.LoadScene(0);
-            Startup._instance.Refresh(0.1f);
-            if (Startup._instance.avatarURL != null)
-                if (Startup._instance.avatarURL.Length > 0)
+                char[] t = item.ToString().ToCharArray();
+                List<int> b = new List<int>();
+                for (int i = 0; i < t.Length; i++)
                 {
-                    PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+                    b.Add((t[i]));
                 }
-        }
+                string con = PlayfabHelperFunctions.Decompress(b);
+                gameList.Add(new BoardData(con));
+            }
+
+            bool foundActiveGame = false;
+            for (int i = 0; i < gameList.Count; i++)
+            {
+                if (gameList[i].player1_PlayfabId == Startup._instance.MyPlayfabID || gameList[i].player2_PlayfabId == Startup._instance.MyPlayfabID &&
+                    gameList[i].player1_PlayfabId == lastBF.GetOtherPlayerPlayfab() || gameList[i].player2_PlayfabId == lastBF.GetOtherPlayerPlayfab())
+                    foundActiveGame = true;
+            }
+
+
+
+            if (foundActiveGame == false)
+            {
+
+
+                challengeWindow.SetActive(true);
+
+                float posX = challengeWindow.transform.GetChild(0).transform.position.x;
+                challengeWindow.transform.GetChild(0).transform.position -= new Vector3(10, 0, 0);
+                challengeWindow.transform.GetChild(0).DOMoveX(posX, 0.5f).SetEase(Ease.InOutQuart);
+
+                challengeWindow.GetComponent<Image>().color = new Color(0, 0, 0, 0);
+                challengeWindow.GetComponent<Image>().DOFade(107f / 255f, 0.5f).SetEase(Ease.InOutQuart).SetDelay(0.1f);
+
+
+
+                float posX2 = transform.GetChild(0).transform.position.x;
+                transform.GetChild(0).DOMoveX(posX2 + 10, 0.5f).SetEase(Ease.InOutQuart);
+
+
+            }
+            else
+            {
+
+                SceneManager.LoadScene(0);
+                Startup._instance.Refresh(0.1f);
+                if (Startup._instance.avatarURL != null)
+                    if (Startup._instance.avatarURL.Length > 0)
+                    {
+                        PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+                    }
+
+
+
+            }
+
+
+
+
+
+        }, error => {
+            Debug.Log("Got error retrieving user when challenging data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
+
+
+
+
+
+
+
+
+        //bool hasActiveGame = false;
+        //for (int i = 0; i < Startup.instance.openGamesList.Count; i++)
+        //{
+        //    if ((Startup.instance.openGamesList[i].player1_PlayfabId == lastBF.GetOtherPlayerPlayfab() || Startup.instance.openGamesList[i].player2_PlayfabId == lastBF.GetOtherPlayerPlayfab())
+        //        && lastBF.RoomName != Startup.instance.openGamesList[i].RoomName)
+        //    {
+        //        hasActiveGame = true;
+        //    }
+        //}
+
+        //if (hasActiveGame == false)
+        //{
+        //    challengeWindow.SetActive(true);
+
+        //    float posX = challengeWindow.transform.GetChild(0).transform.position.x;
+        //    challengeWindow.transform.GetChild(0).transform.position -= new Vector3(10, 0, 0);
+        //    challengeWindow.transform.GetChild(0).DOMoveX(posX, 0.5f).SetEase(Ease.InOutQuart);
+
+        //    challengeWindow.GetComponent<Image>().color = new Color(0, 0, 0, 0);
+        //    challengeWindow.GetComponent<Image>().DOFade(107f / 255f, 0.5f).SetEase(Ease.InOutQuart).SetDelay(0.1f);
+
+
+
+        //    float posX2 = transform.GetChild(0).transform.position.x;
+        //    transform.GetChild(0).DOMoveX(posX2 + 10, 0.5f).SetEase(Ease.InOutQuart);
+        //}
+        //else
+        //{
+        //    SceneManager.LoadScene(0);
+        //    Startup._instance.Refresh(0.1f);
+        //    if (Startup._instance.avatarURL != null)
+        //        if (Startup._instance.avatarURL.Length > 0)
+        //        {
+        //            PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+        //        }
+        //}
 
 
 
@@ -279,20 +359,62 @@ public Text p1_name;
         //PlayfabHelperFunctions.instance.SetPlayfabCreatedRoom(Startup._instance.MyPlayfabID, newRoomName);
 
 
-        
-
-        PlayfabHelperFunctions.instance.ChallengePlayer(Startup._instance.MyPlayfabID, lastBF.GetOtherPlayerPlayfab(), lastBF.GetOtherPlayer(), newRoomName);
-        PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(lastBF.GetOtherPlayerPlayfab(), newRoomName);
-        PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(Startup._instance.MyPlayfabID, newRoomName);
-
-        StartCoroutine(ChallengeProgress());
-
-
         challengeWindow.transform.GetChild(0).GetChild(1).gameObject.SetActive(false);
         challengeWindow.transform.GetChild(0).GetChild(2).gameObject.SetActive(false);
         challengeWindow.transform.GetChild(0).GetChild(3).gameObject.SetActive(true);
 
+        PlayfabCallbackHandler.instance.GetSharedDataGrouped2(Startup.instance.MyPlayfabID, result2 => {
 
+
+
+
+
+            IEnumerable test = (IEnumerable)result2.FunctionResult;
+            List<BoardData> gameList = new List<BoardData>();
+            foreach (IEnumerable item in test)
+            {
+
+                char[] t = item.ToString().ToCharArray();
+                List<int> b = new List<int>();
+                for (int i = 0; i < t.Length; i++)
+                {
+                    b.Add((t[i]));
+                }
+                string con = PlayfabHelperFunctions.Decompress(b);
+                gameList.Add(new BoardData(con));
+            }
+
+            bool foundActiveGame = false;
+            for(int i = 0; i < gameList.Count;i++)
+            {
+                if (gameList[i].player1_PlayfabId == Startup._instance.MyPlayfabID || gameList[i].player2_PlayfabId == Startup._instance.MyPlayfabID &&
+                    gameList[i].player1_PlayfabId == lastBF.GetOtherPlayerPlayfab() || gameList[i].player2_PlayfabId == lastBF.GetOtherPlayerPlayfab())
+                    foundActiveGame = true;
+            }
+
+
+            
+            if(foundActiveGame == false)
+            {
+                PlayfabHelperFunctions.instance.ChallengePlayer(Startup._instance.MyPlayfabID, lastBF.GetOtherPlayerPlayfab(), lastBF.GetOtherPlayer(), newRoomName);
+                PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(lastBF.GetOtherPlayerPlayfab(), newRoomName);
+                PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(Startup._instance.MyPlayfabID, newRoomName);
+
+                StartCoroutine(ChallengeProgress());
+            }
+            else
+            {
+                ChallengeAgainNo();
+            }
+      
+
+
+
+
+        }, error => {
+            Debug.Log("Got error retrieving user when challenging data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
 
     }
 

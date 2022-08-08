@@ -95,7 +95,7 @@ public class LoadingOverlay : MonoBehaviour
             if (loadingTime > 1)
                 loadingTime = 1;
 
-            log.text = (100 * loadingTime).ToString("F0") + "%";
+            log.text = (99 * loadingTime).ToString("F0") + "%";
         }
 
     }
@@ -144,6 +144,11 @@ public class LoadingOverlay : MonoBehaviour
     {
         timer = -1;
           transform.GetChild(0).gameObject.SetActive(true);
+
+        if(targetAlpha != 1)
+        {
+            loadingTick  = 0;
+        }
 
         transform.GetChild(0).GetComponent<CanvasGroup>().alpha = 1;
         targetAlpha = 1;

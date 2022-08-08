@@ -72,7 +72,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public static long TIMEOUT = 60 * 60 * 24 * 2;
 
-    public static string LIVE_VERSION = "11";
+    public static string LIVE_VERSION = "16";
 
     // public static long TIMEOUT = 60+60+60;
 
@@ -207,9 +207,8 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
 #if UNITY_IOS
+        UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert | UnityEngine.iOS.NotificationType.Badge | UnityEngine.iOS.NotificationType.Sound, true);
 
-        StartCoroutine(RequestAuthorization());
-       // UnityEngine.iOS.NotificationServices.RegisterForNotifications(UnityEngine.iOS.NotificationType.Alert | UnityEngine.iOS.NotificationType.Badge | UnityEngine.iOS.NotificationType.Sound, true);
 #endif
 
 
@@ -250,7 +249,7 @@ public class Startup : MonoBehaviourPunCallbacks
             pushToken = req.DeviceToken;
             Debug.Log(res);
 
-            
+            StartCoroutine(RegisterPush());
         }
 
 }
@@ -296,7 +295,9 @@ public class Startup : MonoBehaviourPunCallbacks
 #endif
     public void StartPushSer()
     {
-        StartCoroutine(RegisterPush());
+#if UNITY_IOS
+        StartCoroutine(RequestAuthorization());
+#endif
     }
     float timeSinceFocus = 0;
     private void OnApplicationPause(bool pause)
@@ -438,7 +439,7 @@ public class Startup : MonoBehaviourPunCallbacks
                 if (pushToken.Length <= 0)
                     request.DeviceToken = System.BitConverter.ToString(token).Replace("-", "").ToLower();
                 else
-                    request.DeviceToken = pushToken.Replace("-", "").ToLower();
+                    request.DeviceToken = pushToken;
 
                 PlayFabClientAPI.RegisterForIOSPushNotification(request, (RegisterForIOSPushNotificationResult result) =>
                 {
@@ -446,12 +447,23 @@ public class Startup : MonoBehaviourPunCallbacks
                 }, error =>
                 {
                     Debug.Log("Got error registering Push");
-
-
                 });
             }
             else
             {
+                RegisterForIOSPushNotificationRequest request = new RegisterForIOSPushNotificationRequest();
+
+                request.DeviceToken = pushToken;
+
+                PlayFabClientAPI.RegisterForIOSPushNotification(request, (RegisterForIOSPushNotificationResult result) =>
+                {
+                    Debug.Log("Push Registration Successful");
+                }, error =>
+                {
+                    Debug.Log("Got error registering Push");
+                });
+
+
                 Debug.Log("Push Token was null!");
             }
 
@@ -799,11 +811,12 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
             string[] oldGameList =null;
-            if (GetComponent<Startup>().myData.ContainsKey("OldGames"))
-            {
-                oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
-            }
-            else if(PlayerPrefs.HasKey("OldGames"))
+            //if (GetComponent<Startup>().myData.ContainsKey("OldGames"))
+            //{
+            //    oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
+            //}
+            //else
+            if (PlayerPrefs.HasKey("OldGames"))
             {
                 oldGameList = PlayerPrefs.GetString("OldGames").Split(stringSeparators, System.StringSplitOptions.None);
             }
@@ -813,26 +826,85 @@ public class Startup : MonoBehaviourPunCallbacks
                 if (LoadingOverlay.instance != null)
                     LoadingOverlay.instance.ShowLoadingFullscreen("Getting old games!");
 
-                PlayFabClientAPI.GetUserData(new GetUserDataRequest()
-                {
-                    PlayFabId = Startup._instance.MyPlayfabID,
-                    Keys = new List<string> { "OldGames" },
-                }, result => {
+
+
+                PlayfabCallbackHandler.instance.GetFilesRequest((result) => {
 
                     if (LoadingOverlay.instance != null)
                         LoadingOverlay.instance.DoneLoading("Getting old games!");
 
-                    PlayerPrefs.SetString("OldGames", result.Data["OldGames"].Value );
+                    PlayerPrefs.SetString("OldGames", result);
 
                     Refresh();
 
-
                 }, (error) => {
+
                     if (LoadingOverlay.instance != null)
                         LoadingOverlay.instance.DoneLoading("Getting old games!");
 
+
+                    PlayfabCallbackHandler.instance.GetUserDataOldGames((result)=>
+                    {
+                            PlayerPrefs.SetString("OldGames", result.Data["OldGames"].Value);
+
+                                                if (LoadingOverlay.instance != null)
+                                                    LoadingOverlay.instance.ShowLoadingFullscreen("Set Old games from userdata!");
+
+                                                PlayfabCallbackHandler.instance.InitiateFileUploads((result) => {
+
+                                                    if (LoadingOverlay.instance != null)
+                                                        LoadingOverlay.instance.DoneLoading("Set Old games from userdata!");
+
+                                                    Refresh();
+
+                                                },
+                                                    error => {
+
+
+                                                        if (LoadingOverlay.instance != null)
+                                                            LoadingOverlay.instance.DoneLoading("Set Old games from userdata!");
+
+                                                        Refresh();
+                                                    });
+                                                    
+
+
+
+                    }, (error) => { Debug.LogError("Bug no old games value!"); });
+
+
                     Debug.LogError("BUG GETTING OLD GAMES!");
+
                 });
+
+
+
+
+                //PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+                //{
+                //    PlayFabId = Startup._instance.MyPlayfabID,
+                //    Keys = new List<string> { "OldGames" },
+                //}, result => {
+
+                //    if (LoadingOverlay.instance != null)
+                //        LoadingOverlay.instance.DoneLoading("Getting old games!");
+
+                //    PlayerPrefs.SetString("OldGames", result.Data["OldGames"].Value );
+
+                //    Refresh();
+
+
+                //}, (error) => {
+                //    if (LoadingOverlay.instance != null)
+                //        LoadingOverlay.instance.DoneLoading("Getting old games!");
+
+                //    Debug.LogError("BUG GETTING OLD GAMES!");
+                //});
+
+
+
+
+
                 return;
             }
 
@@ -929,7 +1001,8 @@ public class Startup : MonoBehaviourPunCallbacks
 
                     for (int i = 0; i < openGamesList.Count; i++)
                     {
-                        if (openGamesList[i].player1_displayName == theM || openGamesList[i].player2_displayName == theM)
+                        if (openGamesList[i].player1_displayName == theM || openGamesList[i].player2_displayName == theM &&
+                            int.Parse(openGamesList[i].EmptyTurns) < 4)
                         {
                             Startup._instance.GameToLoad = openGamesList[i];
                             SceneManager.LoadScene(1);
@@ -1088,11 +1161,13 @@ public class Startup : MonoBehaviourPunCallbacks
 
         string[] stringSeparators = new string[] { "[splitter]" };
         string[] oldGameList = null;
-        if (GetComponent<Startup>().myData.ContainsKey("OldGames"))
-        {
-            oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
-        }
-        else if (PlayerPrefs.HasKey("OldGames"))
+        //if (GetComponent<Startup>().myData.ContainsKey("OldGames"))
+        //{
+        //    oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
+        //}
+        //else
+
+        if (PlayerPrefs.HasKey("OldGames"))
         {
             oldGameList = PlayerPrefs.GetString("OldGames").Split(stringSeparators, System.StringSplitOptions.None);
         }
@@ -1200,10 +1275,10 @@ public class Startup : MonoBehaviourPunCallbacks
     {
         myData["Ranking"].Value = (int.Parse(myData["Ranking"].Value) + aValue).ToString();
 
-        _PlayfabHelperFunctions.SubmitHighscore(int.Parse( myData["Ranking"].Value ));
+
         
         
-        _PlayfabHelperFunctions.ChangeValueFor("Ranking", myData["Ranking"].Value);
+        //_PlayfabHelperFunctions.ChangeValueFor("Ranking", myData["Ranking"].Value);
 
         if (opponentPlayfabId == "")
             opponentPlayfabId = "AI";
@@ -1217,22 +1292,47 @@ public class Startup : MonoBehaviourPunCallbacks
             StatsData newData = new StatsData();
             newData.FinishedGames.Add(new StatsGame(opponentPlayfabId, opponentDisplayName,winnerId));
 
-            UpdateStatsData(newData.GetJson());
+            UpdateStatsDataNoUpdate(newData.GetJson());
         }
         else
         {
             StatsData newData = new StatsData(myData["StatsData"].Value);
             newData.FinishedGames.Add(new StatsGame(opponentPlayfabId, opponentDisplayName, winnerId));
-            UpdateStatsData(newData.GetJson());
+            UpdateStatsDataNoUpdate(newData.GetJson());
         }
 
         if(aValue>0)
-            AchivmentController.instance.WonGame(aTotalScore);
+            AchivmentController.instance.WonGame(aTotalScore,false);
         else
-            AchivmentController.instance.LostGame(aTotalScore);
+            AchivmentController.instance.LostGame(aTotalScore,false);
 
 
-        AddXP(85);
+        //AddXP(85);
+
+
+
+
+        string achivemntData = JsonUtility.ToJson(new AchivmentList(AchivmentController.instance.myAchivments, AchivmentController.instance.myStatistics, AchivmentController.instance.myAIStatistics));
+
+        myData["XP"].Value = (int.Parse(myData["XP"].Value) + aValue).ToString();
+
+        PlayfabCallbackHandler.instance.UpdateUserDataGrouped(
+            new Dictionary<string, string>() {
+                {"Ranking", myData["Ranking"].Value},
+                {"XP", myData["XP"].Value},
+                {"StatsData", myData["StatsData"].Value},
+                {"Achivments", achivemntData},
+            }
+            , null,null);
+
+
+        List<StatisticUpdate> list = new List<StatisticUpdate>();
+        list.Add(new StatisticUpdate{StatisticName = "Highscore",Value = int.Parse(myData["Ranking"].Value)});
+        list.Add(new StatisticUpdate { StatisticName = "Experience", Value = int.Parse(myData["XP"].Value) });
+        PlayfabCallbackHandler.instance.UpdatePlayerStatisticsGrouped(list, null,null);
+
+        //_PlayfabHelperFunctions.SubmitHighscore(int.Parse(myData["Ranking"].Value));
+        //_PlayfabHelperFunctions.SubmitExperience(int.Parse(myData["XP"].Value));
 
     }
 
@@ -1252,6 +1352,12 @@ public class Startup : MonoBehaviourPunCallbacks
         myData["StatsData"].Value = aStatsData;
 
         _PlayfabHelperFunctions.ChangeValueFor("StatsData", myData["StatsData"].Value);
+    }
+    public void UpdateStatsDataNoUpdate(string aStatsData)
+    {
+        myData["StatsData"].Value = aStatsData;
+
+        //_PlayfabHelperFunctions.ChangeValueFor("StatsData", myData["StatsData"].Value);
     }
     public StatsData GetStatsData()
     {

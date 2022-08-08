@@ -257,6 +257,20 @@ public class GameManager : MonoBehaviour
             
             if (int.Parse(Startup._instance.GameToLoad.EmptyTurns) >= 4)
                 ScoreScreen.instance.ShowScoreLastPlay(true,Startup._instance.GameToLoad);
+
+            if(Startup._instance.GameToLoad != null)
+            {
+                List<string> moveHistory = Startup._instance.GameToLoad.History;
+                if (moveHistory != null)
+                    if (moveHistory.Count > 0)
+                        {
+                            ScoreScreen.instance.SetLastScoreNotYournTurn(Startup._instance.GameToLoad);
+                        }
+            }
+    
+
+                        
+
         }
         else
         {
@@ -300,7 +314,8 @@ public class GameManager : MonoBehaviour
                 updatedBoard.player2_abandon = "0";
                 updatedBoard.EmptyTurns = AIGAME_EMPTY_TURNS.ToString();
 
-                PlayerPrefs.SetString("AIGame", updatedBoard.GetJson());
+                if (TutorialController.instance == null)
+                    PlayerPrefs.SetString("AIGame", updatedBoard.GetJson());
 
                 int turn = Random.Range(0, 2);
                 if(turn>0)
@@ -509,7 +524,7 @@ public class GameManager : MonoBehaviour
 
     private void OnGUI()
     {
-        if (Startup.DEBUG_TOOLS == false)
+       // if (Startup.DEBUG_TOOLS == false)
             return;
 
         GUI.skin.textField.fontSize = 24;
@@ -810,7 +825,8 @@ public class GameManager : MonoBehaviour
 
             if (shouldAddToAI)
             {
-                PlayerPrefs.SetString("AIGame", updatedBoard.GetJson());
+                if (TutorialController.instance == null)
+                    PlayerPrefs.SetString("AIGame", updatedBoard.GetJson());
                 Board.instance.boardData = updatedBoard;
             }
 
@@ -871,7 +887,7 @@ public class GameManager : MonoBehaviour
         {
             string[] moveInfo = moveHistory[i].Split('#');
 
-            if( moveHistory[i] != "#SWAP#" && moveHistory[i] != "#EMPTY#" && !moveHistory[i].Contains("#TILESONHAND"))
+            if( !moveHistory[i].Contains( "#SWAP#") && moveHistory[i] != "#EMPTY#" && !moveHistory[i].Contains("#TILESONHAND"))
             {
                 Vector2 v2 = ScoreScreen.StringToVector2(moveInfo[0]);
                 Board.instance.SetTileColor((int)(v2.x), (int)(v2.y), Color.white);
@@ -883,7 +899,7 @@ public class GameManager : MonoBehaviour
         if (moveHistory != null)
             for (int i = moveHistory.Count - 1; i >= 0; i--)
         {
-            if( moveHistory[i] == "#SWAP#" || moveHistory[i] == "#EMPTY#"  || moveHistory[i].Contains("#TILESONHAND"))
+            if( moveHistory[i].Contains( "#SWAP#") || moveHistory[i] == "#EMPTY#"  || moveHistory[i].Contains("#TILESONHAND"))
             {
                 break;
             }

@@ -48,6 +48,10 @@ public class MainMenuController : MonoBehaviour
 
     public GameObject UpdateWindow;
 
+    public GameObject adv1;
+    public GameObject adv2;
+    public GameObject adv3;
+
 
     // Start is called before the first frame update
     void Start()
@@ -587,6 +591,38 @@ public void PressOpenFriendsWindow()
 
         }
 
+
+    }
+    int aTest = 0;
+    public void ToggleAdvanced()
+    {
+        bool toggle = !adv2.activeSelf;
+
+
+            adv2.SetActive(toggle);
+        adv3.SetActive(toggle);
+        
+        aTest++;
+        if (aTest>3)
+        {
+            adv1.SetActive(toggle);
+            aTest = 0;
+
+        }
+        else
+        {
+            adv1.SetActive(false);
+        }
+
+        
+    }
+    public void SyncData()
+    {
+        PlayerPrefs.DeleteKey("OldGames");
+        SceneManager.LoadScene(0);
+        if (LoadingOverlay.instance != null)
+            LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
+        Startup._instance.Refresh(0.1f);
 
     }
 }

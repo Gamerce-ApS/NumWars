@@ -107,22 +107,27 @@ public class PlayfabHelperFunctions : MonoBehaviour
             playerID = "asdafsfsdf2";
 
 
-        playerID = "asdafsfsdf3";
-        //   playerID = "peterag";
+        // playerID = "asdafsfsdf3";
+
+        //  playerID = "asdafsfsdf4";
+       //    playerID = "peterag";
         // playerID = "A4244F897FA3FE09";
 
 
         // playerID = "Villads123";
         //  playerID = "PaxMM";
         // playerID = "steffen123";
-        //  playerID = "hmt";
-         playerID = "mike";
+        //   playerID = "hmt";
+        //  playerID = "mike";
         //  playerID = "kasper";
-        // playerID = "Kvotekongen";
+        //  playerID = "Kvotekongen";
         //  playerID = "skatemin";
         //    playerID = "Kristine";
 
 
+      //  playerID = "annellla";
+
+        
 
         instance = this;
         LoadingOverlay.instance.ShowLoadingFullscreen("LoginWithCustomID");
@@ -548,12 +553,12 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
         if (Input.GetKeyUp(KeyCode.H))
         {
-            string[] stringSeparators = new string[] { "[splitter]" };
+            //string[] stringSeparators = new string[] { "[splitter]" };
 
-            string[] oldGameList = null;
+            //string[] oldGameList = null;
 
 
-            oldGameList = PlayerPrefs.GetString("OldGames").Split(stringSeparators, System.StringSplitOptions.None);
+            //oldGameList = PlayerPrefs.GetString("OldGames").Split(stringSeparators, System.StringSplitOptions.None);
 
 
 
@@ -595,105 +600,53 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
 
+            //    PlayFabCloudScriptAPI.ExecuteEntityCloudScript(new ExecuteEntityCloudScriptRequest()
+            //    { 
+            //        FunctionName = "getfileTest",
+            //        FunctionParameter = new Dictionary<string, object>() {
+            //    { "PlayFabId", Startup.instance.MyPlayfabID }
+            //}
+            //    }, result => {
+
+            //        Debug.Log(result.CustomData);
+
+            //    }, error => Debug.LogError(error.GenerateErrorReport()));
 
 
 
-
-
-            var request = new PlayFab.DataModels.InitiateFileUploadsRequest
+            PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
             {
-                Entity = new PlayFab.DataModels.EntityKey { Id = entityId, Type = entityType },
-                FileNames = new List<string> { "OldGamesData" },
-            };
-            PlayFabDataAPI.InitiateFileUploads(request, OnInitFileUpload, OnInitFailed);
+                FunctionName = "ClearOldGames",
+                FunctionParameter = new Dictionary<string, object>() {
+            { "PlayFabId", Startup.instance.MyPlayfabID }
+        }
+            }, result2 => {
+
+
+
+                Debug.Log(result2.Logs);
+
+
+            }, error =>
+            {
+                Debug.LogError(error.GenerateErrorReport());
+            }
+            );
+
 
         }
 
 
         if (Input.GetKeyUp(KeyCode.J))
         {
-            var request = new PlayFab.DataModels.GetFilesRequest { Entity = new PlayFab.DataModels.EntityKey { Id = entityId, Type = entityType } };
-            PlayFabDataAPI.GetFiles(request, OnGetFileMeta, OnSharedFailure);
-        }
-
-
-
-    }
-    void OnGetFileMeta(PlayFab.DataModels.GetFilesResponse result)
-    {
-        Debug.Log("Loading " + result.Metadata.Count + " files");
-
-        foreach (var eachFilePair in result.Metadata)
-        {
-            GetActualFile(eachFilePair.Value);
-        }
-
-    }
-    void GetActualFile(PlayFab.DataModels.GetFileMetadata fileData)
-    {
-
-        PlayFabHttp.SimpleGetCall(fileData.DownloadUrl,
-            result => {
-
-                Debug.Log(Encoding.UTF8.GetString(result));
-
-            }, // Finish Each SimpleGetCall
-            error => { Debug.Log(error); }
-        );
-    }
-    void OnInitFailed(PlayFabError error)
-    {
-        if (error.Error == PlayFabErrorCode.EntityFileOperationPending)
-        {
-            // This is an error you should handle when calling InitiateFileUploads, but your resolution path may vary
-            var request = new PlayFab.DataModels.AbortFileUploadsRequest
-            {
-                Entity = new PlayFab.DataModels.EntityKey { Id = entityId, Type = entityType },
-                FileNames = new List<string> { "OldGamesData" },
-            };
-            PlayFabDataAPI.AbortFileUploads(request, (result) => {   }, OnSharedFailure); 
 
         }
-        else
-            OnSharedFailure(error);
-    }
-    void OnInitFileUpload(PlayFab.DataModels.InitiateFileUploadsResponse response)
-    {
-        string payloadStr = PlayerPrefs.GetString("OldGames");
 
-
-        var payload = Encoding.UTF8.GetBytes(payloadStr);
-
-        PlayFabHttp.SimplePutCall(response.UploadDetails[0].UploadUrl,
-            payload,
-            FinalizeUpload,
-            error => { Debug.Log(error); }
-        );
-    }
-
-    void FinalizeUpload(byte[] data)
-    {
-        var request = new PlayFab.DataModels.FinalizeFileUploadsRequest
-        {
-            Entity = new PlayFab.DataModels.EntityKey { Id = entityId, Type = entityType },
-            FileNames = new List<string> { "OldGamesData" },
-        };
-        PlayFabDataAPI.FinalizeFileUploads(request, OnUploadSuccess, OnSharedFailure);
-    }
-    void OnUploadSuccess(PlayFab.DataModels.FinalizeFileUploadsResponse result)
-    {
-        Debug.Log("File upload success: " + "OldGamesData");
-    }
-    void OnSharedFailure(PlayFabError error)
-    {
-        Debug.LogError(error.GenerateErrorReport());
-
-    }
-    void UploadFile(string fileName)
-    {
 
 
     }
+
+
 
 
     public void UpdateDisplayName(string aName)
@@ -770,7 +723,17 @@ public class PlayfabHelperFunctions : MonoBehaviour
             SharedGroupId = roomName
         }, result3 => {
 
-                                Board.instance.GenerateStartBoard(int.Parse(Startup._instance.StaticServerData["TilesAmount"]), PlayerPrefs.GetInt("BoardLayout", 0).ToString());
+            if(PlayerPrefs.HasKey("BoardLayout") == false)
+                PlayerPrefs.SetInt("BoardLayout", 0);
+
+            string StaticServerDataV = "-1";
+
+            if (Startup._instance != null && Startup._instance.StaticServerData != null && Startup._instance.StaticServerData.ContainsKey("TilesAmount"))
+                StaticServerDataV = Startup._instance.StaticServerData["TilesAmount"];
+
+            
+
+                                Board.instance.GenerateStartBoard(int.Parse(StaticServerDataV), PlayerPrefs.GetInt("BoardLayout", 0).ToString());
                                 BoardData bd = new BoardData(playfabId, playfabId2, "1", Board.instance.BoardTiles, roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles, System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
                                 bd.player1_displayName = Startup._instance.displayName;
                                 bd.player2_displayName = player2DisplayName;
@@ -939,55 +902,76 @@ public class PlayfabHelperFunctions : MonoBehaviour
         if (LoadingOverlay.instance != null)
             LoadingOverlay.instance.ShowLoadingFullscreen("Getting old games!");
 
-        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
-        {
-            PlayFabId = Startup._instance.MyPlayfabID,
-            Keys = new List<string> { "OldGames" },
-        }, result => {
-
-            if (LoadingOverlay.instance != null)
-                LoadingOverlay.instance.DoneLoading("Getting old games!");
-
-            if (LoadingOverlay.instance != null)
-                LoadingOverlay.instance.ShowLoadingFullscreen("Removing AI!");
-
-
-            PlayerPrefs.SetString("OldGames", result.Data["OldGames"].Value);
-            GetComponent<Startup>().myData["OldGames"].Value = result.Data["OldGames"].Value;
 
 
 
-                            GetComponent<Startup>().myData["OldGames"].Value += "[splitter]" + aCompresserdAiBoard;
-                            //LoadingOverlay.instance.ShowLoading("UpdateUserData");
 
-                            PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
-                            {
-                                Data = new Dictionary<string, string>() {
-                            {"MyGames",Startup._instance.myData["MyGames"].Value},
-                            {"OldGames",Startup._instance.myData["OldGames"].Value},
-                        }
-                            },
-                            result =>
-                            {
-                            //LoadingOverlay.instance.DoneLoading("UpdateUserData");
 
-                            // This is for if we find a abandoned game we want to remove a potentail next one
 
-                            //StartCoroutine(Startup._instance.DelayRefresh());
+
+
+
+                    PlayfabCallbackHandler.instance.GetFilesRequest((result) => {
+
+                        if (LoadingOverlay.instance != null)
+                            LoadingOverlay.instance.DoneLoading("Getting old games!");
+
+                        if (LoadingOverlay.instance != null)
+                            LoadingOverlay.instance.ShowLoadingFullscreen("Removing AI!");
+
+   
+
+                        //GetComponent<Startup>().myData["OldGames"].Value = result;
+
+                        result += "[splitter]" + aCompresserdAiBoard;
+                        PlayerPrefs.SetString("OldGames", result);
+
+                        PlayfabCallbackHandler.instance.InitiateFileUploads((result) => {
+
 
                             PlayerPrefs.SetString("AIGame", "");
 
-                                Debug.Log("Removed game");
-                                if (LoadingOverlay.instance != null)
-                                    LoadingOverlay.instance.DoneLoading("Removing AI!");
-                            },
+                            Debug.Log("Removed game");
+                            if (LoadingOverlay.instance != null)
+                                LoadingOverlay.instance.DoneLoading("Removing AI!");
+
+
+                        },
                             error => {
 
 
                                 if (LoadingOverlay.instance != null)
                                     LoadingOverlay.instance.DoneLoading("Removing AI!");
-                                Debug.Log(error.GenerateErrorReport());
+   
                             });
+
+
+
+
+                        //PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+                        //    {
+                        //            Data = new Dictionary<string, string>() {
+                        //        {"MyGames",Startup._instance.myData["MyGames"].Value},
+                        //        {"OldGames",Startup._instance.myData["OldGames"].Value},
+                        //    }
+                        //    },
+                        //    result =>
+                        //    {
+       
+
+                        //    PlayerPrefs.SetString("AIGame", "");
+
+                        //        Debug.Log("Removed game");
+                        //        if (LoadingOverlay.instance != null)
+                        //            LoadingOverlay.instance.DoneLoading("Removing AI!");
+                        //    },
+                        //    error => {
+
+
+                        //        if (LoadingOverlay.instance != null)
+                        //            LoadingOverlay.instance.DoneLoading("Removing AI!");
+                        //        Debug.Log(error.GenerateErrorReport());
+                        //    });
 
 
         }, (error) => {
@@ -1012,15 +996,15 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
 
-        PlayfabCallbackHandler.instance.GetUserDataOldGames(
-             result =>
+        PlayfabCallbackHandler.instance.GetFilesRequest(
+        result =>
              {
 
                  if (LoadingOverlay.instance != null)
                      LoadingOverlay.instance.DoneLoading("Getting old games!");
 
-                 PlayerPrefs.SetString("OldGames", result.Data["OldGames"].Value);
-                 Startup._instance.myData["OldGames"] = result.Data["OldGames"];
+                 PlayerPrefs.SetString("OldGames", result);
+                 //Startup._instance.myData["OldGames"] = result.Data["OldGames"];
 
                  Startup._instance.myData["MyGames"].Value = Startup._instance.myData["MyGames"].Value.Replace("," + aSharedGroupName, "");
 
@@ -1036,65 +1020,68 @@ public class PlayfabHelperFunctions : MonoBehaviour
                      addToOld = false;
 
                  if (addToOld)
-                     GetComponent<Startup>().myData["OldGames"].Value += "[splitter]" + st;
+                     result += "[splitter]" + st;
+
+
+
+                 PlayerPrefs.SetString("OldGames", result);
+
 
                  if (LoadingOverlay.instance != null)
                      LoadingOverlay.instance.ShowLoading("UpdateUserData");
-
-                 PlayerPrefs.SetString("OldGames", Startup._instance.myData["OldGames"].Value);
-
-
-
-                 PlayfabCallbackHandler.instance.UpdateUserDataGames(Startup._instance.myData["MyGames"].Value, Startup._instance.myData["OldGames"].Value, ()=> {
+                 PlayfabCallbackHandler.instance.UpdateUserData("MyGames", Startup._instance.myData["MyGames"].Value, ()=> {
                      if (LoadingOverlay.instance != null)
                          LoadingOverlay.instance.DoneLoading("UpdateUserData");
-
-                     // This is for if we find a abandoned game we want to remove a potentail next one
-                     if (onComplete == null)
-                     {
-                         StartCoroutine(Startup._instance.DelayRefresh());
-                     }
-                     else
-                     {
-                         onComplete.Invoke();
-                     }
-
                      Debug.Log("Removed non existing SharedData room in UserData");
+
+
+
+                     if (LoadingOverlay.instance != null)
+                         LoadingOverlay.instance.ShowLoadingFullscreen("Removing game!");
+                     PlayfabCallbackHandler.instance.InitiateFileUploads((result) => {
+
+    
+                         if (LoadingOverlay.instance != null)
+                             LoadingOverlay.instance.DoneLoading("Removing game!");
+
+
+
+                         // This is for if we find a abandoned game we want to remove a potentail next one
+                         if (onComplete == null)
+                         {
+                             StartCoroutine(Startup._instance.DelayRefresh());
+                         }
+                         else
+                         {
+                             onComplete.Invoke();
+                         }
+
+
+
+                     },
+                     error => {
+
+
+                         if (LoadingOverlay.instance != null)
+                             LoadingOverlay.instance.DoneLoading("Removing game!");
+
+                     });
+
+
+
+
+
                  }, () => {
                      Debug.LogError("Bug  updating games!!");
                  });
 
 
-                        // PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
-                        // {
-                        //     Data = new Dictionary<string, string>() {
-                        //                {"MyGames",Startup._instance.myData["MyGames"].Value},
-                        //                {"OldGames",Startup._instance.myData["OldGames"].Value},
-                        //            }
-                        // },
-                        //result2 =>
-                        //{
+
+      
 
 
-                        //    if (LoadingOverlay.instance != null)
-                        //        LoadingOverlay.instance.DoneLoading("UpdateUserData");
 
-                        //    // This is for if we find a abandoned game we want to remove a potentail next one
-                        //    if (onComplete == null)
-                        //    {
-                        //        StartCoroutine(Startup._instance.DelayRefresh());
-                        //    }
-                        //    else
-                        //    {
-                        //        onComplete.Invoke();
-                        //    }
-
-                        //    Debug.Log("Removed non existing SharedData room in UserData");
-
-                        //},
-                        //error => {
-                        //    Debug.Log(error.GenerateErrorReport());
-                        //});
+      
 
 
 
@@ -1112,56 +1099,6 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
 
-
-
-        //PlayFabClientAPI.GetUserData(new GetUserDataRequest()
-        //{
-        //    PlayFabId = Startup._instance.MyPlayfabID,
-        //    Keys = new List<string> { "OldGames" },
-        //}, result => {
-
-        //    if (LoadingOverlay.instance != null)
-        //        LoadingOverlay.instance.DoneLoading("Getting old games!");
-
-        //    PlayerPrefs.SetString("OldGames", result.Data["OldGames"].Value);
-        //    Startup._instance.myData["OldGames"] = result.Data["OldGames"];
-
-        //                        Startup._instance.myData["MyGames"].Value = Startup._instance.myData["MyGames"].Value.Replace("," + aSharedGroupName, "");
-
-
-
-        //                        string st = (aDBjson);
-
-
-        //                        BoardData bd = new BoardData(CompressString.StringCompressor.DecompressString(aDBjson));
-        //                        // Adding this if challenge is rejected dont add to old games
-        //                        bool addToOld = true;
-        //                        if ((bd.player1_score == "" || bd.player1_score == "0") && (bd.player2_score == "" || bd.player2_score == "0"))
-        //                            addToOld = false;
-
-        //                        if (addToOld)
-        //                            GetComponent<Startup>().myData["OldGames"].Value += "[splitter]" + st;
-
-        //                        if (LoadingOverlay.instance != null)
-        //                            LoadingOverlay.instance.ShowLoading("UpdateUserData");
-
-        //                     PlayerPrefs.SetString("OldGames", Startup._instance.myData["OldGames"].Value);
-
-
-
-
-        //                    StartCoroutine(UpdateUserDataAfterDelet(onComplete));
-                  
-
-
-
-
-        //}, (error) => {
-        //    if (LoadingOverlay.instance != null)
-        //        LoadingOverlay.instance.DoneLoading("Getting old games!");
-
-        //    Debug.LogError("BUG GETTING OLD GAMES!");
-        //});
 
 
 
@@ -1522,19 +1459,7 @@ error => {
 
         }
         Startup._instance.openGamesList.Clear();
-        //GetComponent<Startup>()._roomListLabel.text = "";
-        //string[] gameList = GetComponent<Startup>().myData["MyGames"].Value.Split(',');
-        //string[] stringSeparators = new string[] { "[splitter]" };
-        //string[] oldGameList = GetComponent<Startup>().myData["OldGames"].Value.Split(stringSeparators, System.StringSplitOptions.None);
-        //for(int i = 0; i < oldGameList.Length;i++)
-        //{
-        //    if(oldGameList[i].Length>2)
-        //    {
 
-        //       // Debug.Log(CompressString.StringCompressor.DecompressString(oldGameList[i]));
-        //    }
-             
-        //}
 
 
         string jsonAIBoard = PlayerPrefs.GetString("AIGame", "");
@@ -2320,42 +2245,29 @@ error => {
 
     public void GetSharedDataGrouped(string aId)
     {
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "GetAllAvatarGrouped",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabId", Startup.instance.MyPlayfabID }
-        }
-        }, result => {
 
+        if (Startup._instance.openGamesList.Count > 0)
+            return;
+
+        PlayfabCallbackHandler.instance.GetAllAvatarGrouped(result => {
+            if (Startup._instance.openGamesList.Count > 0)
+                return;
 
             Startup.instance.StoredAvatarURLS = (PlayFab.Json.JsonObject)result.FunctionResult;
 
 
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "GetSharedDataGrouped2",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabId", aId }
-        }
-        }, result => {
+        //        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        //{
+        //    FunctionName = "GetSharedDataGrouped2",
+        //    FunctionParameter = new Dictionary<string, object>() {
+        //    { "PlayFabId", aId }
+        //}
+        //},
+        PlayfabCallbackHandler.instance.GetSharedDataGrouped2(aId, result2 => {
+            if (Startup._instance.openGamesList.Count > 0)
+                return;
 
-            //Debug.Log("Lenth:" + result.FunctionResult.ToString().Length);
-
-           // string jsonResult = JsonWrapper.SerializeObject(result.FunctionResult);
-
-          //  Debug.LogWarning("asdasd" + jsonResult);
-
-
-            
-            //Debug.LogWarning(con.Length + " asdasd" + con);
-            //object ob = JsonWrapper.DeserializeObject(con);
-          //  .SerializeObject(result.FunctionResult)
-       //     JsonObject ob =(JsonObject) PlayFabSimpleJson.DeserializeObject(con);
-          //   jsonResult = (string)result.FunctionResult;
-
-            
-            IEnumerable test = (IEnumerable)result.FunctionResult;
+            IEnumerable test = (IEnumerable)result2.FunctionResult;
 
             List<BoardData> gameList = new List<BoardData>();
 
@@ -2379,15 +2291,6 @@ error => {
                 gameList.Add(new BoardData(con));
             }
 
-            //foreach (var kv in ob)
-            //{
-            //    gameList.Add(new BoardData(kv.ToString()));
-            //}
-
-            //for (int i = 0;i < ob.Values.Count;i++)
-            //{
-            //    gameList.Add( new BoardData(ob.Values[i].ToString()));
-            //}
 
 
             bool shouldAddOldGamesNow = true;

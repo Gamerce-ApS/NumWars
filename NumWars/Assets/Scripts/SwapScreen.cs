@@ -73,6 +73,12 @@ public class SwapScreen : MonoBehaviour
         if(Board.instance.AllTilesNumbers.Count <=0)
         {
             AlertText.instance.ShowAlert("No tiles to swap!");
+
+            for (int i = 0; i < PlayerBoard.instance.myPlayer.myTiles.Count; i++)
+            {
+                PlayerBoard.instance.myPlayer.myTiles[i].ReturnFromBoard();
+            }
+
             return;
         }
 
@@ -112,11 +118,20 @@ public class SwapScreen : MonoBehaviour
             AlertText.instance.ShowAlert("You can only swap "+ Board.instance.AllTilesNumbers.Count+"!");
             return;
         }
+        //string swappedHistory = "";
+        //for (int i = 0; i < GameManager.instance.thePlayers[0].GetMyTiles().Count;i++)
+        //{
+            
+        //  swappedHistory += "," + GameManager.instance.thePlayers[0].GetMyTiles()[i];
+
+        //}
+
 
 
         for (int i = SelectedTiles.Count - 1; i >= 0; i--)
         {
             Tile currentT = SelectedTiles[i];
+
 
             Board.instance.AllTilesNumbers.Add(int.Parse(currentT.textLabel.text));
 
@@ -127,19 +142,35 @@ public class SwapScreen : MonoBehaviour
 
 
 
-            
 
 
-        PlayerBoard.instance.myPlayer.AddNewPlayerTiles();
-        PlayerBoard.instance.RefreshLayout();
-        CloseWindow();
+
+       List<int> newTiles = PlayerBoard.instance.myPlayer.AddNewPlayerTiles(false);
+
+        string swappedHistory = "";
+        for (int i = 0; i < newTiles.Count; i++)
+        {
+            swappedHistory += "," + newTiles[i].ToString();
+        }
 
         if (Startup._instance.GameToLoad != null && Startup._instance.GameToLoad.BoardTiles != null)
         {
-            Startup._instance.GameToLoad.History.Add("#SWAP#");
+            Startup._instance.GameToLoad.History.Add("#SWAP#" + Startup.instance.MyPlayfabID + "#" + swappedHistory);
         }
         else
-            Board.instance.History.Add("#SWAP#");
+            Board.instance.History.Add("#SWAP#" + Startup.instance.MyPlayfabID + "#" + swappedHistory);
+
+
+
+        Board.instance.LoadLastUsedTiles(PlayerBoard.instance.myPlayer.myTiles);
+
+
+
+
+        PlayerBoard.instance.RefreshLayout();
+        CloseWindow();
+
+
 
 
         GameManager.instance.NextTurn(false, OnSwapDone);

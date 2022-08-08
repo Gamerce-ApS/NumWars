@@ -275,7 +275,7 @@ public class AchivmentController
 
 
     // Game functions
-    public void WonGame( int score)
+    public void WonGame( int score, bool shouldUpdate = true)
     {
         for(int i = 0; i < myAchivments.Count;i++)
         {
@@ -326,11 +326,11 @@ public class AchivmentController
         }
 
 
-
+        if(shouldUpdate)
             UpdatePlayfab();
     }
     // Game functions
-    public void LostGame( int score)
+    public void LostGame( int score, bool shouldUpdate = true)
     {
         for (int i = 0; i < myAchivments.Count; i++)
         {
@@ -384,6 +384,7 @@ public class AchivmentController
                     myStatistics[i].current = (int)(totalScore / totalGames);
             }
         }
+        if(shouldUpdate)
         UpdatePlayfab();
     }
     public void Bingo()
