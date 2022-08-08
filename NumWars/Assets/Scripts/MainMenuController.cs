@@ -121,7 +121,13 @@ public class MainMenuController : MonoBehaviour
     }
     public void PressUpdate()
     {
+#if UNITY_ANDROID
+        Application.OpenURL(Startup._instance.StaticServerData["UpdateLink_android"]);
+
+#else
         Application.OpenURL(Startup._instance.StaticServerData["UpdateLink"]);
+
+#endif
     }
     public void PressPlayAI()
     {

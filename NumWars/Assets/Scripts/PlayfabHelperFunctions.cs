@@ -118,7 +118,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
         //  playerID = "PaxMM";
         // playerID = "steffen123";
         //   playerID = "hmt";
-        //  playerID = "mike";
+         // playerID = "mike";
         //  playerID = "kasper";
         //  playerID = "Kvotekongen";
         //  playerID = "skatemin";

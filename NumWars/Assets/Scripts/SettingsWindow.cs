@@ -24,18 +24,21 @@ public class SettingsWindow : MonoBehaviour
     public void ShowSettings()
     {
 
-        if (Startup._instance.GameToLoad.GetHasTimeout())
+        if (Startup._instance.GameToLoad  != null&& Startup._instance.GameToLoad.GetHasTimeout())
         {
             return;
         }
-
-        for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+        if(Startup._instance.GameToLoad != null)
         {
-            if (Startup.instance.myOldGameList[i].RoomName == Startup._instance.GameToLoad.RoomName)
+            for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
             {
-                return;
+                if (Startup.instance.myOldGameList[i].RoomName == Startup._instance.GameToLoad.RoomName)
+                {
+                    return;
+                }
             }
         }
+
 
 
 

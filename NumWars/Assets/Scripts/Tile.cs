@@ -364,6 +364,7 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         _targetRotation = Quaternion.Euler(0, 0, 0);
 
         PlayerBoard.instance.UpdateAllTiles();
+        PlayerBoard.instance.UpdateAllTiles();
         if (TutorialController.instance != null)
             TutorialController.instance.EndDragTile();
 
