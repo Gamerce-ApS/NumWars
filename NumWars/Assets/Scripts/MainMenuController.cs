@@ -51,7 +51,7 @@ public class MainMenuController : MonoBehaviour
     public GameObject adv1;
     public GameObject adv2;
     public GameObject adv3;
-
+    public GameObject adv4;
 
     // Start is called before the first frame update
     void Start()
@@ -588,6 +588,7 @@ public void PressOpenFriendsWindow()
         {
             PlayerPrefs.SetInt("DebugMode", 1);
             DebugText.text = "Debug: ON";
+            Startup.instance.GetComponent<Logger>().enabled = true;
         }
 
        else
@@ -599,6 +600,10 @@ public void PressOpenFriendsWindow()
 
 
     }
+    public void ShowLogs()
+    {
+        Logger.ourInstance.ShowLogs();
+    }
     int aTest = 0;
     public void ToggleAdvanced()
     {
@@ -609,18 +614,21 @@ public void PressOpenFriendsWindow()
         adv3.SetActive(toggle);
         
         aTest++;
-        if (aTest>3)
+        if (aTest>4)
         {
             adv1.SetActive(toggle);
+            adv4.SetActive(toggle);
             aTest = 0;
 
         }
         else
         {
             adv1.SetActive(false);
+            adv4.SetActive(false);
+
         }
 
-        
+
     }
     public void SyncData()
     {

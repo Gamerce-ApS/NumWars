@@ -22,7 +22,9 @@ public class GameFinishedScreen : MonoBehaviour
         }
 
     }
-
+    public GameObject errorButton;
+    public GameObject errorButtonRetry;
+    
 public Text p1_name;
     public Text p1_thropies;
     public Text p1_score;
@@ -39,6 +41,8 @@ public Text p1_name;
 
     BoardData lastBF;
 
+    public bool isShowing = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -52,6 +56,7 @@ public Text p1_name;
     }
     public void Show()
     {
+        isShowing = true;
         for (int i = 0; i < ElementsToMoveOut.Count; i++)
         {
             if (ElementsToMoveOut[i] != null)
@@ -71,6 +76,7 @@ public Text p1_name;
     }
     public void Show(BoardData bf)
     {
+        isShowing = true;
         lastBF = bf;
         bool isOpenGame = false;
         for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
@@ -105,13 +111,14 @@ public Text p1_name;
         string opponentPlayfabID = "";
         if (Startup._instance.MyPlayfabID == bf.player1_PlayfabId)
         {
+            
             p1_name.text = bf.player1_displayName;
-            p1_thropies.text = "-";
+            p1_thropies.text = GameManager.instance.p1_thropies.text;
             p1_score.text = bf.player1_score;
             p1_wins.text = "-";
 
             p2_name.text = bf.player2_displayName;
-            p2_thropies.text = "-";
+            p2_thropies.text = GameManager.instance.p2_thropies.text;
             p2_score.text = bf.player2_score;
             p2_wins.text = "-";
 
@@ -151,15 +158,20 @@ public Text p1_name;
             opponentPlayfabID = bf.player1_PlayfabId;
         }
 
-        if(int.Parse(p1_score.text) > int.Parse(p2_score.text))
+        int p1Win = 0;
+        int p2Win = 0;
+
+        if (int.Parse(p1_score.text) > int.Parse(p2_score.text))
         {
             p1_wins_go.SetActive(true);
             p2_wins_go.SetActive(false);
+            p1Win = 1;
         }
         else
         {
             p1_wins_go.SetActive(false);
             p2_wins_go.SetActive(true);
+            p2Win = 1;
         }
 
 
@@ -168,24 +180,55 @@ public Text p1_name;
         if (opponentPlayfabID == "")
             opponentPlayfabID = "AI";
 
-        StatsData _statsData = Startup._instance.GetStatsData();
+        //StatsData _statsData = Startup._instance.GetStatsData();
+        //int amountLost = 0;
+        //int amountWin = 0;
+        //for(int i = 0; i < _statsData.FinishedGames.Count;i++)
+        //{
+        //    if ( _statsData.FinishedGames[i].PlayfabID == opponentPlayfabID)
+        //    {
+        //        if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
+        //            amountWin++;
+        //        else
+        //            amountLost++;
+        //    }
+        //}
+        //p1_wins.text = amountWin.ToString();
+        //p2_wins.text = amountLost.ToString();
+
         int amountLost = 0;
         int amountWin = 0;
-        for(int i = 0; i < _statsData.FinishedGames.Count;i++)
+        for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
         {
-            if ( _statsData.FinishedGames[i].PlayfabID == opponentPlayfabID)
+            if ((Startup.instance.myOldGameList[i].player1_PlayfabId == opponentPlayfabID || Startup.instance.myOldGameList[i].player2_PlayfabId == opponentPlayfabID))
             {
-                if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
+                if (Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
+                {
                     amountWin++;
+                }
                 else
+                {
                     amountLost++;
+                }
             }
         }
-        p1_wins.text = amountWin.ToString();
-        p2_wins.text = amountLost.ToString();
+        if (amountWin + amountLost > 0)
+        {
+            p1_wins.text = (amountWin+ p1Win).ToString();
+            p2_wins.text = (amountLost+ p2Win).ToString();
+        }
+        else
+        {
+            p1_wins.text = "0";
+            p2_wins.text = "0";
+        }
 
 
-        if(isOpenGame)
+
+
+
+
+        if (isOpenGame)
         {
             contineAfterCallButton.enabled = false;
             contineAfterCallButton.transform.GetChild(0).GetComponent<Text>().text = "Loading..";
@@ -201,7 +244,21 @@ public Text p1_name;
             }
         }
     }
-
+    
+    public void PressThereWasAnError()
+    {
+        SceneManager.LoadScene(0);
+        Startup._instance.Refresh(0.1f);
+        if (Startup._instance.avatarURL != null)
+            if (Startup._instance.avatarURL.Length > 0)
+            {
+                PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+            }
+    }
+    public void PressThereWasAnErrorReUpload()
+    {
+        PlayfabHelperFunctions.instance.RetryUploadFile(WhenRemovedGameDone);
+    }
     public void WhenRemovedGameDone()
     {
         contineAfterCallButton.enabled = true;
@@ -234,6 +291,25 @@ public Text p1_name;
 
             IEnumerable test = (IEnumerable)result2.FunctionResult;
             List<BoardData> gameList = new List<BoardData>();
+
+            if (result2.Error != null)
+            {
+                Debug.LogError(result2.Error.Error);
+                Debug.LogError(result2.Error.Message);
+                Debug.LogError(result2.Error.StackTrace);
+
+                SceneManager.LoadScene(0);
+                Startup._instance.Refresh(0.1f);
+                if (Startup._instance.avatarURL != null)
+                    if (Startup._instance.avatarURL.Length > 0)
+                    {
+                        PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+                    }
+
+
+            }
+      
+
             foreach (IEnumerable item in test)
             {
 
@@ -297,6 +373,13 @@ public Text p1_name;
 
 
         }, error => {
+            SceneManager.LoadScene(0);
+            Startup._instance.Refresh(0.1f);
+            if (Startup._instance.avatarURL != null)
+                if (Startup._instance.avatarURL.Length > 0)
+                {
+                    PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+                }
             Debug.Log("Got error retrieving user when challenging data:");
             Debug.Log(error.GenerateErrorReport());
         });
@@ -397,8 +480,8 @@ public Text p1_name;
             if(foundActiveGame == false)
             {
                 PlayfabHelperFunctions.instance.ChallengePlayer(Startup._instance.MyPlayfabID, lastBF.GetOtherPlayerPlayfab(), lastBF.GetOtherPlayer(), newRoomName);
-                PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(lastBF.GetOtherPlayerPlayfab(), newRoomName);
-                PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(Startup._instance.MyPlayfabID, newRoomName);
+                //PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(lastBF.GetOtherPlayerPlayfab(), newRoomName);
+                //PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(Startup._instance.MyPlayfabID, newRoomName);
 
                 StartCoroutine(ChallengeProgress());
             }

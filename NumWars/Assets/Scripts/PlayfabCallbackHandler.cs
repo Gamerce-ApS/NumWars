@@ -444,21 +444,23 @@ error =>
             SharedGroupId = SharedGroupId,
             PlayFabIds = aPlayfabId
         }, result => {
-            if (shouldCancel)
-                return;
+
             myStatus = Status.Finished;
             Debug.Log("Successfully RemoveSharedGroupMembers");
             if (onDone != null)
                 onDone.Invoke();
-
-        }, error => {
             if (shouldCancel)
                 return;
+
+        }, error => {
+
             myStatus = Status.Finished;
             Debug.Log("Got error setting stats");
             Debug.Log(error.GenerateErrorReport());
             if (onError != null)
                 onError.Invoke();
+            if (shouldCancel)
+                return;
         });
 
 

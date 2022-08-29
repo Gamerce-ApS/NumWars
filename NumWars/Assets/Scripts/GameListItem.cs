@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using PlayFab;
 using PlayFab.ClientModels;
@@ -263,6 +264,17 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             if (bd.playerTurn == "1" && Startup._instance.MyPlayfabID == bd.player1_PlayfabId)
             {
                 OtherTurnGO.transform.GetChild(1).GetComponent<Text>().text = "PENDING";
+                PlayfabHelperFunctions.instance.CheckIfGameIsInList(bd.player1_PlayfabId, bd.player2_PlayfabId, bd.RoomName);
+            }
+            else if (bd.playerTurn == "0" && Startup._instance.MyPlayfabID == bd.player1_PlayfabId)
+            {
+                TimeSpan diff = DateTime.Now - TimeForCheck;
+                if (diff.TotalMinutes >30)
+                {
+                    PlayfabHelperFunctions.instance.CheckIfGameIsInList(bd.player1_PlayfabId, bd.player2_PlayfabId, bd.RoomName);
+                    TimeForCheck = DateTime.Now;
+
+                }
             }
             else if (bd.playerTurn == "1" && Startup._instance.MyPlayfabID == bd.player2_PlayfabId)
             {
@@ -278,6 +290,7 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
 
     }
+    public DateTime TimeForCheck = DateTime.MinValue;
     public IEnumerator PicCheck(string otherPlayerID)
     {
         yield return new WaitForSeconds(0.1f);

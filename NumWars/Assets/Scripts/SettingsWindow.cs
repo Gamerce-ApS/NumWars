@@ -131,7 +131,11 @@ public class SettingsWindow : MonoBehaviour
     {
         ResignWindow.SetActive(false);
         if (GameManager.instance.thePlayers[1].isAI)
+        {
             PlayerPrefs.DeleteKey("AIGame");
+            GameManager.instance.ClickBack();
+        }
+  
         else
         {
             PlayfabHelperFunctions.instance.DeleteGame(Startup._instance.GameToLoad.RoomName, DeletedFinished);

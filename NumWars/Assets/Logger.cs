@@ -73,6 +73,13 @@ public class Logger : MonoBehaviour
 	public ConsoleLogTrigger consoleLogTrigger { get; set; }
 	private bool hasAttached = false;
 
+	public bool showStoredLogs= false;
+	public void ShowLogs()
+    {
+		showStoredLogs = !showStoredLogs;
+
+	}
+
 	void Start()
 	{
 		ourInstance = this;
@@ -105,6 +112,14 @@ public class Logger : MonoBehaviour
 	//#if !UNITY_EDITOR
 	private void OnGUI()
 	{
+		if(showStoredLogs)
+        {
+			ConsoleWindowStoredLogs();
+
+		}
+
+
+
 		if(!show)
 		{
 			return;
@@ -136,7 +151,44 @@ public class Logger : MonoBehaviour
 		// Allow the window to be dragged by its title bar.
 		GUI.DragWindow(_titleBarRect);
 	}
-	
+	public void ConsoleWindowStoredLogs()
+    {
+		_scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
+		{
+			
+				// Iterate through the recorded logs.
+				
+					try
+					{
+						GUILayout.TextArea(PlayerPrefs.GetString("Logs", ""));
+					}
+					catch (Exception)
+					{
+						// ignored
+					}
+				
+			
+		}
+		GUILayout.EndScrollView();
+		GUILayout.BeginHorizontal();
+		try
+		{
+			if (GUILayout.Button(_clearLabel, GUILayout.Height(300)))
+			{
+				PlayerPrefs.DeleteKey("Logs");
+			}
+
+			if (GUILayout.Button(_hideLabel, GUILayout.Height(300)))
+			{
+				showStoredLogs = false;
+			}
+		}
+		catch (Exception)
+		{
+			// ignored
+		}
+		GUILayout.EndHorizontal();
+	}
 	public void ConsoleView(bool showHideButton)
 	{
 		_scrollPosition = GUILayout.BeginScrollView (_scrollPosition);
@@ -266,6 +318,18 @@ public class Logger : MonoBehaviour
 				stackTrace = stackTrace,
 				type = type,
 			});
+
+	
+
+			if (type == LogType.Error || type == LogType.Exception)
+            {
+				string all = PlayerPrefs.GetString("Logs", "");
+
+
+					all += "type: " +type.ToString() + " message:" +message + " stackTrace:" + stackTrace;
+				PlayerPrefs.SetString("Logs", all);
+			}
+		
 		}
 		if(invokeWarning && onMemoryWarning != null){
 			onMemoryWarning.Invoke();

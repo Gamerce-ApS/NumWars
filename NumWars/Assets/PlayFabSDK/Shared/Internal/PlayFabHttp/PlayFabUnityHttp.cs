@@ -12,6 +12,15 @@ namespace PlayFab.Internal
 {
     public class PlayFabUnityHttp : ITransportPlugin
     {
+
+        public static int Timeout
+        {
+            get
+            {
+                return 10;
+            }
+        }
+
         private bool _isInitialized = false;
         private readonly int _pendingWwwMessages = 0;
 
@@ -44,6 +53,7 @@ namespace PlayFab.Internal
             {
                 using (UnityWebRequest www = UnityWebRequest.Get(fullUrl))
                 {
+                    www.timeout = Timeout;
 #if UNITY_2017_2_OR_NEWER
                     yield return www.SendWebRequest();
 #else
@@ -60,6 +70,7 @@ namespace PlayFab.Internal
             {
 
                 UnityWebRequest request;
+       
                 if (method == "put")
                 {
                     request = UnityWebRequest.Put(fullUrl, payload);
@@ -71,7 +82,7 @@ namespace PlayFab.Internal
                     request.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
                     request.SetRequestHeader("Content-Type", "application/json");
                 }
-
+                request.timeout = Timeout;
 
 #if UNITY_2017_2_OR_NEWER
 #if !UNITY_2019_1_OR_NEWER
@@ -126,7 +137,7 @@ namespace PlayFab.Internal
                 downloadHandler = new DownloadHandlerBuffer(),
                 method = "POST"
             };
-
+            www.timeout = Timeout;
             foreach (var headerPair in reqContainer.RequestHeaders)
             {
                 if (!string.IsNullOrEmpty(headerPair.Key) && !string.IsNullOrEmpty(headerPair.Value))

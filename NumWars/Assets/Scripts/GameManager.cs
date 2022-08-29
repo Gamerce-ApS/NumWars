@@ -442,7 +442,7 @@ public class GameManager : MonoBehaviour
     public float SendingDataDelay = 0;
     public GameObject connectionissues;
     // Update is called once per frame
-    void Update()
+void Update()
     {
         if (isFakeGame)
             return;
@@ -485,7 +485,7 @@ public class GameManager : MonoBehaviour
         }
 
 
-        if (thePlayers[1].isAI == false)
+        if (thePlayers[1].isAI == false && GameFinishedScreen.instance.isShowing == false)
         {
             if (CheckIfMyTurn(false) == false)
             {
@@ -655,9 +655,10 @@ public class GameManager : MonoBehaviour
         Debug.Log("Next Turn: " + CurrentTurn);
         if (CurrentTurn == 1)
         {
-            Startup._instance.AddXP(5);
+            
             if (thePlayers[1].isAI)
             {
+                Startup._instance.AddXP(5);
                 GameManager.instance.SendingDataDelay = 0;
                 thePlayers[1].DoAI();
 

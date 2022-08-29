@@ -197,7 +197,7 @@ namespace PlayFab.Internal
         {
             CallRequestContainer reqContainer = (CallRequestContainer)reqContainerObj;
             reqContainer.HttpState = HttpRequestState.Idle;
-            PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls.Add(reqContainer.ApiRequest.ToString());
+         //   PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls.Add(reqContainer.ApiRequest.ToString());
             lock (ActiveRequests)
             {
                 ActiveRequests.Insert(0, reqContainer);
@@ -343,7 +343,7 @@ namespace PlayFab.Internal
 
         private static void ProcessHttpResponse(CallRequestContainer reqContainer)
         {
-            PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls.Remove(reqContainer.ApiRequest.ToString());
+          //  PlayFab.Internal.PlayFabUnityHttp.AmountOfCalls.Remove(reqContainer.ApiRequest.ToString());
 
             try
             {

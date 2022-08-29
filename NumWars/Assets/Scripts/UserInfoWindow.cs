@@ -174,7 +174,12 @@ public PlayerProfileModel theProfile;
         }
         else
         {
-            InitUserAfterDataSet(aUserId);
+            PlayerProfileModel pf = PlayfabHelperFunctions.instance.GetPlayerProfileModel(Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
+            if (pf != null)
+            {
+                theProfile = pf;
+                InitUserAfterDataSet(aUserId);
+            }
         }
     }
 
@@ -223,23 +228,52 @@ public PlayerProfileModel theProfile;
             _name.text = Startup._instance.displayName;
 
 
-            StatsData _statsData = Startup._instance.GetStatsData();
+            //StatsData _statsData = Startup._instance.GetStatsData();
+            //int amountLost = 0;
+            //int amountWin = 0;
+            //for (int i = 0; i < _statsData.FinishedGames.Count; i++)
+            //{
+            //    if (_statsData.FinishedGames[i].PlayfabID == theProfile.PlayerId)
+            //    {
+            //        if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
+            //            amountWin++;
+            //        else
+            //            amountLost++;
+            //    }
+            //}
+
+
+            //winT.text = amountWin.ToString();
+            //LoseT.text = amountLost.ToString();
+
+
             int amountLost = 0;
             int amountWin = 0;
-            for (int i = 0; i < _statsData.FinishedGames.Count; i++)
+            for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
             {
-                if (_statsData.FinishedGames[i].PlayfabID == theProfile.PlayerId)
+                if ((Startup.instance.myOldGameList[i].player1_PlayfabId == theProfile.PlayerId || Startup.instance.myOldGameList[i].player2_PlayfabId == theProfile.PlayerId))
                 {
-                    if (_statsData.FinishedGames[i].Winner == Startup._instance.MyPlayfabID)
+                    if (Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
+                    {
                         amountWin++;
+                    }
                     else
+                    {
                         amountLost++;
+                    }
                 }
             }
+            if (amountWin + amountLost > 0)
+            {
+                winT.text = amountWin.ToString();
+                LoseT.text = amountLost.ToString();
+            }
+            else
+            {
+                winT.text = "0";
+                LoseT.text = "0";
+            }
 
-
-            winT.text = amountWin.ToString();
-            LoseT.text = amountLost.ToString();
         }
 
 
@@ -354,9 +388,17 @@ public PlayerProfileModel theProfile;
                 }
              }
         }
-        winT.text = amountWin.ToString();
-        LoseT.text = amountLost.ToString();
 
+        if (amountWin + amountLost > 0)
+        {
+            winT.text = amountWin.ToString();
+            LoseT.text = amountLost.ToString();
+        }
+        else
+        {
+            winT.text = "0";
+            LoseT.text = "0";
+        }
 
         PlayfabHelperFunctions.instance.GetOtherUserDataProfile(theProfile.PlayerId,this);
 
@@ -435,6 +477,11 @@ public PlayerProfileModel theProfile;
         {
             winT.text = amountWin.ToString();
             LoseT.text = amountLost.ToString();
+        }
+        else
+        {
+            winT.text = "0";
+            LoseT.text = "0";
         }
 
 

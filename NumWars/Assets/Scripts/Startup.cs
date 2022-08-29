@@ -72,7 +72,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public static long TIMEOUT = 60 * 60 * 24 * 2;
 
-    public static string LIVE_VERSION = "16";
+    public static string LIVE_VERSION = "17";
 
     // public static long TIMEOUT = 60+60+60;
 
@@ -123,8 +123,8 @@ public class Startup : MonoBehaviourPunCallbacks
 #endif
 
 
-        if (PlayerPrefs.GetInt("DebugMode", 0) == 1)
-            DEBUG_TOOLS = true;
+  
+
         
         float aspect = (float)Screen.height / (float)Screen.width;
         Debug.Log("aspect:" + aspect);
@@ -174,6 +174,12 @@ public class Startup : MonoBehaviourPunCallbacks
             return;
         }
 
+
+        if (PlayerPrefs.GetInt("DebugMode", 0) == 1)
+        {
+            DEBUG_TOOLS = true;
+            Startup.instance.GetComponent<Logger>().enabled = true;
+        }
 
         DontDestroyOnLoad(gameObject);
         _instance = this;
@@ -355,6 +361,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
 
 #endif
+            if(SceneManager.GetActiveScene().name != "GameScene")
             PlayfabCallbackHandler.instance.CancelAllCalls();
                         if (PhotonNetwork.IsConnected&& PlayFabClientAPI.IsClientLoggedIn() || SceneManager.GetActiveScene().name == "GameScene" && PlayFabClientAPI.IsClientLoggedIn())
                         {
@@ -408,6 +415,10 @@ public class Startup : MonoBehaviourPunCallbacks
 
             if(FindObjectOfType<ScrollListBasedOnItems>() != null)
             FindObjectOfType<ScrollListBasedOnItems>().Reset();
+
+            if( PlayfabHelperFunctions.instance != null)
+            PlayfabHelperFunctions.instance.AddingUsersToGame = -1;
+
         }
 
     }
@@ -934,11 +945,53 @@ public class Startup : MonoBehaviourPunCallbacks
 
             }
 
-            //
+
+            //int realThropies = 0;
+            //List<BoardData> RealGamesFinished = new List<BoardData>();
+            //for (int i = 0; i < myOldGameList.Count; i++)
+            //{
+
+              
+            //        if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
+            //        Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
+            //        Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
+            //        {
+            //        RealGamesFinished.Add(myOldGameList[i]);
+            //    }
+             
+            
+            //        if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
+            //        Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
+            //        Startup.instance.myOldGameList[i].GetWinner() != Startup.instance.MyPlayfabID &&
+            //        Startup.instance.myOldGameList[i].GetWinner().Length > 0)
+            //        {
+            //        RealGamesFinished.Add(myOldGameList[i]);
+            //    }
+
+            //}
+            //for (int i = 0; i < RealGamesFinished.Count; i++)
+            //{
+
+            //    Debug.Log(RealGamesFinished[i].player1_displayName + " vs " + RealGamesFinished[i].player2_displayName + ": " + RealGamesFinished[i].player1_score + " - " + RealGamesFinished[i].player2_score+"  " + RealGamesFinished[i].RoomName);
+            //    if (RealGamesFinished[i].GetWinner() == MyPlayfabID)
+            //    {
+            //        realThropies += 30;
+            //    }
+            //    else
+            //    {
+            //        realThropies -= 15;
+            //    }
+            //}
+             
+
+            //Debug.LogWarning("Real Thropies:" + realThropies);
+
+
+                //
 
 
 
-            foreach (Transform child in MainMenuController.instance._GameListParent.transform)
+                foreach (Transform child in MainMenuController.instance._GameListParent.transform)
             {
                 GameObject.Destroy(child.gameObject);
             }

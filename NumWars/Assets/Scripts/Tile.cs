@@ -363,6 +363,33 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
 
         _targetRotation = Quaternion.Euler(0, 0, 0);
 
+        List<Tile> placedTiles = new List<Tile>();
+        List<StaticTile> placedOnTile = new List<StaticTile>();
+        for (int j = 0; j < PlayerBoard.instance.myPlayer.myTiles.Count; j++)
+        {
+
+            if (PlayerBoard.instance.myPlayer.myTiles[j]  != this && PlayerBoard.instance.myPlayer.myTiles[j].PlacedOnTile != null)
+            {
+                placedTiles.Add(PlayerBoard.instance.myPlayer.myTiles[j]);
+                placedOnTile.Add(PlayerBoard.instance.myPlayer.myTiles[j].PlacedOnTile);
+                PlayerBoard.instance.myPlayer.myTiles[j].PlacedOnTile.SetValue(0);
+                PlayerBoard.instance.myPlayer.myTiles[j].PlacedOnTile = null;
+            }
+
+        }
+
+
+        for(int i = 0; i< placedTiles.Count;i++)
+        {
+            placedTiles[i].PlacedOnTile = placedOnTile[i];
+            placedTiles[i].PlaceTileOnSelection(true);
+
+            PlayerBoard.instance.UpdateAllTiles();
+        }
+
+
+
+
         PlayerBoard.instance.UpdateAllTiles();
         PlayerBoard.instance.UpdateAllTiles();
         if (TutorialController.instance != null)
@@ -371,16 +398,20 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
 
 
     }
-    public void PlaceTileOnSelection()
+    public void PlaceTileOnSelection(bool isFake = false)
     {
 
 
         myTileStatus = TileStatus.PlacingOnBoard;
-        _OriginalPosition = Board.instance.Selection.transform.position;
+        if(isFake == false) // this is for special handling long rows of numbers and if you change a early number we need to replace the numbers
+        {
+            _OriginalPosition = Board.instance.Selection.transform.position;
 
-        _targetScale = new Vector3(0.5f, 0.5f, 0.5f);
+            _targetScale = new Vector3(0.5f, 0.5f, 0.5f);
 
-        dragObjectInternal.rotation = Quaternion.identity;
+            dragObjectInternal.rotation = Quaternion.identity;
+        }
+
 
 
         if( Board.instance.CheckValid(PlacedOnTile,textLabel.text) )

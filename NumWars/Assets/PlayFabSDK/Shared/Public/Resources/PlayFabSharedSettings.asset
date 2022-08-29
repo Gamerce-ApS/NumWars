@@ -15,7 +15,7 @@ MonoBehaviour:
   TitleId: 80664
   DeveloperSecretKey: 1MX831JOYYNGTPH3YK5FCP9IUDIASNOD7MBE68N8CHOZZH8FDY
   ProductionEnvironmentUrl: 
-  RequestType: 0
+  RequestType: 1
   DisableDeviceInfo: 0
   DisableFocusTimeCollection: 0
   RequestTimeout: 2000

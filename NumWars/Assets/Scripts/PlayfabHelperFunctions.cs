@@ -110,24 +110,26 @@ public class PlayfabHelperFunctions : MonoBehaviour
         // playerID = "asdafsfsdf3";
 
         //  playerID = "asdafsfsdf4";
-       //    playerID = "peterag";
+        //     playerID = "peterag";
+        //playerID = "peterag2";
+        
         // playerID = "A4244F897FA3FE09";
 
 
         // playerID = "Villads123";
-        //  playerID = "PaxMM";
+        //   playerID = "PaxMM";
         // playerID = "steffen123";
         //   playerID = "hmt";
-         // playerID = "mike";
-        //  playerID = "kasper";
-        //  playerID = "Kvotekongen";
-        //  playerID = "skatemin";
+        //   playerID = "kasper";
+        //   playerID = "mike";
+        // playerID = "Kvotekongen";
+      //    playerID = "skatemin";
         //    playerID = "Kristine";
+        //   playerID = "vibe";
+         // playerID = "maj";
+         //   playerID = "annellla";
+       // playerID = "kudis";
 
-
-      //  playerID = "annellla";
-
-        
 
         instance = this;
         LoadingOverlay.instance.ShowLoadingFullscreen("LoginWithCustomID");
@@ -545,7 +547,12 @@ public class PlayfabHelperFunctions : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-       if( Input.GetKeyUp(KeyCode.U))
+
+
+        if (AddingUsersToGame > 0)
+            AddingUsersToGame -= Time.deltaTime;
+
+       if ( Input.GetKeyUp(KeyCode.U))
        {
             test();
        }
@@ -695,25 +702,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
     {
 
 
-        List<string> aUser = new List<string>();
-        aUser.Add(playfabId2);
 
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "AddPlayerToSharedGroup",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabIds", aUser },
-            { "SharedGroupId", roomName }
-        }
-        }, result =>
-        {
-            Debug.Log(result.FunctionResult);
-        }, error =>
-        {
-            Debug.LogError(error.GenerateErrorReport());
-        }
-
-        );
 
 
 
@@ -757,6 +746,33 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
 
+
+                                    List<string> aUser = new List<string>();
+                                    aUser.Add(playfabId2);
+
+                                    PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+                                    {
+                                        FunctionName = "AddPlayerToSharedGroupAndToGameList",
+                                        FunctionParameter = new Dictionary<string, object>() {
+                                        { "PlayFabIds", aUser },
+                                        { "SharedGroupId", roomName },
+                                        { "P1", playfabId },
+                                        { "P2", playfabId2 }
+                                    }
+                                    }, result =>
+                                    {
+                                        Debug.Log(result.FunctionResult);
+                                    }, error =>
+                                    {
+                                        Debug.LogError(error.GenerateErrorReport());
+                                    }
+
+                                    );
+
+
+
+                                    //PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(playfabId, roomName);
+                                    //PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(Startup._instance.MyPlayfabID, roomName);
 
 
                                     SendPushToUser(bd.player2_PlayfabId, "", "" + Startup._instance.displayName +" has challenged you!");
@@ -861,6 +877,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
             SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName,boardLayout);
         }, error =>
         {
+            SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName, boardLayout);
             Debug.LogError(error.GenerateErrorReport());
         }
 );
@@ -1030,6 +1047,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
                  if (LoadingOverlay.instance != null)
                      LoadingOverlay.instance.ShowLoading("UpdateUserData");
                  PlayfabCallbackHandler.instance.UpdateUserData("MyGames", Startup._instance.myData["MyGames"].Value, ()=> {
+
                      if (LoadingOverlay.instance != null)
                          LoadingOverlay.instance.DoneLoading("UpdateUserData");
                      Debug.Log("Removed non existing SharedData room in UserData");
@@ -1038,14 +1056,10 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
                      if (LoadingOverlay.instance != null)
                          LoadingOverlay.instance.ShowLoadingFullscreen("Removing game!");
-                     PlayfabCallbackHandler.instance.InitiateFileUploads((result) => {
-
-    
+                     PlayfabCallbackHandler.instance.InitiateFileUploads((result) =>
+                     {
                          if (LoadingOverlay.instance != null)
                              LoadingOverlay.instance.DoneLoading("Removing game!");
-
-
-
                          // This is for if we find a abandoned game we want to remove a potentail next one
                          if (onComplete == null)
                          {
@@ -1061,9 +1075,18 @@ public class PlayfabHelperFunctions : MonoBehaviour
                      },
                      error => {
 
-
+                         GameFinishedScreen.instance.errorButtonRetry.SetActive(true);
+                         GameFinishedScreen.instance.errorButtonRetry.transform.GetChild(1).GetComponent<Text>().text = "Error: InitiateFileUploads" + error;
                          if (LoadingOverlay.instance != null)
                              LoadingOverlay.instance.DoneLoading("Removing game!");
+
+
+
+
+
+
+
+
 
                      });
 
@@ -1072,6 +1095,8 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
                  }, () => {
+                     GameFinishedScreen.instance.errorButton.SetActive(true);
+                     GameFinishedScreen.instance.errorButton.transform.GetChild(1).GetComponent<Text>().text = "Error: UpdateUserData";
                      Debug.LogError("Bug  updating games!!");
                  });
 
@@ -1091,7 +1116,8 @@ public class PlayfabHelperFunctions : MonoBehaviour
              {
                  if (LoadingOverlay.instance != null)
                      LoadingOverlay.instance.DoneLoading("Getting old games!");
-
+                 GameFinishedScreen.instance.errorButton.SetActive(true);
+                 GameFinishedScreen.instance.errorButton.transform.GetChild(1).GetComponent<Text>().text = "Error: GetFilesRequest";
                  Debug.LogError("BUG GETTING OLD GAMES!");
              }
             );
@@ -1111,7 +1137,35 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
     }
 
+    public void RetryUploadFile(System.Action onComplete)
+    {
+        GameFinishedScreen.instance.errorButtonRetry.SetActive(false);
+        PlayfabCallbackHandler.instance.InitiateFileUploads((result) =>
+        {
+            if (LoadingOverlay.instance != null)
+                LoadingOverlay.instance.DoneLoading("Removing game!");
+            // This is for if we find a abandoned game we want to remove a potentail next one
+            if (onComplete == null)
+            {
+                StartCoroutine(Startup._instance.DelayRefresh());
+            }
+            else
+            {
+                onComplete.Invoke();
+            }
 
+
+
+        },
+        error => {
+
+            GameFinishedScreen.instance.errorButtonRetry.SetActive(true);
+            GameFinishedScreen.instance.errorButtonRetry.transform.GetChild(1).GetComponent<Text>().text = "Error: InitiateFileUploads" + error;
+            if (LoadingOverlay.instance != null)
+                LoadingOverlay.instance.DoneLoading("Removing game!");
+
+        });
+    }
 
         public void SetSharedDataForNewGame(string player1_playfabID, string player2_playfabID,string player1_displayName, string roomName, string boardLayout)
     {
@@ -1914,14 +1968,21 @@ error => {
     public void SendNextTurn(BoardData aBoarddata, System.Action callback=null)
     {
 
-       // LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
 
-        PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
+
+
+
+
+
+        // LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
+
+        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
         {
-            SharedGroupId = aBoarddata.RoomName,
-            Data = new Dictionary<string, string>() {
-                        {aBoarddata.RoomName, aBoarddata.GetJson()}
-
+            FunctionName = "UpdateSharedGroupData",
+            FunctionParameter = new Dictionary<string, object>() {
+                { "SharedGroupId", aBoarddata.RoomName },
+                { "PlayFabId", Startup.instance.MyPlayfabID },
+                { "Data",  aBoarddata.GetJson()}
             }
         },
         result3 =>
@@ -2049,6 +2110,29 @@ error => {
             Debug.Log(result.FunctionResult);
 
         }, error => Debug.LogError(error.GenerateErrorReport()));
+    }
+    public float AddingUsersToGame = 0;
+    public void CheckIfGameIsInList(string player1, string player2, string roomID)
+    {
+        if(AddingUsersToGame <=0)
+        {
+            PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+            {
+                FunctionName = "CheckIfGameInListElseAdd",
+                FunctionParameter = new Dictionary<string, object>() {
+            { "player1", player1 },
+            { "player2", player2 },
+            { "roomID", roomID }
+
+        }
+            }, result => {
+                Debug.Log(result.FunctionResult);
+
+            }, error => Debug.LogError(error.GenerateErrorReport()));
+
+            
+        }
+
     }
     public void GetAllAvatarGrouped(string aId)
     {
@@ -2361,8 +2445,11 @@ error => {
                 }
             }
 
+
+            AddingUsersToGame = 60;
+
            // if (shouldAddOldGamesNow)
-                Startup._instance.FinishedGettingGameListCheckForOpenGames();
+            Startup._instance.FinishedGettingGameListCheckForOpenGames();
 
 
 
