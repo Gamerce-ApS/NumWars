@@ -294,13 +294,27 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     public IEnumerator PicCheck(string otherPlayerID)
     {
         yield return new WaitForSeconds(0.1f);
+
+        if (Startup.instance == null || Startup.instance.StoredAvatarURLS == null)
+            yield break;
+
         if (Startup.instance.StoredAvatarURLS.ContainsKey(otherPlayerID))
         {
             object outV = "";
             if (Startup.instance.StoredAvatarURLS.TryGetValue(otherPlayerID, out outV))
             {
-                string t = outV.ToString();
-                LoadAvatarURL(t, otherPlayerID);
+                if (outV == null)
+                    yield break;
+                try
+                {
+                    string t = outV.ToString();
+                    LoadAvatarURL(t, otherPlayerID);
+                }
+                catch
+                {
+
+                }
+
             }
 
 

@@ -266,6 +266,9 @@ error =>
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
+
+            if (onDone == null)
+                return;
             onDone.Invoke(result2);
 
 
@@ -274,6 +277,8 @@ error =>
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
+            if (onError == null)
+                return;
             onError.Invoke(error);
         }
     );

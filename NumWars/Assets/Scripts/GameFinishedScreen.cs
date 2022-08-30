@@ -289,6 +289,18 @@ public Text p1_name;
 
         PlayfabCallbackHandler.instance.GetSharedDataGrouped2(Startup.instance.MyPlayfabID, result2 => {
 
+            if (result2 == null || result2.FunctionResult == null)
+            {
+                SceneManager.LoadScene(0);
+                Startup._instance.Refresh(0.1f);
+                if (Startup._instance.avatarURL != null)
+                    if (Startup._instance.avatarURL.Length > 0)
+                    {
+                        PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+                    }
+                return;
+            }
+
             IEnumerable test = (IEnumerable)result2.FunctionResult;
             List<BoardData> gameList = new List<BoardData>();
 
@@ -448,7 +460,17 @@ public Text p1_name;
 
         PlayfabCallbackHandler.instance.GetSharedDataGrouped2(Startup.instance.MyPlayfabID, result2 => {
 
-
+            if (result2 == null || result2.FunctionResult == null)
+            {
+                SceneManager.LoadScene(0);
+                Startup._instance.Refresh(0.1f);
+                if (Startup._instance.avatarURL != null)
+                    if (Startup._instance.avatarURL.Length > 0)
+                    {
+                        PlayfabHelperFunctions.instance.LoadAvatarURL(Startup._instance.avatarURL);
+                    }
+                return;
+            }
 
 
 

@@ -25,6 +25,7 @@ using PlayFab.DataModels;
 using PlayFab.Internal;
 //using AppodealAds.Unity.Api;
 //using AppodealAds.Unity.Common;
+using System.Threading;
 
 #if UNITY_IOS
 using Unity.Advertisement.IosSupport;
@@ -1017,6 +1018,13 @@ public class PlayfabHelperFunctions : MonoBehaviour
         result =>
              {
 
+
+
+                     // Code here will be called in the main thread...
+
+                
+
+
                  if (LoadingOverlay.instance != null)
                      LoadingOverlay.instance.DoneLoading("Getting old games!");
 
@@ -1102,11 +1110,11 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
 
-      
+
+       
 
 
 
-      
 
 
 
@@ -2349,6 +2357,8 @@ error => {
         //},
         PlayfabCallbackHandler.instance.GetSharedDataGrouped2(aId, result2 => {
             if (Startup._instance.openGamesList.Count > 0)
+                return;
+            if (result2 == null || result2.FunctionResult == null)
                 return;
 
             IEnumerable test = (IEnumerable)result2.FunctionResult;

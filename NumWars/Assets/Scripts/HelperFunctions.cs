@@ -45,6 +45,9 @@ namespace CompressString
         /// <returns></returns>
         public static string DecompressString(string compressedText)
         {
+            Debug.Log(compressedText);
+            //string converted = compressedText.Replace('-', '+');
+            //compressedText = converted.Replace('_', '/');
             byte[] gZipBuffer = Convert.FromBase64String(compressedText);
             using (var memoryStream = new MemoryStream())
             {

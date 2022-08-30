@@ -405,6 +405,10 @@ public PlayerProfileModel theProfile;
     }
     public void SetData(Dictionary<string,UserDataRecord> profileData,string playfabID)
     {
+        try
+        {
+
+   
 
         _level.text = HelperFunctions.XPtoLevel(profileData["XP"].Value).ToString();
 
@@ -485,7 +489,11 @@ public PlayerProfileModel theProfile;
         }
 
 
+        }
+        catch
+        {
 
+        }
 
 
 

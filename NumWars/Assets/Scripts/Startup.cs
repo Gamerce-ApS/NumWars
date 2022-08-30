@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using DG.Tweening;
 //using GameAnalyticsSDK;
 using Photon.Pun;
@@ -55,6 +56,8 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public PlayFab.Json.JsonObject StoredAvatarURLS =null;
 
+
+    public static Thread mainThread = Thread.CurrentThread;
     //public static Startup _instance=null;
     public static Startup _instance = null;
     public static Startup instance
@@ -94,8 +97,7 @@ public class Startup : MonoBehaviourPunCallbacks
     {
 
 
-
-#if UNITY_ANDROID
+        #if UNITY_ANDROID
         Firebase.FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
         {
             var dependencyStatus = task.Result;
@@ -123,9 +125,9 @@ public class Startup : MonoBehaviourPunCallbacks
 #endif
 
 
-  
 
-        
+
+
         float aspect = (float)Screen.height / (float)Screen.width;
         Debug.Log("aspect:" + aspect);
         if (aspect < 1.4f)
@@ -830,6 +832,11 @@ public class Startup : MonoBehaviourPunCallbacks
             if (PlayerPrefs.HasKey("OldGames"))
             {
                 oldGameList = PlayerPrefs.GetString("OldGames").Split(stringSeparators, System.StringSplitOptions.None);
+
+                for(int i= 0; i < oldGameList.Length;i++)
+                {
+                    Debug.Log(oldGameList[i]);
+                }
             }
             else
             {
@@ -926,6 +933,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
                 if (i>=0 && oldGameList[i].Length > 2)
                 {
+                    Debug.Log(oldGameList[i]);
                     BoardData bd = new BoardData(CompressString.StringCompressor.DecompressString(oldGameList[i]));
                     GameObject obj2 = (GameObject)GameObject.Instantiate(_PlayfabHelperFunctions._GameListItem, MainMenuController.instance._GameListParent_updating);
                     obj2.GetComponent<GameListItem>().Init(bd, true);

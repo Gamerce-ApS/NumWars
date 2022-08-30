@@ -72,6 +72,14 @@ public class ChallengeWindow : MonoBehaviour
             window.SetActive(false);
             return;
         }
+
+        if (currentChallenges == null || currentChallenges[0].bd == null || Startup._instance == null)
+        {
+            bg.gameObject.SetActive(false);
+            window.SetActive(false);
+            return;
+        }
+
         del.interactable = true;
         aprove.interactable = true;
 
@@ -83,6 +91,7 @@ public class ChallengeWindow : MonoBehaviour
 
         PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
         {
+
             PlayFabId = currentChallenges[0].bd.GetOtherPlayerPlayfab(),
             ProfileConstraints = new PlayerProfileViewConstraints()
             {
@@ -90,6 +99,16 @@ public class ChallengeWindow : MonoBehaviour
                 ShowAvatarUrl = true
             }
         }, result => {
+
+            if (result == null)
+                return;
+
+            if (currentChallenges == null || currentChallenges.Count <= 0 || Startup._instance == null)
+            {
+                bg.gameObject.SetActive(false);
+                window.SetActive(false);
+                return;
+            }
 
             LoadAvatarURL(result.PlayerProfile.AvatarUrl, currentChallenges[0].bd.GetOtherPlayerPlayfab());
 
