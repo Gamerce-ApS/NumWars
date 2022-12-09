@@ -100,7 +100,7 @@ public class GameManager : MonoBehaviour
 
 
 
-        GameAnalytics.NewDesignEvent("GameStarted", 0);
+        //GameAnalytics.NewDesignEvent("GameStarted", 0);
         // TinySauce.OnGameStarted();
 
 
@@ -109,11 +109,13 @@ public class GameManager : MonoBehaviour
             TutorailGO.SetActive(true);
             TutorailGO2.SetActive(true);
             Startup._instance.isTutorialGame = false;
+            GameAnalytics.NewDesignEvent("StartedTutorialGame");
         }
         else
         {
             TutorailGO.SetActive(false);
             TutorailGO2.SetActive(false);
+
         }
 
 

@@ -12,6 +12,8 @@ using UnityEngine;
 using LoginResult = PlayFab.ClientModels.LoginResult;
 using VoxelBusters.EssentialKit;
 using VoxelBusters.CoreLibrary;
+using GameAnalyticsSDK;
+using UnityEngine.EventSystems;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -67,6 +69,7 @@ public class MainMenuController : MonoBehaviour
     }
 
     public float UpdateTimer = 0;
+    public UnityEngine.Video.VideoPlayer videoPlayer;
     // Update is called once per frame
     void Update()
     {
@@ -103,9 +106,43 @@ public class MainMenuController : MonoBehaviour
                 Startup._instance.Refresh();
             UpdateTimer = 0;
         }
+
+
+        if(videoPlayer.isPlaying)
+        {
+            if (Input.GetMouseButtonUp(0))
+            {
+
+                GameObject.Find("EventSystem").GetComponent<EventSystem>().enabled = true;
+                videoPlayer.Stop();
+
+                PlayerPrefs.SetInt("Music", 1);
+                Startup._instance.GetComponent<AudioSource>().volume = 0.3f;
+            }
+
+        }
+
+    }
+    public void PlayHelpVideo()
+    {
+        videoPlayer.Play();
+        videoPlayer.loopPointReached += EndReached;
+        GameObject.Find("EventSystem").GetComponent<EventSystem>().enabled = false;
+        GameAnalytics.NewDesignEvent("WatchHelpVideo");
+
+            PlayerPrefs.SetInt("Music", 0);
+            Startup._instance.GetComponent<AudioSource>().volume = 0;
+
+
+        }
+    void EndReached(UnityEngine.Video.VideoPlayer vp)
+    {
+        GameObject.Find("EventSystem").GetComponent<EventSystem>().enabled = true;
     }
     public void PressPlayOnline()
     {
+        GameAnalytics.NewDesignEvent("PressPlayOnline");
+
         Startup._instance.PlaySoundEffect(0);
         PressCloseNewGameWindow();
         if (Startup._instance.GetHasActiveGameSearch()) // if you have a searching entry you need to wait
@@ -118,6 +155,10 @@ public class MainMenuController : MonoBehaviour
             Startup._instance.JoinRandomRoom();
         }
 
+    }
+    public void PressPolicy()
+    {
+        Application.OpenURL("https://outnumber.me/privacy.html");
     }
     public void PressUpdate()
     {
@@ -135,12 +176,16 @@ public class MainMenuController : MonoBehaviour
     }
     public void PressPlayPratice()
     {
+        GameAnalytics.NewDesignEvent("PressPlayPratice");
+
         Startup._instance.PlaySoundEffect(0);
         Startup._instance.GameToLoad = null;
         SceneManager.LoadScene(1);
     }
     public void PressPlayTutorial()
     {
+        GameAnalytics.NewDesignEvent("PressPlayTutorial");
+
         Startup._instance.PlaySoundEffect(0);
         if (!PlayerPrefs.HasKey("HasDoneTutorial"))
             Startup._instance.AddXP(85);
@@ -155,6 +200,8 @@ public class MainMenuController : MonoBehaviour
     }
     public void PressOpenNewGameWindow()
     {
+        GameAnalytics.NewDesignEvent("PressOpenGameWindow");
+
         Startup._instance.PlaySoundEffect(0);
         NewGameWindow.SetActive(true);
         NewGameWindow.transform.GetChild(0).GetComponent<Image>().DOFade(157f / 255f,0 ).SetEase(Ease.InOutQuart);
@@ -183,6 +230,8 @@ public class MainMenuController : MonoBehaviour
 }
 public void PressOpenFriendsWindow()
     {
+        GameAnalytics.NewDesignEvent("PressOpenFriendsWindow");
+
         Startup._instance.PlaySoundEffect(0);
         PressCloseNewGameWindow();
         FriendsWindow.SetActive(true);
@@ -294,6 +343,7 @@ public void PressOpenFriendsWindow()
     {
         Startup._instance.PlaySoundEffect(0);
         PlayerPrefs.SetInt("FacebookLink", 1);
+        PlayerPrefs.SetInt("HasDoneTutorial", 1);
         SceneManager.LoadScene(0);
         // Startup._instance.Refresh(0.1f);
         PlayfabHelperFunctions.instance.ReLogin();
@@ -319,6 +369,7 @@ public void PressOpenFriendsWindow()
     private void OnCompleteForceLink(LinkFacebookAccountResult result)
     {
         PlayerPrefs.SetInt("FacebookLink", 1);
+        PlayerPrefs.SetInt("HasDoneTutorial", 1);
         SceneManager.LoadScene(0);
         // Startup._instance.Refresh(0.1f);
         PlayfabHelperFunctions.instance.ReLogin();
@@ -337,6 +388,8 @@ public void PressOpenFriendsWindow()
 
     public void SetFBLinked(bool isLinked)
     {
+        if (UnlinkFBButton == null)
+            return;
         if( isLinked )
         {
             UnlinkFBButton.SetActive(true);
@@ -373,6 +426,9 @@ public void PressOpenFriendsWindow()
     }
     public void Share()
     {
+        GameAnalytics.NewDesignEvent("ClickShare");
+
+
         Startup._instance.PlaySoundEffect(0);
         ShareSheet shareSheet = ShareSheet.CreateInstance();
         shareSheet.AddText("Hey, test out Outnumber on appstore or google play! It's a great game!");
@@ -423,6 +479,8 @@ public void PressOpenFriendsWindow()
     }
     public void OpenSettings()
     {
+        GameAnalytics.NewDesignEvent("PressOpenSettingsWindow");
+
         Startup._instance.PlaySoundEffect(0);
 
 

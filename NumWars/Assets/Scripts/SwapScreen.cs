@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using GameAnalyticsSDK;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -69,8 +70,10 @@ public class SwapScreen : MonoBehaviour
         if (GameManager.instance.CheckIfMyTurn() == false)
             return;
 
+        GameAnalytics.NewDesignEvent("OpenSwapScreen");
 
-        if(Board.instance.AllTilesNumbers.Count <=0)
+
+        if (Board.instance.AllTilesNumbers.Count <=0)
         {
             AlertText.instance.ShowAlert("No tiles to swap!");
 

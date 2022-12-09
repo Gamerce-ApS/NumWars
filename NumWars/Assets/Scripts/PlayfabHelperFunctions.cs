@@ -26,6 +26,8 @@ using PlayFab.Internal;
 //using AppodealAds.Unity.Api;
 //using AppodealAds.Unity.Common;
 using System.Threading;
+using Newtonsoft.Json;
+using System.Web;
 
 #if UNITY_IOS
 using Unity.Advertisement.IosSupport;
@@ -74,7 +76,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
         if (PlayerPrefs.HasKey("AppleUserIdKey"))
         {
             MainMenuController.instance.SetAppleLinked(true);
-            DoAppleQuickLogin();
+            StartCoroutine(DoAppleQuickLogin());
 
         }
         else if (PlayerPrefs.HasKey("FacebookLink"))
@@ -90,9 +92,14 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
     public void Login()
     {
+
+      //  PlayfabCallbackHandler.instance.UpdateUserDataGrouped(
+      //new Dictionary<string, string>() {
+      //          {"pushnotification_tooken", Startup.instance.MyPlayfabID}}, null, null);
+
         Startup.instance.StartPushSer();
 
-        if (PlayFabClientAPI.IsClientLoggedIn())
+        if (Startup.instance.MyPlayfabID.Length>0)
         {
             if (LoadingOverlay.instance != null)
                 LoadingOverlay.instance.ShowLoadingFullscreen("Updating..");
@@ -107,13 +114,17 @@ public class PlayfabHelperFunctions : MonoBehaviour
         else
             playerID = "asdafsfsdf2";
 
+        //playerID = "sdfsdfewwr2";
+        //playerID = "NewUser1";
+        //playerID = "PaxMM";
+        //playerID = "PatrikB_3";
 
         // playerID = "asdafsfsdf3";
 
         //  playerID = "asdafsfsdf4";
         //     playerID = "peterag";
         //playerID = "peterag2";
-        
+
         // playerID = "A4244F897FA3FE09";
 
 
@@ -124,13 +135,13 @@ public class PlayfabHelperFunctions : MonoBehaviour
         //   playerID = "kasper";
         //   playerID = "mike";
         // playerID = "Kvotekongen";
-      //    playerID = "skatemin";
+        //    playerID = "skatemin";
         //    playerID = "Kristine";
         //   playerID = "vibe";
-         // playerID = "maj";
-         //   playerID = "annellla";
-       // playerID = "kudis";
-
+        // playerID = "maj";
+        //   playerID = "annellla";
+        // playerID = "kudis";
+        playerID = "asdafe3eewrer";
 
         instance = this;
         LoadingOverlay.instance.ShowLoadingFullscreen("LoginWithCustomID");
@@ -149,13 +160,9 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
         if (PlayerPrefs.HasKey("AppleUserIdKey"))
         {
-            DoAppleQuickLogin();
+            StartCoroutine( DoAppleQuickLogin() );
             return;
         }
-
-       
-
-
 
 
 
@@ -220,25 +227,27 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 #elif UNITY_ANDROID
 
-        PlayFabClientAPI.LoginWithAndroidDeviceID(new LoginWithAndroidDeviceIDRequest()
-        { 
+        PlayfabCallbackHandler.instance.LoginWithIOSDeviceID(playerID, LoginSucess, error =>{Debug.LogError(error.GenerateErrorReport());} );
 
-            TitleId = PlayFabSettings.TitleId,
-            AndroidDeviceId = SystemInfo.deviceUniqueIdentifier,
-            OS = SystemInfo.operatingSystem,
-            AndroidDevice = SystemInfo.deviceModel,
-            CreateAccount = true,
-            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
-            {
-                GetUserAccountInfo = true,
-                GetPlayerProfile = true
-            }
-        },
-    result =>
-    {
-        LoginSucess(result);
-    },
-     error => Debug.LogError(error.GenerateErrorReport()));
+    //    PlayFabClientAPI.LoginWithAndroidDeviceID(new LoginWithAndroidDeviceIDRequest()
+    //    { 
+
+    //        TitleId = PlayFabSettings.TitleId,
+    //        AndroidDeviceId = SystemInfo.deviceUniqueIdentifier,
+    //        OS = SystemInfo.operatingSystem,
+    //        AndroidDevice = SystemInfo.deviceModel,
+    //        CreateAccount = true,
+    //        InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+    //        {
+    //            GetUserAccountInfo = true,
+    //            GetPlayerProfile = true
+    //        }
+    //    },
+    //result =>
+    //{
+    //    LoginSucess(result);
+    //},
+    // error => Debug.LogError(error.GenerateErrorReport()));
 #endif
 
 
@@ -247,40 +256,92 @@ public class PlayfabHelperFunctions : MonoBehaviour
     }
     public SignInWithApple signInWithApple;
 
-    public void DoAppleQuickLogin()
+    public IEnumerator DoAppleQuickLogin()
     {
 
 
         Debug.Log("DoAppleQuickLogin");
 
 
+        yield return new WaitForSeconds(0.2f);
+
+
         if (PlayerPrefs.HasKey("AppleidentityToken"))
         {
             string tooken = PlayerPrefs.GetString("AppleidentityToken");
-            PlayFabClientAPI.LoginWithApple(new LoginWithAppleRequest()
-            {
 
-                TitleId = PlayFabSettings.TitleId,
-                IdentityToken = tooken,
-                InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
-                {
-                    GetUserAccountInfo = true,
-                    GetPlayerProfile = true
-                }
-            },
-            result2 =>
-            {
-                LoginSucess(result2);
-            },
-            error =>
-            {
-                PlayerPrefs.DeleteKey("AppleidentityToken");
-                PlayerPrefs.DeleteKey("AppleUserIdKey");
-                SceneManager.LoadScene(0);
-                PlayfabHelperFunctions.instance.ReLogin();
+            string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"DefaultAchivements", Startup._instance.myAchivmentController.GetDefault()},});
 
-                Debug.LogError(error.GenerateErrorReport());
-            });
+            AWSBackend.instance.AWSClientAPI("phpBackend/LoginWithCustomID.php?appleID=" + tooken, jsonString,
+                  result =>
+                  {
+                      Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+
+                      LoginResult lr = new LoginResult();
+                      lr.AuthenticationContext = new PlayFabAuthenticationContext();
+                      lr.AuthenticationContext.PlayFabId = dic["PlayerID"];
+                      lr.InfoResultPayload = new GetPlayerCombinedInfoResultPayload();
+                      lr.InfoResultPayload.PlayerProfile = new PlayerProfileModel();
+                      lr.InfoResultPayload.PlayerProfile.DisplayName = dic["DisplayName"];
+                      lr.InfoResultPayload.AccountInfo = new UserAccountInfo();
+                      lr.InfoResultPayload.AccountInfo.TitleInfo = new UserTitleInfo();
+                      lr.InfoResultPayload.AccountInfo.TitleInfo.AvatarUrl = dic["avatarURL"];
+                      lr.NewlyCreated = false;
+
+                      lr.InfoResultPayload.AccountInfo.AppleAccountInfo = new UserAppleIdInfo();
+                      lr.InfoResultPayload.AccountInfo.AppleAccountInfo.AppleSubjectId = PlayerPrefs.GetString("AppleidentityToken");
+
+
+                      LoginSucess(lr);
+
+                  },
+                  error =>
+                  {
+                      Debug.LogError(error);
+
+                      //PlayerPrefs.DeleteKey("FacebookLink");
+                      //LoadingOverlay.instance.LoadingCall.Clear();
+                      //PlayfabHelperFunctions.instance.ReLogin();
+                      //SceneManager.LoadScene(0);
+                      //Startup._instance.Refresh(0.1f);
+
+                      PlayerPrefs.DeleteKey("AppleidentityToken");
+                      PlayerPrefs.DeleteKey("AppleUserIdKey");
+                      LoadingOverlay.instance.LoadingCall.Clear();
+                      PlayfabHelperFunctions.instance.ReLogin();
+                      SceneManager.LoadScene(0);
+                      Startup._instance.Refresh(0.1f);
+             
+
+                  });
+
+
+            //string tooken = PlayerPrefs.GetString("AppleidentityToken");
+            //PlayFabClientAPI.LoginWithApple(new LoginWithAppleRequest()
+            //{
+
+            //    TitleId = PlayFabSettings.TitleId,
+            //    IdentityToken = tooken,
+            //    InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+            //    {
+            //        GetUserAccountInfo = true,
+            //        GetPlayerProfile = true
+            //    }
+            //},
+            //result2 =>
+            //{
+            //    LoginSucess(result2);
+            //},
+            //error =>
+            //{
+            //    PlayerPrefs.DeleteKey("AppleidentityToken");
+            //    PlayerPrefs.DeleteKey("AppleUserIdKey");
+            //    SceneManager.LoadScene(0);
+            //    PlayfabHelperFunctions.instance.ReLogin();
+
+            //    Debug.LogError(error.GenerateErrorReport());
+            //});
 
          }
         else
@@ -395,9 +456,9 @@ public class PlayfabHelperFunctions : MonoBehaviour
     {
 
 
-        entityId = result.EntityToken.Entity.Id;
+        //entityId = result.EntityToken.Entity.Id;
         // The expected entity type is title_player_account.
-        entityType = result.EntityToken.Entity.Type;
+        //entityType = result.EntityToken.Entity.Type;
 
 
         Debug.Log("LoginSucess_ DoAppleQuickLogin");
@@ -414,7 +475,6 @@ public class PlayfabHelperFunctions : MonoBehaviour
                 Startup._instance.StaticServerData = result2.Data;
             }
             LoadingOverlay.instance.DoneLoading("Loading data!");
-
 
             if (int.Parse(Startup.LIVE_VERSION) < int.Parse(Startup._instance.StaticServerData["LIVE_VERSION"]))
             {
@@ -465,9 +525,17 @@ public class PlayfabHelperFunctions : MonoBehaviour
         LoadingOverlay.instance.DoneLoading("LoginWithCustomID");
         GetComponent<Startup>().MyPlayfabID = result.AuthenticationContext.PlayFabId;
 
+        if(result.InfoResultPayload.PlayerProfile.DisplayName.Length<=0 || result.InfoResultPayload.PlayerProfile.DisplayName.Contains("TEMP_NAME_"))
+        {
+            PlayerPrefs.DeleteAll();
+            //PlayerPrefs.SetInt("HasDoneTutorial", 1);
+            MainMenuController.instance.OpenSetNameWidnow(true);
+        }
+
+
         if (result.NewlyCreated)
         {
-            SetUserData();
+            //SetUserData();
         }
         else
         {
@@ -553,10 +621,10 @@ public class PlayfabHelperFunctions : MonoBehaviour
         if (AddingUsersToGame > 0)
             AddingUsersToGame -= Time.deltaTime;
 
-       if ( Input.GetKeyUp(KeyCode.U))
-       {
-            test();
-       }
+       //if ( Input.GetKeyUp(KeyCode.U))
+       //{
+       //     test();
+       //}
 
 
         if (Input.GetKeyUp(KeyCode.H))
@@ -622,24 +690,24 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
 
-            PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-            {
-                FunctionName = "ClearOldGames",
-                FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabId", Startup.instance.MyPlayfabID }
-        }
-            }, result2 => {
+        //    PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        //    {
+        //        FunctionName = "ClearOldGames",
+        //        FunctionParameter = new Dictionary<string, object>() {
+        //    { "PlayFabId", Startup.instance.MyPlayfabID }
+        //}
+        //    }, result2 => {
 
 
 
-                Debug.Log(result2.Logs);
+        //        Debug.Log(result2.Logs);
 
 
-            }, error =>
-            {
-                Debug.LogError(error.GenerateErrorReport());
-            }
-            );
+        //    }, error =>
+        //    {
+        //        Debug.LogError(error.GenerateErrorReport());
+        //    }
+        //    );
 
 
         }
@@ -660,58 +728,137 @@ public class PlayfabHelperFunctions : MonoBehaviour
     public void UpdateDisplayName(string aName)
     {
         LoadingOverlay.instance.ShowLoading("UpdateUserTitleDisplayName");
-        PlayFabClientAPI.UpdateUserTitleDisplayName(new UpdateUserTitleDisplayNameRequest
-        {
-            DisplayName = aName 
-        }, result =>
-        {
-            
+
+
+        PlayfabCallbackHandler.instance.UpdateUserData("DisplayName", aName, () => {
             LoadingOverlay.instance.DoneLoading("UpdateUserTitleDisplayName");
-            Debug.Log("The player's display name is now: " + result.DisplayName);
             MainMenuController.instance.SetNameGO.SetActive(false);
 
             StartCoroutine(GetComponent<Startup>().DelayRefresh());
-
-        }, error =>{
-                        Debug.LogError(error.GenerateErrorReport());
-                        LoadingOverlay.instance.DoneLoading("UpdateUserTitleDisplayName");
+        }, () => {
+            LoadingOverlay.instance.DoneLoading("UpdateUserTitleDisplayName");
 
             MainMenuController.instance.nameSettingTextError.text = "Invalid name";
-
         });
+
+
+
+        //PlayFabClientAPI.UpdateUserTitleDisplayName(new UpdateUserTitleDisplayNameRequest
+        //{
+        //    DisplayName = aName 
+        //}, result =>
+        //{
+            
+        //    LoadingOverlay.instance.DoneLoading("UpdateUserTitleDisplayName");
+        //    Debug.Log("The player's display name is now: " + result.DisplayName);
+        //    MainMenuController.instance.SetNameGO.SetActive(false);
+
+        //    StartCoroutine(GetComponent<Startup>().DelayRefresh());
+
+        //}, error =>{
+        //                Debug.LogError(error.GenerateErrorReport());
+        //                LoadingOverlay.instance.DoneLoading("UpdateUserTitleDisplayName");
+
+        //    MainMenuController.instance.nameSettingTextError.text = "Invalid name";
+
+        //});
     }
 
     public void SetPlayfabCreatedRoom(string playfabId, string roomName)
     {
-        LoadingOverlay.instance.ShowLoading("CreateSharedGroup");
+        //LoadingOverlay.instance.ShowLoading("CreateSharedGroup");
 
-        PlayFabClientAPI.CreateSharedGroup(new CreateSharedGroupRequest()
+        //PlayFabClientAPI.CreateSharedGroup(new CreateSharedGroupRequest()
+        //{
+        //    SharedGroupId = roomName
+        //}, result3 => {
+        //    LoadingOverlay.instance.DoneLoading("CreateSharedGroup");
+
+        //    AddGameToSharedGroup(new List<string>() { playfabId }, roomName);
+
+
+        //}, (error) => {
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
+
+
+
+
+
+
+
+        //string StaticServerDataV = "-1";
+
+        //if (Startup._instance != null && Startup._instance.StaticServerData != null && Startup._instance.StaticServerData.ContainsKey("TilesAmount"))
+        //    StaticServerDataV = Startup._instance.StaticServerData["TilesAmount"];
+
+        //Board.instance.GenerateStartBoard(int.Parse(StaticServerDataV), PlayerPrefs.GetInt("BoardLayout", 0).ToString());
+        //BoardData bd = new BoardData(playfabId, playfabId2, "1", Board.instance.BoardTiles, roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles, System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
+        //bd.player1_displayName = Startup._instance.displayName;
+        //bd.player2_displayName = player2DisplayName;
+        //bd.player1_avatarURL = Startup.instance.avatarURL;
+        //bd.player1_score = "0";
+        //bd.player2_score = "0";
+        //bd.EmptyTurns = "0";
+
+
+
+        string secondPlayer = "";
+        BoardData bd = new BoardData(playfabId, secondPlayer, "0", Board.instance.BoardTiles, roomName, new List<string>(), new List<string>(), "0", new List<string>(), new List<string>(), System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
+        bd.player1_displayName = Startup._instance.displayName;
+        bd.player1_avatarURL = Startup._instance.avatarURL;
+
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"SharedGroupId", roomName},
+                    {"data", bd.GetJson()}});
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/UpdateSharedGroupData.php", jsonString, (result4) =>
         {
-            SharedGroupId = roomName
-        }, result3 => {
-            LoadingOverlay.instance.DoneLoading("CreateSharedGroup");
+            //List<string> aUser = new List<string>();
+            //aUser.Add(playfabId2);
 
-            AddGameToSharedGroup(new List<string>() { playfabId }, roomName);
-            
+            //string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+            //                        {"PlayerID_1", playfabId},
+            //                        {"PlayerID_2", playfabId2},
+            //                        {"SharedGroupId", roomName}});
+            //AWSBackend.instance.AWSClientAPI("phpBackend/AddPlayerToSharedGroupAndToGameList_cloudscript.php", jsonString,
+            //           (result) =>
+            //           {
+            //               Debug.Log(result);
+            //           }, error =>
+            //           {
+            //               Debug.LogError(error);
+            //           }
+            //        );
 
-        }, (error) => {
-            Debug.Log(error.GenerateErrorReport());
+
+            AddSharedGroupToGameList(roomName);
+
+
+
+
+
+
+        },
+        error =>
+        {
+            Debug.LogError("Got error setting user data Ancestor to Arthur");
         });
+
+
+
+
+
+
 
     }
     public void ChallengePlayer(string playfabId, string playfabId2,string player2DisplayName, string roomName)
     {
 
-
-
-
-
-
-
-        PlayFabClientAPI.CreateSharedGroup(new CreateSharedGroupRequest()
-        {
-            SharedGroupId = roomName
-        }, result3 => {
+        //PlayFabClientAPI.CreateSharedGroup(new CreateSharedGroupRequest()
+        //{
+        //    SharedGroupId = roomName
+        //}, result3 => {
 
             if(PlayerPrefs.HasKey("BoardLayout") == false)
                 PlayerPrefs.SetInt("BoardLayout", 0);
@@ -721,59 +868,60 @@ public class PlayfabHelperFunctions : MonoBehaviour
             if (Startup._instance != null && Startup._instance.StaticServerData != null && Startup._instance.StaticServerData.ContainsKey("TilesAmount"))
                 StaticServerDataV = Startup._instance.StaticServerData["TilesAmount"];
 
-            
+            Board.instance.GenerateStartBoard(int.Parse(StaticServerDataV), PlayerPrefs.GetInt("BoardLayout", 0).ToString());
+            BoardData bd = new BoardData(playfabId, playfabId2, "1", Board.instance.BoardTiles, roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles, System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
+            bd.player1_displayName = Startup._instance.displayName;
+            bd.player2_displayName = player2DisplayName;
+            bd.player1_avatarURL = Startup.instance.avatarURL;
+            bd.player1_score = "0";
+            bd.player2_score = "0";
+            bd.EmptyTurns = "0";
 
-                                Board.instance.GenerateStartBoard(int.Parse(StaticServerDataV), PlayerPrefs.GetInt("BoardLayout", 0).ToString());
-                                BoardData bd = new BoardData(playfabId, playfabId2, "1", Board.instance.BoardTiles, roomName, new List<string>(), Board.instance.GetTilesLeft(), "0", Board.instance.p1_tiles, Board.instance.p2_tiles, System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
-                                bd.player1_displayName = Startup._instance.displayName;
-                                bd.player2_displayName = player2DisplayName;
-                                bd.player1_avatarURL = Startup.instance.avatarURL;
-                                bd.player1_score = "0";
-                                bd.player2_score = "0";
-                                bd.EmptyTurns = "0";
 
-                                PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
+
+        //PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
+        //                    {
+        //                        SharedGroupId = roomName,
+        //                        Data = new Dictionary<string, string>() {
+        //                                {roomName, bd.GetJson()}
+
+        //                    }
+        //                    },
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"SharedGroupId", roomName},
+                    {"data", bd.GetJson()}});
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/UpdateSharedGroupData.php", jsonString, (result4) =>
                                 {
-                                    SharedGroupId = roomName,
-                                    Data = new Dictionary<string, string>() {
-                                            {roomName, bd.GetJson()}
-
-                                }
-                                },
-                                result4 =>
-                                {
+                                    Debug.Log(result4);
                                     Debug.Log("Successfully updated user data with new player id's");
 
+                                            List<string> aUser = new List<string>();
+                                            aUser.Add(playfabId2);
 
+                                    string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                                    {"PlayerID_1", playfabId},
+                                    {"PlayerID_2", playfabId2},
+                                    {"SharedGroupId", roomName}});
 
-
-
-                                    List<string> aUser = new List<string>();
-                                    aUser.Add(playfabId2);
-
-                                    PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-                                    {
-                                        FunctionName = "AddPlayerToSharedGroupAndToGameList",
-                                        FunctionParameter = new Dictionary<string, object>() {
-                                        { "PlayFabIds", aUser },
-                                        { "SharedGroupId", roomName },
-                                        { "P1", playfabId },
-                                        { "P2", playfabId2 }
-                                    }
-                                    }, result =>
-                                    {
-                                        Debug.Log(result.FunctionResult);
-                                    }, error =>
-                                    {
-                                        Debug.LogError(error.GenerateErrorReport());
-                                    }
-
-                                    );
-
-
-
-                                    //PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(playfabId, roomName);
-                                    //PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(Startup._instance.MyPlayfabID, roomName);
+                                    //PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+                                    //{
+                                    //    FunctionName = "AddPlayerToSharedGroupAndToGameList",
+                                    //    FunctionParameter = new Dictionary<string, object>() {
+                                    //    { "PlayFabIds", aUser },
+                                    //    { "SharedGroupId", roomName },
+                                    //    { "P1", playfabId },
+                                    //    { "P2", playfabId2 }
+                                    //}
+                                    AWSBackend.instance.AWSClientAPI("phpBackend/AddPlayerToSharedGroupAndToGameList_cloudscript.php", jsonString,
+                                               (result) =>
+                                            {
+                                                Debug.Log(result);
+                                            }, error =>
+                                            {
+                                                Debug.LogError(error);
+                                            }
+                                            );
 
 
                                     SendPushToUser(bd.player2_PlayfabId, "", "" + Startup._instance.displayName +" has challenged you!");
@@ -781,107 +929,75 @@ public class PlayfabHelperFunctions : MonoBehaviour
                                 },
                                 error =>
                                 {
-                                    Debug.Log("Got error setting user data Ancestor to Arthur");
-                                    Debug.Log(error.GenerateErrorReport());
+                                    Debug.LogError("Got error setting user data Ancestor to Arthur");
                                 });
 
 
-        }, (error) => {
-            Debug.Log(error.GenerateErrorReport());
-        });
+        //}, (error) => {
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
 
     }
 
     
 
 
-    public void AddGameToSharedGroup(List<string> playfabId, string roomName)
-    {
+    //public void AddGameToSharedGroup(List<string> playfabId, string roomName)
+    //{
 
-        string secondPlayer = "";
-        if (playfabId.Count > 1)
-            secondPlayer = playfabId[1];
+    //    string secondPlayer = "";
+    //    if (playfabId.Count > 1)
+    //        secondPlayer = playfabId[1];
 
-        BoardData bd = new BoardData(playfabId[0], secondPlayer, "0", Board.instance.BoardTiles, roomName,new List<string>(), new List<string>(), "0", new List<string>(), new List<string>(), System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
-        bd.player1_displayName = Startup._instance.displayName;
-        bd.player1_avatarURL = Startup._instance.avatarURL;
+    //    BoardData bd = new BoardData(playfabId[0], secondPlayer, "0", Board.instance.BoardTiles, roomName,new List<string>(), new List<string>(), "0", new List<string>(), new List<string>(), System.DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
+    //    bd.player1_displayName = Startup._instance.displayName;
+    //    bd.player1_avatarURL = Startup._instance.avatarURL;
         
-        LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
+    //    LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
 
-        PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
-        {
-            SharedGroupId = roomName,
-            Data = new Dictionary<string, string>(){{roomName, bd.GetJson()}}
-        },
-        result2 =>
-        {
-            LoadingOverlay.instance.DoneLoading("UpdateSharedGroupData");
-            Debug.Log("Successfully updated user data");
-            AddSharedGroupToGameList(roomName);
-            // Startup._instance.Refresh();
-        },
-        error =>
-        {
-            Debug.Log("Got error setting user data Ancestor to Arthur");
-            Debug.Log(error.GenerateErrorReport());
-        });
-    }
+    //    PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
+    //    {
+    //        SharedGroupId = roomName,
+    //        Data = new Dictionary<string, string>(){{roomName, bd.GetJson()}}
+    //    },
+    //    result2 =>
+    //    {
+    //        LoadingOverlay.instance.DoneLoading("UpdateSharedGroupData");
+    //        Debug.Log("Successfully updated user data");
+    //        AddSharedGroupToGameList(roomName);
+    //        // Startup._instance.Refresh();
+    //    },
+    //    error =>
+    //    {
+    //        Debug.Log("Got error setting user data Ancestor to Arthur");
+    //        Debug.Log(error.GenerateErrorReport());
+    //    });
+    //}
 
     public void AddPlayerToSharedGroup(string player1_playfabID, string player2_playfabID,string player1_displayName, string roomName,string boardLayout)
     {
+        SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName, boardLayout);
 
-        //LoadingOverlay.instance.ShowLoading("PlayFabCloudScriptAPI.ExecuteFunction");
 
-        //PlayFabCloudScriptAPI.ExecuteFunction(new ExecuteFunctionRequest()
+        //List<string> aUser = new List<string>();
+        //aUser.Add(player2_playfabID);
+
+        //PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
         //{
-        //    Entity = new PlayFab.CloudScriptModels.EntityKey()
-        //    {
-        //        Id = PlayFabSettings.staticPlayer.EntityId, //Get this from when you logged in,
-        //        Type = PlayFabSettings.staticPlayer.EntityType, //Get this from when you logged in
-        //    },
-        //    FunctionName = "httptrigger1", //This should be the name of your Azure Function that you created.
-        //    FunctionParameter = new Dictionary<string, object>() { { "player1_playfabID", roomName }, { "player2_playfabID", player2_playfabID } }, //This is the data that you would want to pass into your function.
-        //    GeneratePlayStreamEvent = false //Set this to true if you would like this call to show up in PlayStream
-        //}, (ExecuteFunctionResult result) =>
+        //    FunctionName = "AddPlayerToSharedGroup",
+        //    FunctionParameter = new Dictionary<string, object>() {
+        //    { "PlayFabIds", aUser },
+        //    { "SharedGroupId", roomName }
+        //}
+        //}, result => {
+        //    Debug.Log(result.FunctionResult);
+        //    SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName,boardLayout);
+        //}, error =>
         //{
-        //    LoadingOverlay.instance.DoneLoading("PlayFabCloudScriptAPI.ExecuteFunction");
-        //    if (result.FunctionResultTooLarge ?? false)
-        //    {
-        //        Debug.Log("This can happen if you exceed the limit that can be returned from an Azure Function, See PlayFab Limits Page for details.");
-        //        return;
-        //    }
-        //    Debug.Log($"The {result.FunctionName} function took {result.ExecutionTimeMilliseconds} to complete");
-        //    Debug.Log($"Result: {result.FunctionResult.ToString()}");
-
-
-        //    SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName);
-
-
-        //}, (PlayFabError error) =>
-        //{
-        //    Debug.Log($"Opps Something went wrong: {error.GenerateErrorReport()}");
-        //});
-
-
-        List<string> aUser = new List<string>();
-        aUser.Add(player2_playfabID);
-
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "AddPlayerToSharedGroup",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabIds", aUser },
-            { "SharedGroupId", roomName }
-        }
-        }, result => {
-            Debug.Log(result.FunctionResult);
-            SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName,boardLayout);
-        }, error =>
-        {
-            SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName, boardLayout);
-            Debug.LogError(error.GenerateErrorReport());
-        }
-);
+        //    SetSharedDataForNewGame(player1_playfabID, player2_playfabID, player1_displayName, roomName, boardLayout);
+        //    Debug.LogError(error.GenerateErrorReport());
+        //}
+//);
 
 
 
@@ -894,110 +1010,135 @@ public class PlayfabHelperFunctions : MonoBehaviour
         GetComponent<Startup>().myData["MyGames"].Value += ","+ aSharedGroupName;
 
         LoadingOverlay.instance.ShowLoading("UpdateUserData");
-        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
-        {
-            Data = new Dictionary<string, string>() {
-            {"MyGames", GetComponent<Startup>().myData["MyGames"].Value},
+        Dictionary<string, string> updateInfo = new Dictionary<string, string>();
+        updateInfo.Add("MyGames", Startup._instance.myData["MyGames"].Value);
+
+        PlayfabCallbackHandler.instance.UpdateUserDataGrouped(updateInfo, 
+            () =>
+            {
+                LoadingOverlay.instance.DoneLoading("UpdateUserData");
+
+                StartCoroutine(GetComponent<Startup>().DelayRefresh());
+
+            },
+            () => {
+                LoadingOverlay.instance.DoneLoading("UpdateUserData");
+
+                Debug.LogError("Bug updating data");
+            });
+
+
+
+            //PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+            //{
+            //    Data = new Dictionary<string, string>() {
+            //    {"MyGames", GetComponent<Startup>().myData["MyGames"].Value},
+            //}
+            //},
+            //result =>
+            //{
+            //    LoadingOverlay.instance.DoneLoading("UpdateUserData");
+
+            //    StartCoroutine(GetComponent<Startup>().DelayRefresh());
+
+            //},
+            //error => {
+            //    Debug.Log(error.GenerateErrorReport());
+            //});
         }
-        },
-        result =>
-        {
-            LoadingOverlay.instance.DoneLoading("UpdateUserData");
-
-            StartCoroutine(GetComponent<Startup>().DelayRefresh());
-
-        },
-        error => {
-            Debug.Log(error.GenerateErrorReport());
-        });
-    }
     public void AddAiGameToOldGames(string aCompresserdAiBoard)
     {
+        PlayfabCallbackHandler.instance.GetUserData(
+        result =>
+        {
+
+
+
+            if (result.Data.ContainsKey("OldGames") == true)
+                PlayerPrefs.SetString("OldGames", result.Data["OldGames"].Value);
+
+
+            string st = (aCompresserdAiBoard);
+
+            result.Data["OldGames"].Value += "[splitter]" + st;
+
+            PlayerPrefs.SetString("OldGames", result.Data["OldGames"].Value);
+
+            if (LoadingOverlay.instance != null)
+                LoadingOverlay.instance.ShowLoading("UpdateUserData");
+            Dictionary<string, string> updateInfo = new Dictionary<string, string>();
+            updateInfo.Add("OldGames", result.Data["OldGames"].Value);
+
+            PlayfabCallbackHandler.instance.UpdateUserDataGrouped(updateInfo, () => {
+
+                if (LoadingOverlay.instance != null)
+                    LoadingOverlay.instance.DoneLoading("UpdateUserData");
+
+                if (LoadingOverlay.instance != null)
+                    LoadingOverlay.instance.DoneLoading("Removing game!");
+
+
+                    StartCoroutine(Startup._instance.DelayRefresh());
+          
+                PlayerPrefs.SetString("AIGame", "");
+
+            }, () => {
+
+                Debug.LogError("Bug  updating games!!");
+            });
+
+
+
+        }, (error) =>
+        {
+
+
+            Debug.LogError("BUG GETTING OLD GAMES!");
+        }
+            );
+
+
 
 
 
         //Need to load old games from online
-        if (LoadingOverlay.instance != null)
-            LoadingOverlay.instance.ShowLoadingFullscreen("Getting old games!");
 
 
 
 
 
+        //            PlayfabCallbackHandler.instance.GetFilesRequest((result) => {
+
+        //                if (LoadingOverlay.instance != null)
+        //                    LoadingOverlay.instance.DoneLoading("Getting old games!");
+
+        //                if (LoadingOverlay.instance != null)
+        //                    LoadingOverlay.instance.ShowLoadingFullscreen("Removing AI!");
+
+        //                result += "[splitter]" + aCompresserdAiBoard;
+        //                PlayerPrefs.SetString("OldGames", result);
+
+        //                PlayfabCallbackHandler.instance.InitiateFileUploads((result) => {
+
+        //                    PlayerPrefs.SetString("AIGame", "");
+
+        //                    Debug.Log("Removed game");
+        //                    if (LoadingOverlay.instance != null)
+        //                        LoadingOverlay.instance.DoneLoading("Removing AI!");
+        //                },
+        //                    error => {
 
 
-
-
-
-                    PlayfabCallbackHandler.instance.GetFilesRequest((result) => {
-
-                        if (LoadingOverlay.instance != null)
-                            LoadingOverlay.instance.DoneLoading("Getting old games!");
-
-                        if (LoadingOverlay.instance != null)
-                            LoadingOverlay.instance.ShowLoadingFullscreen("Removing AI!");
-
+        //                        if (LoadingOverlay.instance != null)
+        //                            LoadingOverlay.instance.DoneLoading("Removing AI!");
    
+        //                    });
+        //}, (error) => {
+        //    if (LoadingOverlay.instance != null)
+        //        LoadingOverlay.instance.DoneLoading("Getting old games!");
 
-                        //GetComponent<Startup>().myData["OldGames"].Value = result;
-
-                        result += "[splitter]" + aCompresserdAiBoard;
-                        PlayerPrefs.SetString("OldGames", result);
-
-                        PlayfabCallbackHandler.instance.InitiateFileUploads((result) => {
-
-
-                            PlayerPrefs.SetString("AIGame", "");
-
-                            Debug.Log("Removed game");
-                            if (LoadingOverlay.instance != null)
-                                LoadingOverlay.instance.DoneLoading("Removing AI!");
-
-
-                        },
-                            error => {
-
-
-                                if (LoadingOverlay.instance != null)
-                                    LoadingOverlay.instance.DoneLoading("Removing AI!");
-   
-                            });
-
-
-
-
-                        //PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
-                        //    {
-                        //            Data = new Dictionary<string, string>() {
-                        //        {"MyGames",Startup._instance.myData["MyGames"].Value},
-                        //        {"OldGames",Startup._instance.myData["OldGames"].Value},
-                        //    }
-                        //    },
-                        //    result =>
-                        //    {
-       
-
-                        //    PlayerPrefs.SetString("AIGame", "");
-
-                        //        Debug.Log("Removed game");
-                        //        if (LoadingOverlay.instance != null)
-                        //            LoadingOverlay.instance.DoneLoading("Removing AI!");
-                        //    },
-                        //    error => {
-
-
-                        //        if (LoadingOverlay.instance != null)
-                        //            LoadingOverlay.instance.DoneLoading("Removing AI!");
-                        //        Debug.Log(error.GenerateErrorReport());
-                        //    });
-
-
-        }, (error) => {
-            if (LoadingOverlay.instance != null)
-                LoadingOverlay.instance.DoneLoading("Getting old games!");
-
-            Debug.LogError("BUG GETTING OLD GAMES!");
-        });
+        //    Debug.LogError("BUG GETTING OLD GAMES!");
+        //});
 
 
 
@@ -1014,26 +1155,17 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
 
-        PlayfabCallbackHandler.instance.GetFilesRequest(
+        PlayfabCallbackHandler.instance.GetUserData(
         result =>
              {
-
-
-
-                     // Code here will be called in the main thread...
-
-                
-
-
                  if (LoadingOverlay.instance != null)
                      LoadingOverlay.instance.DoneLoading("Getting old games!");
 
-                 PlayerPrefs.SetString("OldGames", result);
-                 //Startup._instance.myData["OldGames"] = result.Data["OldGames"];
+
+                 if (result.Data.ContainsKey("OldGames") == true)
+                    PlayerPrefs.SetString("OldGames", result.Data["OldGames"].Value);
 
                  Startup._instance.myData["MyGames"].Value = Startup._instance.myData["MyGames"].Value.Replace("," + aSharedGroupName, "");
-
-
 
                  string st = (aDBjson);
 
@@ -1045,27 +1177,31 @@ public class PlayfabHelperFunctions : MonoBehaviour
                      addToOld = false;
 
                  if (addToOld)
-                     result += "[splitter]" + st;
+                     result.Data["OldGames"].Value += "[splitter]" + st;
 
 
 
-                 PlayerPrefs.SetString("OldGames", result);
+                 PlayerPrefs.SetString("OldGames", result.Data["OldGames"].Value);
 
 
                  if (LoadingOverlay.instance != null)
                      LoadingOverlay.instance.ShowLoading("UpdateUserData");
-                 PlayfabCallbackHandler.instance.UpdateUserData("MyGames", Startup._instance.myData["MyGames"].Value, ()=> {
+                 Dictionary<string, string> updateInfo = new Dictionary<string, string>();
+                 updateInfo.Add("MyGames", Startup._instance.myData["MyGames"].Value);
+                 updateInfo.Add("OldGames", result.Data["OldGames"].Value);
+
+                 PlayfabCallbackHandler.instance.UpdateUserDataGrouped(updateInfo, ()=> {
 
                      if (LoadingOverlay.instance != null)
                          LoadingOverlay.instance.DoneLoading("UpdateUserData");
-                     Debug.Log("Removed non existing SharedData room in UserData");
+                     //Debug.Log("Removed non existing SharedData room in UserData");
 
 
 
-                     if (LoadingOverlay.instance != null)
-                         LoadingOverlay.instance.ShowLoadingFullscreen("Removing game!");
-                     PlayfabCallbackHandler.instance.InitiateFileUploads((result) =>
-                     {
+                     //if (LoadingOverlay.instance != null)
+                     //    LoadingOverlay.instance.ShowLoadingFullscreen("Removing game!");
+                     //PlayfabCallbackHandler.instance.InitiateFileUploads((result) =>
+                     //{
                          if (LoadingOverlay.instance != null)
                              LoadingOverlay.instance.DoneLoading("Removing game!");
                          // This is for if we find a abandoned game we want to remove a potentail next one
@@ -1080,15 +1216,13 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
 
-                     },
-                     error => {
+                     //},
+                     //error => {
 
-                         GameFinishedScreen.instance.errorButtonRetry.SetActive(true);
-                         GameFinishedScreen.instance.errorButtonRetry.transform.GetChild(1).GetComponent<Text>().text = "Error: InitiateFileUploads" + error;
-                         if (LoadingOverlay.instance != null)
-                             LoadingOverlay.instance.DoneLoading("Removing game!");
-
-
+                     //    GameFinishedScreen.instance.errorButtonRetry.SetActive(true);
+                     //    GameFinishedScreen.instance.errorButtonRetry.transform.GetChild(1).GetComponent<Text>().text = "Error: InitiateFileUploads" + error;
+                     //    if (LoadingOverlay.instance != null)
+                     //        LoadingOverlay.instance.DoneLoading("Removing game!");
 
 
 
@@ -1096,7 +1230,9 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
 
-                     });
+
+
+                     //});
 
 
 
@@ -1187,46 +1323,50 @@ public class PlayfabHelperFunctions : MonoBehaviour
         bd.EmptyTurns = "0";
         LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
 
-        PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
-        {
-            SharedGroupId = roomName,
-            Data = new Dictionary<string, string>() {
-                        {roomName, bd.GetJson()}
 
-            }
-        },
-        result3 =>
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"SharedGroupId", roomName},
+                    {"data", bd.GetJson()}});
+
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/UpdateSharedGroupData.php", jsonString, (result4) =>
         {
             LoadingOverlay.instance.DoneLoading("UpdateSharedGroupData");
+            Debug.Log(result4);
             Debug.Log("Successfully updated user data with new player id's");
 
-            AddSharedGroupToGameList(roomName);
+            List<string> aUser = new List<string>();
+            aUser.Add(player2_playfabID);
 
-            SendPushToUser(bd.player1_PlayfabId, "", "You have started a game against "+ Startup._instance.displayName);
+            string jsonString2 = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                                    {"PlayerID_1", player1_playfabID},
+                                    {"PlayerID_2", player2_playfabID},
+                                    {"SharedGroupId", roomName}});
 
-        },
+                AWSBackend.instance.AWSClientAPI("phpBackend/AddPlayerToSharedGroupAndToGameList_cloudscript.php", jsonString2,
+                           (result) =>
+                           {
+                               SendPushToUser(bd.player2_PlayfabId, "", "" + Startup._instance.displayName + " has challenged you!");
+                               Startup._instance.Refresh(0.1f);
+                               Debug.Log(result);
+                           }, error =>
+                           {
+                               Debug.LogError(error);
+                           });
+
+
+
+                    },
         error =>
         {
-            Debug.Log("Got error setting user data Ancestor to Arthur");
-            Debug.Log(error.GenerateErrorReport());
+            Debug.LogError("Got error setting user data Ancestor to Arthur");
         });
 
-
-        //PlayFabClientAPI.CreateSharedGroup(new CreateSharedGroupRequest()
-        //{
-        //    SharedGroupId = GetComponent<Startup>().MyPlayfabID,
-
-        //}, result3 => {
-        //    AddGameToSharedGroup(new List<string>(){ player1_playfabID, player2_playfabID }, roomName);
-        //}, (error) => {
-        //    AddGameToSharedGroup(new List<string>(){ player1_playfabID, player2_playfabID }, roomName);
-        //    Debug.Log(error.GenerateErrorReport());
-        //});
 
 
         //PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
         //{
-        //    SharedGroupId = player2_playfabID,
+        //    SharedGroupId = roomName,
         //    Data = new Dictionary<string, string>() {
         //                {roomName, bd.GetJson()}
 
@@ -1234,16 +1374,22 @@ public class PlayfabHelperFunctions : MonoBehaviour
         //},
         //result3 =>
         //{
-        //    Debug.Log("Successfully updated user data");
+        //    LoadingOverlay.instance.DoneLoading("UpdateSharedGroupData");
+        //    Debug.Log("Successfully updated user data with new player id's");
 
+        //    AddSharedGroupToGameList(roomName);
 
-        //    Refresh();
+        //    SendPushToUser(bd.player1_PlayfabId, "", "You have started a game against "+ Startup._instance.displayName);
+
         //},
         //error =>
         //{
         //    Debug.Log("Got error setting user data Ancestor to Arthur");
         //    Debug.Log(error.GenerateErrorReport());
         //});
+
+
+        
     }
 
 
@@ -1252,32 +1398,32 @@ public class PlayfabHelperFunctions : MonoBehaviour
     {
 
 
-        LoadingOverlay.instance.ShowLoadingFullscreen("UpdateUserData");
-        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
-        { 
-            Data = new Dictionary<string, string>() {
-            {"Ranking", "0"},
-            {"Picture", "0"},
-            {"MyGames", ","},
-            {"OldGames", "[splitter][splitter]"},
-            {"StatsData", " "},
-            {"Achivments", Startup._instance.myAchivmentController.GetDefault()},
-            {"XP", "0"} },
-            Permission = UserDataPermission.Public,
+        //LoadingOverlay.instance.ShowLoadingFullscreen("UpdateUserData");
+        //PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+        //{ 
+        //    Data = new Dictionary<string, string>() {
+        //    {"Ranking", "0"},
+        //    {"Picture", "0"},
+        //    {"MyGames", ","},
+        //    {"OldGames", "[splitter][splitter]"},
+        //    {"StatsData", " "},
+        //    {"Achivments", Startup._instance.myAchivmentController.GetDefault()},
+        //    {"XP", "0"} },
+        //    Permission = UserDataPermission.Public,
 
-        },
-        result =>
-        {
-            LoadingOverlay.instance.DoneLoading("UpdateUserData");
-            Debug.Log("Successfully updated user data");
-            StartCoroutine(GetComponent<Startup>().DelayRefresh());
-            MainMenuController.instance.OpenSetNameWidnow(true);
+        //},
+        //result =>
+        //{
+        //    LoadingOverlay.instance.DoneLoading("UpdateUserData");
+        //    Debug.Log("Successfully updated user data");
+        //    StartCoroutine(GetComponent<Startup>().DelayRefresh());
+        //    MainMenuController.instance.OpenSetNameWidnow(true);
 
-        },
-        error => {
-            Debug.Log("Got error setting user data Ancestor to Arthur");
-            Debug.Log(error.GenerateErrorReport());
-        });
+        //},
+        //error => {
+        //    Debug.Log("Got error setting user data Ancestor to Arthur");
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
     }
     public void ChangeValueFor(string aEntry,string aValue)
     {
@@ -1358,6 +1504,9 @@ public class PlayfabHelperFunctions : MonoBehaviour
             else
                 ChangeValueFor("XP", "0");
 
+            if (result.Data.ContainsKey("DisplayName") == true)
+                GetComponent<Startup>().displayName = result.Data["DisplayName"].Value;
+
             ProfileButton.instance.Init(GetComponent<Startup>().displayName, GetComponent<Startup>().myData["Ranking"].Value, xp);
             if (!updateHighscoreOnce)
             {
@@ -1390,12 +1539,13 @@ public class PlayfabHelperFunctions : MonoBehaviour
             }
 
 
+
             //if( ChallengeAgainWindow.instance != null)
             //{
             //    ChallengeAgainWindow.instance.CheckPlayAgain();
             //}
 
-            if(shouldRest == false)
+            if (shouldRest == false)
                 UpdateGameList();
 
             //if (result.Data == null || !result.Data.ContainsKey("Ancestor")) Debug.Log("No Ancestor");
@@ -1477,32 +1627,32 @@ error => {
 
     }
     bool updateHighscoreOnce = false;
-    public List<string> EmptyGamesToRemove = new List<string>();
-    public void RemoveLegacyAndEmptyGames()
-    {
-        if(EmptyGamesToRemove.Count>0)
-        {
-            for(int i = 0; i < EmptyGamesToRemove.Count;i++)
-            {
-                Startup._instance.myData["MyGames"].Value = Startup._instance.myData["MyGames"].Value.Replace("," + EmptyGamesToRemove[i], "");
-            }
-            PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
-            {
-                Data = new Dictionary<string, string>() {
-                {"MyGames",Startup._instance.myData["MyGames"].Value}
-            }
-            },
-            result =>
-            {
-                Debug.Log("Removed non existing SharedData room in UserData");
-            },
-            error => {
-                Debug.Log(error.GenerateErrorReport());
-            });
+    //public List<string> EmptyGamesToRemove = new List<string>();
+    //public void RemoveLegacyAndEmptyGames()
+    //{
+    //    if(EmptyGamesToRemove.Count>0)
+    //    {
+    //        for(int i = 0; i < EmptyGamesToRemove.Count;i++)
+    //        {
+    //            Startup._instance.myData["MyGames"].Value = Startup._instance.myData["MyGames"].Value.Replace("," + EmptyGamesToRemove[i], "");
+    //        }
+    //        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+    //        {
+    //            Data = new Dictionary<string, string>() {
+    //            {"MyGames",Startup._instance.myData["MyGames"].Value}
+    //        }
+    //        },
+    //        result =>
+    //        {
+    //            Debug.Log("Removed non existing SharedData room in UserData");
+    //        },
+    //        error => {
+    //            Debug.Log(error.GenerateErrorReport());
+    //        });
 
-        }
-        EmptyGamesToRemove.Clear();
-    }
+    //    }
+    //    EmptyGamesToRemove.Clear();
+    //}
   
     public void UpdateGameList()
     {
@@ -1648,7 +1798,7 @@ error => {
 
 
 
-        PlayfabCallbackHandler.instance.RemoveSharedGroupMembers(aRoomName, new List<string>() { Startup._instance.MyPlayfabID }, () => {
+        //PlayfabCallbackHandler.instance.RemoveSharedGroupMembers(aRoomName, new List<string>() { Startup._instance.MyPlayfabID }, () => {
             if (LoadingOverlay.instance != null)
                 LoadingOverlay.instance.DoneLoading("RemoveSharedGroupMembers");
 
@@ -1672,32 +1822,32 @@ error => {
 
             Debug.Log("Removed old inactive SharedData room");
             //Refresh();
-        }, () => {
-            if (LoadingOverlay.instance != null)
-                LoadingOverlay.instance.DoneLoading("RemoveSharedGroupMembers");
+        //}, () => {
+        //    if (LoadingOverlay.instance != null)
+        //        LoadingOverlay.instance.DoneLoading("RemoveSharedGroupMembers");
 
 
-            string st = "";
+        //    string st = "";
 
-            st = CompressString.StringCompressor.CompressString(aRoomJson);
+        //    st = CompressString.StringCompressor.CompressString(aRoomJson);
 
 
 
-            for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
-            {
-                if (Startup._instance.openGamesList[i].player1_PlayfabId == Startup._instance.MyPlayfabID && Startup._instance.openGamesList[i].player2_PlayfabId == "")
-                {
-                    Startup._instance.openGamesList.RemoveAt(i);
-                    break;
-                }
-            }
+        //    for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
+        //    {
+        //        if (Startup._instance.openGamesList[i].player1_PlayfabId == Startup._instance.MyPlayfabID && Startup._instance.openGamesList[i].player2_PlayfabId == "")
+        //        {
+        //            Startup._instance.openGamesList.RemoveAt(i);
+        //            break;
+        //        }
+        //    }
 
-            RemoveSharedGroupToGameList(aRoomName, onComplete, st);
+        //    RemoveSharedGroupToGameList(aRoomName, onComplete, st);
 
-            Debug.Log("Removed old inactive SharedData room");
-            //        Refresh();
-           // Debug.Log(error.GenerateErrorReport());
-        });
+        //    Debug.Log("Removed old inactive SharedData room");
+        //    //        Refresh();
+        //   // Debug.Log(error.GenerateErrorReport());
+        //});
 
 
 
@@ -1871,10 +2021,7 @@ error => {
 
 
 
-        PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
-                {
-                    SharedGroupId = aGame
-                }, result =>
+        PlayfabCallbackHandler.instance.GetSharedGroupData(aGame, result =>
                 {
 
                     if (SceneManager.GetActiveScene().name != "GameScene")
@@ -1887,11 +2034,11 @@ error => {
 
                     foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
                     {
-                        if (entry.Key == "Chat")
+                        if (entry.Key == "chat")
                         {
                             string chatViewed = PlayerPrefs.GetString(aGame + "_chat");
 
-                            if(chatViewed != entry.Value.Value)
+                            if(chatViewed != entry.Value.Value && entry.Value.Value.Length>0)
                             {
                                 string[] liveMessegaes = entry.Value.Value.Split('≤');
                                 string[] viewedMessegaes = chatViewed.Split('≤');
@@ -1913,9 +2060,11 @@ error => {
                                 
                             continue;
                         }
-                         
-                        BoardData bd = new BoardData(entry.Value.Value);
-                        GetComponent<Startup>().GameToLoad = bd;
+                        if (entry.Key == "data")
+                        {
+                            BoardData bd = new BoardData(HttpUtility.UrlDecode(entry.Value.Value));
+                            GetComponent<Startup>().GameToLoad = bd;
+                        }
                     }
                     GameManager.instance.RefreshBackendCallback();
 
@@ -1933,21 +2082,18 @@ error => {
         if (LoadingOverlay.instance != null)
             LoadingOverlay.instance.ShowLoading("GetSharedGroupData2");
 
-        PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
-        {
-            SharedGroupId = aGame
-        }, result =>
+        PlayfabCallbackHandler.instance.GetSharedGroupData(aGame, result =>
         {
             if (LoadingOverlay.instance != null)
                 LoadingOverlay.instance.DoneLoading("GetSharedGroupData2");
 
             foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
             {
-                if (entry.Key == "Chat")
+                if (entry.Key == "chat")
                 {
                     string chatViewed = PlayerPrefs.GetString(aGame + "_chat");
 
-                    if (chatViewed != entry.Value.Value)
+                    if (chatViewed != entry.Value.Value && entry.Value.Value.Length>0)
                     {
                         string[] liveMessegaes = entry.Value.Value.Split('≤');
                         string[] viewedMessegaes = chatViewed.Split('≤');
@@ -1978,24 +2124,12 @@ error => {
 
 
 
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"PlayerID", Startup.instance.MyPlayfabID },
+                    {"SharedGroupId", aBoarddata.RoomName},
+                    {"data", aBoarddata.GetJson()}});
 
-
-
-
-        // LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
-
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "UpdateSharedGroupData",
-            FunctionParameter = new Dictionary<string, object>() {
-                { "SharedGroupId", aBoarddata.RoomName },
-                { "PlayFabId", Startup.instance.MyPlayfabID },
-                { "Data",  aBoarddata.GetJson()}
-            }
-        },
-        result3 =>
-        {
-          //  LoadingOverlay.instance.DoneLoading("UpdateSharedGroupData");
+        AWSBackend.instance.AWSClientAPI("phpBackend/UpdateSharedGroupData_cloudscript.php", jsonString, (result) => {
             Debug.Log("Successfully updated shared data with where players took a turn");
             GameManager.instance.updateInProgress = false;
 
@@ -2014,7 +2148,7 @@ error => {
             }
  
 
-
+             //TODO. Enable this again
             SendPushToUser(userToSend,"", "It's your turn against "+displayName +"!", aBoarddata.RoomName);
 
 
@@ -2067,28 +2201,9 @@ error => {
         error =>
         {
             Debug.Log("Got error making turn");
-            Debug.Log(error.GenerateErrorReport());
+            Debug.LogError(error);
 
-            if(error.ErrorMessage== "NotAuthorized")
-            {
-                PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-                {
-                    FunctionName = "AddPlayerToSharedGroup",
-                    FunctionParameter = new Dictionary<string, object>() {
-                { "PlayFabIds", Startup.instance.MyPlayfabID },
-                { "SharedGroupId", aBoarddata.RoomName }
-                    }
-                }, result => {
-
-                    SendNextTurn(aBoarddata,callback);
-
-                }, error =>
-                {
-                    Debug.LogError(error.GenerateErrorReport());
-                }
-                );
-
-            }
+   
 
 
             GameManager.instance.updateInProgress = false;
@@ -2104,136 +2219,169 @@ error => {
         if (message == "")
             message = "Outnumber";
 
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "ChallengePlayer",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "TargetId", aId },
-            { "Title", title },
-            { "Message", message },
-            { "room", "{\"room\":\""+room+"\"}" }
 
-        }
-        }, result => {
-            Debug.Log(result.FunctionResult);
 
-        }, error => Debug.LogError(error.GenerateErrorReport()));
+
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"TargetPlayerId", aId},
+                    { "Title", title},
+                    { "Message", message },
+                    { "room", "{\"room\":\""+room+"\"}" }});
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/SendPush.php", jsonString, (result) => {
+            Debug.Log("Done!" + result);
+        }, (error) => {
+            Debug.Log("Error!" + error);
+        });
+
+
+
+        //PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        //{
+        //    FunctionName = "ChallengePlayer",
+        //    FunctionParameter = new Dictionary<string, object>() {
+        //    { "TargetId", aId },
+        //    { "Title", title },
+        //    { "Message", message },
+        //    { "room", "{\"room\":\""+room+"\"}" }
+
+        //}
+        //}, result => {
+        //    Debug.Log(result.FunctionResult);
+
+        //}, error => Debug.LogError(error.GenerateErrorReport()));
+
+
+
+
+
     }
     public float AddingUsersToGame = 0;
     public void CheckIfGameIsInList(string player1, string player2, string roomID)
     {
         if(AddingUsersToGame <=0)
         {
-            PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-            {
-                FunctionName = "CheckIfGameInListElseAdd",
-                FunctionParameter = new Dictionary<string, object>() {
-            { "player1", player1 },
-            { "player2", player2 },
-            { "roomID", roomID }
+            string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"SharedGroupId", roomID},
+                         {"PlayerID_1", player1},
+                              {"PlayerID_2", player2}
+            });
 
-        }
-            }, result => {
-                Debug.Log(result.FunctionResult);
+            AWSBackend.instance.AWSClientAPI("phpBackend/CheckIfGameInListElseAdd.php", jsonString, (result2) => {
+                //Debug.Log(result2);
 
-            }, error => Debug.LogError(error.GenerateErrorReport()));
+            }, error => Debug.LogError(error));
 
-            
+
+
+            //PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+            //{
+            //    FunctionName = "CheckIfGameInListElseAdd",
+            //    FunctionParameter = new Dictionary<string, object>() {
+            //{ "player1", player1 },
+            //{ "player2", player2 },
+            //{ "roomID", roomID }
+
+            //}
+            //}, result => {
+            //    Debug.Log(result.FunctionResult);
+
+            //}, error => Debug.LogError(error.GenerateErrorReport()));
+
+
         }
 
     }
-    public void GetAllAvatarGrouped(string aId)
-    {
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "GetAllAvatarGrouped",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabId", aId }
-        }
-        }, result => {
+    //public void GetAllAvatarGrouped(string aId)
+    //{
+    //    PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+    //    {
+    //        FunctionName = "GetAllAvatarGrouped",
+    //        FunctionParameter = new Dictionary<string, object>() {
+    //        { "PlayFabId", aId }
+    //    }
+    //    }, result => {
 
-            IEnumerable test = (IEnumerable)result.FunctionResult;
+    //        IEnumerable test = (IEnumerable)result.FunctionResult;
 
-            List<BoardData> gameList = new List<BoardData>();
-            foreach (IEnumerable item in test)
-            {
-                gameList.Add(new BoardData(item.ToString()));
+    //        List<BoardData> gameList = new List<BoardData>();
+    //        foreach (IEnumerable item in test)
+    //        {
+    //            gameList.Add(new BoardData(item.ToString()));
 
-            }
-
-
-            bool shouldAddOldGamesNow = true;
-            for (int i = 0; i < gameList.Count; i++)
-            {
-                if (gameList[i] != null)
-                {
-
-                    shouldAddOldGamesNow = false;
+    //        }
 
 
-                    BoardData bd = gameList[i];
+    //        bool shouldAddOldGamesNow = true;
+    //        for (int i = 0; i < gameList.Count; i++)
+    //        {
+    //            if (gameList[i] != null)
+    //            {
+
+    //                shouldAddOldGamesNow = false;
 
 
-                    if (Startup._instance.SearchingForGameObject != null)
-                    {
-                        if (Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID == bd.RoomName)
-                        {
-                            if (bd.player2_PlayfabId != "")
-                                Destroy(Startup._instance.SearchingForGameObject);
-                        }
-                    }
+    //                BoardData bd = gameList[i];
 
 
-                    if (bd.player1_abandon == "1" || bd.player2_abandon == "1")
-                    {
-
-                    }
-                    else if (bd.player2_PlayfabId != "")
-                    {
-                        GameObject obj = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent_updating);
-                        Vector3 rc = obj.GetComponent<RectTransform>().localPosition;
-                        obj.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
-                        obj.GetComponent<GameListItem>().Init(bd);
-
-                    }
-                    else
-                    {
-                        if (Startup._instance.SearchingForGameObject == null)
-                        {
-                            Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent_updating);
-                            Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
-                            Startup._instance.SearchingForGameObject.SetActive(true);
-                            Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
-                            Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
-                            Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = bd.RoomName;
-                        }
-                        else
-                        {
-                            Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
-                            Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
-                            Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
-
-                        }
-
-                    }
+    //                if (Startup._instance.SearchingForGameObject != null)
+    //                {
+    //                    if (Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID == bd.RoomName)
+    //                    {
+    //                        if (bd.player2_PlayfabId != "")
+    //                            Destroy(Startup._instance.SearchingForGameObject);
+    //                    }
+    //                }
 
 
-                    Startup._instance.openGamesList.Add(bd);
+    //                if (bd.player1_abandon == "1" || bd.player2_abandon == "1")
+    //                {
+
+    //                }
+    //                else if (bd.player2_PlayfabId != "")
+    //                {
+    //                    GameObject obj = (GameObject)GameObject.Instantiate(_GameListItem, MainMenuController.instance._GameListParent_updating);
+    //                    Vector3 rc = obj.GetComponent<RectTransform>().localPosition;
+    //                    obj.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+    //                    obj.GetComponent<GameListItem>().Init(bd);
+
+    //                }
+    //                else
+    //                {
+    //                    if (Startup._instance.SearchingForGameObject == null)
+    //                    {
+    //                        Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent_updating);
+    //                        Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+    //                        Startup._instance.SearchingForGameObject.SetActive(true);
+    //                        Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+    //                        Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+    //                        Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = bd.RoomName;
+    //                    }
+    //                    else
+    //                    {
+    //                        Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+    //                        Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+    //                        Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(0, 0, 0);
+
+    //                    }
+
+    //                }
 
 
-
-                    //  Startup._instance.FinishedGettingGameListCheckForOpenGames();
+    //                Startup._instance.openGamesList.Add(bd);
 
 
 
-
-                }
-            }
-
-            // if (shouldAddOldGamesNow)
-            Startup._instance.FinishedGettingGameListCheckForOpenGames();
+    //                //  Startup._instance.FinishedGettingGameListCheckForOpenGames();
 
 
+
+
+    //            }
+    //        }
+
+    //        // if (shouldAddOldGamesNow)
+    //        Startup._instance.FinishedGettingGameListCheckForOpenGames();
 
 
 
@@ -2244,24 +2392,26 @@ error => {
 
 
 
-        }, error => Debug.LogError(error.GenerateErrorReport()));
-    }
 
 
-    public void test( )
-    {
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "GetAllAvatarGrouped",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabId", Startup.instance.MyPlayfabID }
-        }
-        }, result => {
+    //    }, error => Debug.LogError(error.GenerateErrorReport()));
+    //}
 
-            Debug.Log(result.CustomData);
 
-        }, error => Debug.LogError(error.GenerateErrorReport()));
-    }
+    //public void test( )
+    //{
+    //    PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+    //    {
+    //        FunctionName = "GetAllAvatarGrouped",
+    //        FunctionParameter = new Dictionary<string, object>() {
+    //        { "PlayFabId", Startup.instance.MyPlayfabID }
+    //    }
+    //    }, result => {
+
+    //        Debug.Log(result.CustomData);
+
+    //    }, error => Debug.LogError(error.GenerateErrorReport()));
+    //}
     public static void CopyTo(Stream src, Stream dest)
     {
         byte[] bytes = new byte[4096];
@@ -2334,7 +2484,12 @@ error => {
 
         return decompressed.ToString();
     }
-
+    private static string DecodeUrlString(string url) {
+    string newUrl;
+    while ((newUrl = Uri.UnescapeDataString(url)) != url)
+        url = newUrl;
+    return newUrl;
+}
     public void GetSharedDataGrouped(string aId)
     {
 
@@ -2345,45 +2500,61 @@ error => {
             if (Startup._instance.openGamesList.Count > 0)
                 return;
 
-            Startup.instance.StoredAvatarURLS = (PlayFab.Json.JsonObject)result.FunctionResult;
-
-
-        //        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        //{
-        //    FunctionName = "GetSharedDataGrouped2",
-        //    FunctionParameter = new Dictionary<string, object>() {
-        //    { "PlayFabId", aId }
-        //}
-        //},
-        PlayfabCallbackHandler.instance.GetSharedDataGrouped2(aId, result2 => {
+            //   Startup.instance.StoredAvatarURLS = (PlayFab.Json.JsonObject)result.FunctionResult;
+            string v = (string)result.FunctionResult;
+            if (v != "[]" && v.Length>2)
+            Startup.instance.StoredAvatarURLS = JsonConvert.DeserializeObject<Dictionary<string, string>>((string)result.FunctionResult);
+            //        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+            //{
+            //    FunctionName = "GetSharedDataGrouped2",
+            //    FunctionParameter = new Dictionary<string, object>() {
+            //    { "PlayFabId", aId }
+            //}
+            //},
+            PlayfabCallbackHandler.instance.GetSharedDataGrouped2(aId, result2 => {
             if (Startup._instance.openGamesList.Count > 0)
                 return;
             if (result2 == null || result2.FunctionResult == null)
                 return;
 
-            IEnumerable test = (IEnumerable)result2.FunctionResult;
+   
+
+
+
+                //IEnumerable test = (IEnumerable)result2.FunctionResult;
 
             List<BoardData> gameList = new List<BoardData>();
 
-            foreach (IEnumerable item in test)
-            {
-      
-                char[] t = item.ToString().ToCharArray();
-
-                List<int> b = new List<int>();
-
-                for (int i = 0; i < t.Length; i++)
+                //foreach (IEnumerable item in test)
+                string v2 = (string)result2.FunctionResult;
+                if (v2 != "[]" && v2.Length > 2)
                 {
+                    Dictionary<string, string> gamelistreturn = JsonConvert.DeserializeObject<Dictionary<string, string>>((string)result2.FunctionResult);
 
-                    b.Add((t[i]));
+                    foreach (var item in gamelistreturn)
+                    {
+                        string con2 = HttpUtility.UrlDecode(item.Value);
+                        //   char[] t = con2.ToCharArray();
+
+                        //List<int> b = new List<int>();
+
+                        //for (int i = 0; i < t.Length; i++)
+                        //{
+
+                        //    b.Add((t[i]));
+                        //}
+
+
+                        //string con = Decompress(b);
+
+
+
+
+
+                        gameList.Add(new BoardData(con2));
+                    }
                 }
-
-
-                string con = Decompress(b);
-
-
-                gameList.Add(new BoardData(con));
-            }
+              
 
 
 
@@ -2485,60 +2656,64 @@ error => {
     }
     public void AddGameToPlayerListCloudScript(string aId, string aRoomName)
     {
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "AddGameToPlayerList",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabId", aId },
-            { "RoomName", aRoomName }
+        //PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        //{
+        //    FunctionName = "AddGameToPlayerList",
+        //    FunctionParameter = new Dictionary<string, object>() {
+        //    { "PlayFabId", aId },
+        //    { "RoomName", aRoomName }
 
-        }
-        }, result => {
-            Debug.Log(result.FunctionResult);
+        //}
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"PlayerID_1", aId},
+                    {"SharedGroupId", aRoomName}});
 
-        }, error => Debug.LogError(error.GenerateErrorReport()));
+        AWSBackend.instance.AWSClientAPI("phpBackend/AddGameToPlayerList.php", jsonString, (result) => {
+                Debug.Log(result);
+
+        }, error => Debug.LogError(error));
     }
 
 
     
-    public void CreateAndAddToSharedGroup(string[] aPlayFabIds, string aSharedGroupId)
-    {
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "CreateAndAddSharedGroup",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabIds", aPlayFabIds },
-            { "SharedGroupId", aSharedGroupId }
-        }
-        }, result => {
-            Debug.Log(result.FunctionResult);
+    //public void CreateAndAddToSharedGroup(string[] aPlayFabIds, string aSharedGroupId)
+    //{
+    //    PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+    //    {
+    //        FunctionName = "CreateAndAddSharedGroup",
+    //        FunctionParameter = new Dictionary<string, object>() {
+    //        { "PlayFabIds", aPlayFabIds },
+    //        { "SharedGroupId", aSharedGroupId }
+    //    }
+    //    }, result => {
+    //        Debug.Log(result.FunctionResult);
 
-        }, error =>
-        {
-            Debug.LogError(error.GenerateErrorReport());
-        }
-        );
+    //    }, error =>
+    //    {
+    //        Debug.LogError(error.GenerateErrorReport());
+    //    }
+    //    );
 
-    }
-    public void AddPlayerToSharedGroup(string[] aPlayFabIds, string aSharedGroupId)
-    {
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "AddPlayerToSharedGroup",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabIds", aPlayFabIds },
-            { "SharedGroupId", aSharedGroupId }
-        }
-        }, result => {
-            Debug.Log(result.FunctionResult);
+    //}
+    //public void AddPlayerToSharedGroup(string[] aPlayFabIds, string aSharedGroupId)
+    //{
+    //    PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+    //    {
+    //        FunctionName = "AddPlayerToSharedGroup",
+    //        FunctionParameter = new Dictionary<string, object>() {
+    //        { "PlayFabIds", aPlayFabIds },
+    //        { "SharedGroupId", aSharedGroupId }
+    //    }
+    //    }, result => {
+    //        Debug.Log(result.FunctionResult);
 
-        }, error =>
-        {
-            Debug.LogError(error.GenerateErrorReport());
-        }
-        );
+    //    }, error =>
+    //    {
+    //        Debug.LogError(error.GenerateErrorReport());
+    //    }
+    //    );
 
-    }
+    //}
 
 
 
@@ -2553,26 +2728,26 @@ error => {
 
         Startup._instance.DontAutoRefresh = false;
 
-        if (LoadingOverlay.instance != null)
-            LoadingOverlay.instance.ShowLoading("GetPlayerProfile");
+        //if (LoadingOverlay.instance != null)
+        //    LoadingOverlay.instance.ShowLoading("GetPlayerProfile");
 
 
 
 
 
-        PlayfabCallbackHandler.instance.GetPlayerProfile(result2 => {
-            if (LoadingOverlay.instance != null)
-                LoadingOverlay.instance.DoneLoading("GetPlayerProfile");
+        //PlayfabCallbackHandler.instance.GetPlayerProfile(result2 => {
+        //    if (LoadingOverlay.instance != null)
+        //        LoadingOverlay.instance.DoneLoading("GetPlayerProfile");
 
-            GetComponent<Startup>().displayName = result2.PlayerProfile.DisplayName;
+        //    GetComponent<Startup>().displayName = result2.PlayerProfile.DisplayName;
 
 
             GetUserData();
 
-        },
-      error => {
-          Debug.Log(error.GenerateErrorReport());
-      });
+      //  },
+      //error => {
+      //    Debug.Log(error.GenerateErrorReport());
+      //});
 
 
 
@@ -2681,45 +2856,72 @@ error => {
     {
         if(LoadingOverlay.instance != null)
         LoadingOverlay.instance.ShowLoading("GetSharedGroupData3");
-
-        PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
-        {
-            SharedGroupId = aRoomName
-        }, result =>
+        PlayfabCallbackHandler.instance.GetSharedGroupData(aRoomName, result =>
         {
             if (LoadingOverlay.instance != null)
                 LoadingOverlay.instance.DoneLoading("GetSharedGroupData3");
             foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
             {
-                if (entry.Key == "Chat")
+                if (entry.Key == "chat")
                     continue;
-                BoardData bd = new BoardData(entry.Value.Value);
-
-                bd.SetPlayerAbandome();
-                if (LoadingOverlay.instance != null)
-                    LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
-                PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
+                if (entry.Key == "data")
                 {
-                    SharedGroupId = aRoomName,
-                    Data = new Dictionary<string, string>() {
-                        {aRoomName, bd.GetJson()}
+                    BoardData bd = new BoardData(HttpUtility.UrlDecode(entry.Value.Value));
+
+                    bd.SetPlayerAbandome();
+                    if (LoadingOverlay.instance != null)
+                        LoadingOverlay.instance.ShowLoading("UpdateSharedGroupData");
+
+
+                    string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"SharedGroupId", aRoomName},
+                    {"data", bd.GetJson()}});
+
+                    AWSBackend.instance.AWSClientAPI("phpBackend/UpdateSharedGroupData.php", jsonString, 
+                       result3 =>
+                       {
+                           if (LoadingOverlay.instance != null)
+                               LoadingOverlay.instance.DoneLoading("UpdateSharedGroupData");
+                           Debug.Log("Successfully updated SetAbadome in room name:" + aRoomName);
+                           RemoveRoomFromList(aRoomName, bd.GetJson(), callback);
+                           LoadingOverlay.instance.DoneLoading("RemoveGame!");
+                       },
+                        error =>
+                        {
+                            Debug.LogError("Got error SetAbadome");
+                            LoadingOverlay.instance.DoneLoading("RemoveGame!");
+                        });
+
+
+
+                               // PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
+                               // {
+                               //     SharedGroupId = aRoomName,
+                               //     Data = new Dictionary<string, string>() {
+                               //         {aRoomName, bd.GetJson()}
+
+                               // }
+                               // },
+                               //result3 =>
+                               //{
+                               //    if (LoadingOverlay.instance != null)
+                               //        LoadingOverlay.instance.DoneLoading("UpdateSharedGroupData");
+                               //    Debug.Log("Successfully updated SetAbadome in room name:" + aRoomName);
+                               //    RemoveRoomFromList(aRoomName, bd.GetJson(), callback);
+                               //    LoadingOverlay.instance.DoneLoading("RemoveGame!");
+                               //},
+                               //error =>
+                               //{
+                               //    Debug.Log("Got error SetAbadome");
+                               //    Debug.Log(error.GenerateErrorReport());
+                               //    LoadingOverlay.instance.DoneLoading("RemoveGame!");
+                               //});
+
+
+
+
 
                 }
-                },
-               result3 =>
-               {
-                   if (LoadingOverlay.instance != null)
-                       LoadingOverlay.instance.DoneLoading("UpdateSharedGroupData");
-                   Debug.Log("Successfully updated SetAbadome in room name:" + aRoomName);
-                   RemoveRoomFromList(aRoomName, bd.GetJson(), callback);
-                   LoadingOverlay.instance.DoneLoading("RemoveGame!");
-               },
-               error =>
-               {
-                   Debug.Log("Got error SetAbadome");
-                   Debug.Log(error.GenerateErrorReport());
-                   LoadingOverlay.instance.DoneLoading("RemoveGame!");
-               });
             }
         }, (error) =>
         {
@@ -2769,7 +2971,7 @@ error => {
     //}
 
 
-
+   
 
 
 
@@ -2850,18 +3052,32 @@ error => {
         Debug.Log("DoAppleQuickLogin");
         signInWithApple.Login((args) =>
         {
+            Debug.Log("signInWithApple Done");
+            Debug.Log("signInWithApple " + args.error);
             if (!string.IsNullOrEmpty(args.error))
             {
                 Debug.Log("Apple -> sign in error:" + args.error);
                 return;
             }
+            Debug.Log("signInWithApple " + args.userInfo.idToken);
             string idToken = args.userInfo.idToken;
             //LogMessage("Apple --> Identity Token:\n" + idToken);
 
             PlayerPrefs.SetString("AppleUserIdKey", args.userInfo.displayName);
-            PlayerPrefs.SetString("AppleidentityToken", args.userInfo.idToken);
+            PlayerPrefs.SetString("AppleidentityToken", args.userInfo.userId);
+            PlayerPrefs.SetInt("UpdateAppleLogin", 1);
 
-            PlayFabClientAPI.LinkApple(new LinkAppleRequest { IdentityToken = args.userInfo.idToken }, AppleLoginSucess, OnPlayfabAppleAuthFailed);
+
+
+            //PlayFabClientAPI.LinkApple(new LinkAppleRequest { IdentityToken = args.userInfo.idToken }, AppleLoginSucess, OnPlayfabAppleAuthFailed);
+
+            //PlayfabCallbackHandler.instance.UpdateUserData("ApppleID", args.userInfo.userId, () => {
+            //    AppleLoginSucess();
+            //}, () => {
+
+            //    OnPlayfabAppleAuthFailed();
+            //});
+
 
             // use idToken to login to PlayFab or any other web services
         });
@@ -2876,7 +3092,7 @@ error => {
 
     }
 
-    private void AppleLoginSucess(PlayFab.ClientModels.EmptyResult obj)
+    public void AppleLoginSucess()
     {
         MainMenuController.instance.SetAppleLinked(true);
 
@@ -2943,9 +3159,9 @@ error => {
 
         if (PlayerPrefs.HasKey("FacebookLink"))
         {
-            if(FB.IsLoggedIn == false)
-                FB.LogInWithReadPermissions(new List<string>() { "public_profile", "gaming_user_picture" }, OnFacebookStartupLogin);
-            else
+            //if(FB.IsLoggedIn == false)
+            //    FB.LogInWithReadPermissions(new List<string>() { "public_profile", "gaming_user_picture" }, OnFacebookStartupLogin);
+            //else
             {
                 FacebookLogin();
 
@@ -2960,7 +3176,7 @@ error => {
         // If result has no errors, it means we have authenticated in Facebook successfully
         if ((result == null || string.IsNullOrEmpty(result.Error) ) && result.Cancelled == false)
         {
-            Debug.Log("Facebook Auth Complete! Access Token: " + AccessToken.CurrentAccessToken.TokenString + "\nLogging into PlayFab...");
+            Debug.Log("Facebook Auth Complete! Access Token: " + AccessToken.CurrentAccessToken.UserId + "\nLogging into PlayFab...");
 
             /*
              * We proceed with making a call to PlayFab API. We pass in current Facebook AccessToken and let it create
@@ -2980,7 +3196,18 @@ error => {
 
             if (isLinked == false)
             {
-                PlayFabClientAPI.LinkFacebookAccount(new LinkFacebookAccountRequest { AccessToken = AccessToken.CurrentAccessToken.TokenString }, OnPlayfabFacebookAuthComplete, OnPlayfabFacebookAuthFailed);
+                
+
+                PlayfabCallbackHandler.instance.UpdateUserData("FacebookTooken", AccessToken.CurrentAccessToken.UserId, () => {
+                    OnPlayfabFacebookAuthComplete();
+                    PlayerPrefs.DeleteKey("OldGames");
+                }, () => {
+
+                    OnPlayfabFacebookAuthFailed();
+                    PlayerPrefs.DeleteKey("OldGames");
+                });
+
+                //PlayFabClientAPI.LinkFacebookAccount(new LinkFacebookAccountRequest { AccessToken = AccessToken.CurrentAccessToken.TokenString }, OnPlayfabFacebookAuthComplete, OnPlayfabFacebookAuthFailed);
             }
             else
             {
@@ -2992,6 +3219,18 @@ error => {
                 }
                 MainMenuController.instance.SetFBLinked(true);
                 LoadingOverlay.instance.DoneLoading("Facebook login");
+
+                PlayfabCallbackHandler.instance.UpdateUserData("FacebookTooken", AccessToken.CurrentAccessToken.UserId, () => {
+                    OnPlayfabFacebookAuthComplete();
+                    PlayerPrefs.DeleteKey("OldGames");
+
+                }, () => {
+
+                    OnPlayfabFacebookAuthFailed();
+                    PlayerPrefs.DeleteKey("OldGames");
+                });
+
+
             }
 
 
@@ -3006,35 +3245,97 @@ error => {
 
  
     }
+    public int failedLoginFacebook = 0;
     public void FacebookLogin()
     {
+        Debug.Log("Facebook Auth UserID: "+AccessToken.CurrentAccessToken.UserId);
         Debug.Log("Facebook Auth Complete! Access Token: " + AccessToken.CurrentAccessToken.TokenString + "\nLogging into PlayFab...");
-        PlayFabClientAPI.LoginWithFacebook(new LoginWithFacebookRequest()
-        {
 
-            TitleId = PlayFabSettings.TitleId,
-            AccessToken = AccessToken.CurrentAccessToken.TokenString,
-            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
-            {
-                GetUserAccountInfo = true,
-                GetPlayerProfile = true
-            }
-        },
-        result2 =>
-        {
-            LoginSucess(result2);
-        },
-        error =>
-        {
-            Debug.LogError(error.GenerateErrorReport());
 
-            PlayerPrefs.DeleteKey("FacebookLink");
-            LoadingOverlay.instance.LoadingCall.Clear();
-            PlayfabHelperFunctions.instance.ReLogin();
-            SceneManager.LoadScene(0);
-            Startup._instance.Refresh(0.1f);
+
+
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"DefaultAchivements", Startup._instance.myAchivmentController.GetDefault()},});
+
+
+        string accessToken = "";
+        if(AccessToken.CurrentAccessToken != null && AccessToken.CurrentAccessToken.UserId.Length>0)
+        {
+            PlayerPrefs.SetString("FacebookTooken", AccessToken.CurrentAccessToken.UserId);
+            accessToken = AccessToken.CurrentAccessToken.UserId;
         }
-        );
+        if(PlayerPrefs.HasKey("FacebookTooken"))
+        {
+            accessToken = PlayerPrefs.GetString("FacebookTooken");
+        }
+
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/LoginWithCustomID.php?FacebookTooken=" + accessToken, jsonString,
+              result =>
+              {
+                  Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+
+                  LoginResult lr = new LoginResult();
+                  lr.AuthenticationContext = new PlayFabAuthenticationContext();
+                  lr.AuthenticationContext.PlayFabId = dic["PlayerID"];
+                  lr.InfoResultPayload = new GetPlayerCombinedInfoResultPayload();
+                  lr.InfoResultPayload.PlayerProfile = new PlayerProfileModel();
+                  lr.InfoResultPayload.PlayerProfile.DisplayName = dic["DisplayName"];
+                  lr.InfoResultPayload.AccountInfo = new UserAccountInfo();
+                  lr.InfoResultPayload.AccountInfo.TitleInfo = new UserTitleInfo();
+                  lr.InfoResultPayload.AccountInfo.TitleInfo.AvatarUrl = dic["avatarURL"];
+                  lr.NewlyCreated = false;
+
+                  lr.InfoResultPayload.AccountInfo.FacebookInfo = new UserFacebookInfo();
+                  lr.InfoResultPayload.AccountInfo.FacebookInfo.FacebookId = AccessToken.CurrentAccessToken.UserId;
+
+                  LoginSucess(lr);
+
+
+              },
+              error =>
+              {
+                  Debug.LogError(error);
+                  failedLoginFacebook++;
+                  if(failedLoginFacebook>10)
+                    PlayerPrefs.DeleteKey("FacebookLink");
+
+                  LoadingOverlay.instance.LoadingCall.Clear();
+                  PlayfabHelperFunctions.instance.ReLogin();
+                  SceneManager.LoadScene(0);
+                  Startup._instance.Refresh(0.1f);
+              });
+
+
+
+
+
+        //PlayFabClientAPI.LoginWithFacebook(new LoginWithFacebookRequest()
+        //{
+
+        //    TitleId = PlayFabSettings.TitleId,
+        //    AccessToken = AccessToken.CurrentAccessToken.TokenString,
+        //    InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+        //    {
+        //        GetUserAccountInfo = true,
+        //        GetPlayerProfile = true
+        //    }
+        //},
+        //result2 =>
+        //{
+        //    LoginSucess(result2);
+        //},
+        //error =>
+        //{
+        //    Debug.LogError(error.GenerateErrorReport());
+
+        //    PlayerPrefs.DeleteKey("FacebookLink");
+        //    LoadingOverlay.instance.LoadingCall.Clear();
+        //    PlayfabHelperFunctions.instance.ReLogin();
+        //    SceneManager.LoadScene(0);
+        //    Startup._instance.Refresh(0.1f);
+        //}
+        //);
         
         LoadingOverlay.instance.DoneLoading("Facebook login");
     }
@@ -3063,23 +3364,43 @@ error => {
             LoadingOverlay.instance.DoneLoading("Facebook login");
             // If Facebook authentication failed, we stop the cycle with the message
             Debug.Log("Facebook Auth Failed: " + result.Error + "\n" + result.RawResult);
+            if( result.Cancelled)
+            {
+                PlayerPrefs.DeleteKey("FacebookLink");
+                PlayerPrefs.DeleteKey("OldGames");
+                LoadingOverlay.instance.LoadingCall.Clear();
+                PlayfabHelperFunctions.instance.ReLogin();
+                SceneManager.LoadScene(0);
+                Startup._instance.Refresh(0.1f);
+            }
         }
 
 
     }
 
-    
+
 
     // When processing both results, we just set the message, explaining what's going on.
-    private void OnPlayfabFacebookAuthComplete(LinkFacebookAccountResult result)
+    //LinkFacebookAccountResult result
+    private void OnPlayfabFacebookAuthComplete()
     {
         PlayerPrefs.SetInt("FacebookLink", 1);
+        PlayerPrefs.SetInt("HasDoneTutorial", 1);
 
         LoadingOverlay.instance.DoneLoading("Facebook login");
-        Debug.Log("PlayFab Facebook Auth Complete. Session ticket: " + result.ToJson());
+        //Debug.Log("PlayFab Facebook Auth Complete. Session ticket: " + result.ToJson());
         string avatarURL = "https://graph.facebook.com/" + Facebook.Unity.AccessToken.CurrentAccessToken.UserId + "/picture?type=small";
 
-        PlayFabClientAPI.UpdateAvatarUrl(new UpdateAvatarUrlRequest { ImageUrl = avatarURL }, OnUpdateAvatarURL, OnPlayfabFacebookAuthFailed);
+        //PlayFabClientAPI.UpdateAvatarUrl(new UpdateAvatarUrlRequest { ImageUrl = avatarURL }, OnUpdateAvatarURL, OnPlayfabFacebookAuthFailed);
+
+        PlayfabCallbackHandler.instance.UpdateUserData("avatarURL", avatarURL, () => {
+
+        }, () => {
+
+             });
+
+
+
         LoadAvatarURL(avatarURL);
 
         MainMenuController.instance.SetFBLinked(true);
@@ -3090,27 +3411,27 @@ error => {
 
 
     
-    private void OnPlayfabFacebookAuthFailed(PlayFabError error)
+    private void OnPlayfabFacebookAuthFailed()
     {
-        if(error.Error == PlayFabErrorCode.LinkedAccountAlreadyClaimed || error.Error == PlayFabErrorCode.LinkedIdentifierAlreadyClaimed)
-        {
-            Debug.Log("Should we merge?");
-          //  MainMenuController.instance.ShowMerginAlert();
+        //if(error.Error == PlayFabErrorCode.LinkedAccountAlreadyClaimed || error.Error == PlayFabErrorCode.LinkedIdentifierAlreadyClaimed)
+        //{
+        //    Debug.Log("Should we merge?");
+        //  //  MainMenuController.instance.ShowMerginAlert();
 
 
-          //  if( MainMenuController.instance.FacebookButton.activeSelf )
-            {
+        //  //  if( MainMenuController.instance.FacebookButton.activeSelf )
+        //    {
                 MainMenuController.instance.ClickRecoveAccount();
-            }
+        //    }
 
 
-        }
-        LoadingOverlay.instance.DoneLoading("Facebook login");
-        Debug.Log("PlayFab Facebook Auth Failed: " + error.GenerateErrorReport());
+        //}
+        //LoadingOverlay.instance.DoneLoading("Facebook login");
+        //Debug.Log("PlayFab Facebook Auth Failed: " + error.GenerateErrorReport());
     }
-    private void OnPlayfabAppleAuthFailed(PlayFabError error)
+    public void OnPlayfabAppleAuthFailed()
     {
-        if (error.Error == PlayFabErrorCode.LinkedAccountAlreadyClaimed || error.Error == PlayFabErrorCode.LinkedIdentifierAlreadyClaimed)
+        //if (error.Error == PlayFabErrorCode.LinkedAccountAlreadyClaimed || error.Error == PlayFabErrorCode.LinkedIdentifierAlreadyClaimed)
         {
             Debug.Log("Should we merge?");
 
@@ -3123,7 +3444,7 @@ error => {
 
         }
         LoadingOverlay.instance.DoneLoading("Facebook login");
-        Debug.Log("PlayFab Facebook Auth Failed: " + error.GenerateErrorReport());
+        //Debug.LogError("PlayFab Facebook Auth Failed: " + error.GenerateErrorReport());
     }
     private static void FbGetPicture(IGraphResult result)
     {
@@ -3198,25 +3519,19 @@ error => {
 
     public void GetOtherUserData(string aPlayfabId)
     {
+        PlayfabCallbackHandler.instance.GetOtherPlayerProfile(aPlayfabId, result => {
+
+            Debug.Log("Done getting data");
 
 
-        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
-        {
-            PlayFabId = aPlayfabId,
-            Keys = null
-        }, result => {
-
-        Debug.Log("Done getting data");
-
-
-        string xp = "0";
-        if (result.Data.ContainsKey("XP") == true)
-        {
-            xp = result.Data["XP"].Value;
-        }
+            string xp = "0";
+            if (result.Data.ContainsKey("XP") == true)
+            {
+                xp = result.Data["XP"].Value;
+            }
 
             string rank = "0";
-            if(result.Data.ContainsKey("Ranking"))
+            if (result.Data.ContainsKey("Ranking"))
                 rank = result.Data["Ranking"].Value;
 
             if (SceneManager.GetActiveScene().name != "GameScene")
@@ -3224,14 +3539,58 @@ error => {
                 return;
             }
             GameManager.instance.SetOpponentData(xp, rank);
- 
+
+
 
         }, (error) => {
             Debug.Log("Got error retrieving user data:");
             Debug.Log(error.GenerateErrorReport());
         });
-
     }
+    public void GetOtherUserDataRank(int aOwner , string aPlayfabId)
+    {
+       
+
+        PlayfabCallbackHandler.instance.GetOtherPlayerProfile(aPlayfabId, result => {
+
+            Debug.Log("Done getting data");
+
+
+            string xp = "0";
+            if (result.Data.ContainsKey("XP") == true)
+            {
+                xp = result.Data["XP"].Value;
+            }
+
+            string rank = "0";
+            if (result.Data.ContainsKey("Ranking"))
+                rank = result.Data["Ranking"].Value;
+
+            if (SceneManager.GetActiveScene().name != "GameScene")
+            {
+                return;
+            }
+
+            if (aOwner == 1)
+            {
+                GameFinishedScreen.instance.p1_thropies.text = GameManager.instance.p1_thropies.text ;
+                GameFinishedScreen.instance.p2_thropies.text = rank;
+            }
+            else if(aOwner == 2)
+            {
+                GameFinishedScreen.instance.p1_thropies.text = GameManager.instance.p1_thropies.text ;
+                GameFinishedScreen.instance.p2_thropies.text = rank;
+            }
+            
+
+
+
+        }, (error) => {
+            Debug.Log("Got error retrieving user data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
+    }
+    
     public class StoredData
     {
         public Dictionary<string, UserDataRecord> theData;
@@ -3270,23 +3629,41 @@ error => {
             }
         }
 
-        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
-        {
-            PlayFabId = aPlayfabId,
-            Keys = new List<string> { "Achivments", "XP", "Ranking", "MyGames" }
-        }, result => {
-            StoredData st = new StoredData();
-            st.theData = result.Data;
-            st.playfabID = aPlayfabId;
-            storedRecords.Add(st);
-            theWidnow.SetData(result.Data, aPlayfabId);
+
+
+
+        PlayfabCallbackHandler.instance.GetOtherPlayerProfile(aPlayfabId, result => {
+             StoredData st = new StoredData();
+             st.theData = result.Data;
+             st.playfabID = aPlayfabId;
+             storedRecords.Add(st);
+             theWidnow.SetData(result.Data, aPlayfabId);
+
+
+
+         }, (error) => {
+             Debug.Log("Got error retrieving user data:");
+             Debug.Log(error.GenerateErrorReport());
+         });
+
+
+        //PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+        //{
+        //    PlayFabId = aPlayfabId,
+        //    Keys = new List<string> { "Achivments", "XP", "Ranking", "MyGames" }
+        //}, result => {
+        //    StoredData st = new StoredData();
+        //    st.theData = result.Data;
+        //    st.playfabID = aPlayfabId;
+        //    storedRecords.Add(st);
+        //    theWidnow.SetData(result.Data, aPlayfabId);
     
 
 
-        }, (error) => {
-            Debug.Log("Got error retrieving user data:");
-            Debug.Log(error.GenerateErrorReport());
-        });
+        //}, (error) => {
+        //    Debug.Log("Got error retrieving user data:");
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
 
     }
 

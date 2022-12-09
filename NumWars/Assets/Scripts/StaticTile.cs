@@ -94,6 +94,11 @@ public class StaticTile : MonoBehaviour
         Number = aNumber;
     }
     public TileType PreviousTileType= TileType.EmptyTile;
+    public bool preDestroy = false;
+    public void PreDestroy()
+    {
+        preDestroy = true;
+    }
     public void SetTile(TileType aType, int aNumber)
     {
         if (_child != null)

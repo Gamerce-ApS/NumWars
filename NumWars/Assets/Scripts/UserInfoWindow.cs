@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using GameAnalyticsSDK;
+using Newtonsoft.Json;
 using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
@@ -37,16 +39,49 @@ public PlayerProfileModel theProfile;
 
   
 
-        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
-        {
-            PlayFabId = Startup._instance.GameToLoad.GetOtherPlayerPlayfab(),
-            Keys = null
-        }, result =>
-        {
+
+
+        PlayfabCallbackHandler.instance.GetOtherPlayerProfile(Startup._instance.GameToLoad.GetOtherPlayerPlayfab(), result => {
             StoredData st = new StoredData();
             st.theData = result.Data;
             st.playfabID = Startup._instance.GameToLoad.GetOtherPlayerPlayfab();
             PlayfabHelperFunctions.instance.storedRecords.Add(st);
+        }, (error) => {
+            Debug.Log("Got error retrieving user data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
+
+
+        //PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+        //{
+        //    PlayFabId = Startup._instance.GameToLoad.GetOtherPlayerPlayfab(),
+        //    Keys = null
+        //}, result =>
+        //{
+        //    StoredData st = new StoredData();
+        //    st.theData = result.Data;
+        //    st.playfabID = Startup._instance.GameToLoad.GetOtherPlayerPlayfab();
+        //    PlayfabHelperFunctions.instance.storedRecords.Add(st);
+
+        //}, (error) => {
+        //    Debug.Log("Got error retrieving user data:");
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
+
+
+
+
+        PlayfabCallbackHandler.instance.GetOtherPlayerProfile(Startup._instance.GameToLoad.GetOtherPlayerPlayfab(), result => {
+            StoredDataProfiles st = new StoredDataProfiles();
+            st.playfabID = Startup._instance.GameToLoad.GetOtherPlayerPlayfab();
+            st.theData = new PlayerProfileModel();
+            st.theData.DisplayName = result.Data["DisplayName"].Value;
+            st.theData.AvatarUrl = result.Data["avatarURL"].Value;
+            st.theData.PlayerId = result.Data["PlayerID"].Value;
+
+            PlayfabHelperFunctions.instance._StoredDataProfiles.Add(st);
+
+
 
         }, (error) => {
             Debug.Log("Got error retrieving user data:");
@@ -54,20 +89,69 @@ public PlayerProfileModel theProfile;
         });
 
 
+        //PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        //{
+        //    PlayFabId = Startup._instance.GameToLoad.GetOtherPlayerPlayfab(),
+        //    ProfileConstraints = new PlayerProfileViewConstraints()
+        //    {
+        //        ShowDisplayName = true,
+        //        ShowAvatarUrl = true
+        //    }
+        //}, result => {
 
-        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
-        {
-            PlayFabId = Startup._instance.GameToLoad.GetOtherPlayerPlayfab(),
-            ProfileConstraints = new PlayerProfileViewConstraints()
-            {
-                ShowDisplayName = true,
-                ShowAvatarUrl = true
-            }
-        }, result => {
+        //    StoredDataProfiles st = new StoredDataProfiles();
+        //    st.playfabID = Startup._instance.GameToLoad.GetOtherPlayerPlayfab();
+        //    st.theData = result.PlayerProfile;
+        //    PlayfabHelperFunctions.instance._StoredDataProfiles.Add(st);
 
+        //}, (error) => {
+        //    Debug.Log("Got error retrieving user data:");
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
+
+
+
+        PlayfabCallbackHandler.instance.GetOtherPlayerProfile(Startup._instance.MyPlayfabID, result => {
+            StoredData st = new StoredData();
+            st.theData = result.Data;
+            st.playfabID = Startup._instance.MyPlayfabID;
+            PlayfabHelperFunctions.instance.storedRecords.Add(st);
+        }, (error) => {
+            Debug.Log("Got error retrieving user data:");
+            Debug.Log(error.GenerateErrorReport());
+        });
+
+
+        //PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+        //{
+        //    PlayFabId = Startup._instance.MyPlayfabID,
+        //    Keys = new List<string> { "Achivments", "XP", "Ranking", "MyGames" }
+        //}, result =>
+        //{
+        //    StoredData st = new StoredData();
+        //    st.theData = result.Data;
+        //    st.playfabID = Startup._instance.MyPlayfabID;
+        //    PlayfabHelperFunctions.instance.storedRecords.Add(st);
+
+        //}, (error) => {
+        //    Debug.Log("Got error retrieving user data:");
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
+
+
+
+        PlayfabCallbackHandler.instance.GetOtherPlayerProfile(Startup._instance.MyPlayfabID, result => {
+            //StoredDataProfiles st = new StoredDataProfiles();
+            //st.playfabID = Startup._instance.GameToLoad.GetOtherPlayerPlayfab();
+
+
+            //PlayfabHelperFunctions.instance._StoredDataProfiles.Add(st);
             StoredDataProfiles st = new StoredDataProfiles();
-            st.playfabID = Startup._instance.GameToLoad.GetOtherPlayerPlayfab();
-            st.theData = result.PlayerProfile;
+            st.playfabID = Startup._instance.MyPlayfabID;
+            st.theData = new PlayerProfileModel();
+            st.theData.DisplayName = result.Data["DisplayName"].Value;
+            st.theData.AvatarUrl = result.Data["avatarURL"].Value;
+            st.theData.PlayerId = result.Data["PlayerID"].Value;
             PlayfabHelperFunctions.instance._StoredDataProfiles.Add(st);
 
         }, (error) => {
@@ -76,45 +160,25 @@ public PlayerProfileModel theProfile;
         });
 
 
+        //PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        //{
+        //    PlayFabId = Startup._instance.MyPlayfabID,
+        //    ProfileConstraints = new PlayerProfileViewConstraints()
+        //    {
+        //        ShowDisplayName = true,
+        //        ShowAvatarUrl = true
+        //    }
+        //}, result => {
 
+        //    StoredDataProfiles st = new StoredDataProfiles();
+        //    st.playfabID = Startup._instance.MyPlayfabID;
+        //    st.theData = result.PlayerProfile;
+        //    PlayfabHelperFunctions.instance._StoredDataProfiles.Add(st);
 
-        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
-        {
-            PlayFabId = Startup._instance.MyPlayfabID,
-            Keys = new List<string> { "Achivments", "XP", "Ranking", "MyGames" }
-        }, result =>
-        {
-            StoredData st = new StoredData();
-            st.theData = result.Data;
-            st.playfabID = Startup._instance.MyPlayfabID;
-            PlayfabHelperFunctions.instance.storedRecords.Add(st);
-
-        }, (error) => {
-            Debug.Log("Got error retrieving user data:");
-            Debug.Log(error.GenerateErrorReport());
-        });
-
-
-
-        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
-        {
-            PlayFabId = Startup._instance.MyPlayfabID,
-            ProfileConstraints = new PlayerProfileViewConstraints()
-            {
-                ShowDisplayName = true,
-                ShowAvatarUrl = true
-            }
-        }, result => {
-
-            StoredDataProfiles st = new StoredDataProfiles();
-            st.playfabID = Startup._instance.MyPlayfabID;
-            st.theData = result.PlayerProfile;
-            PlayfabHelperFunctions.instance._StoredDataProfiles.Add(st);
-
-        }, (error) => {
-            Debug.Log("Got error retrieving user data:");
-            Debug.Log(error.GenerateErrorReport());
-        });
+        //}, (error) => {
+        //    Debug.Log("Got error retrieving user data:");
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
 
 
 
@@ -174,12 +238,21 @@ public PlayerProfileModel theProfile;
         }
         else
         {
-            PlayerProfileModel pf = PlayfabHelperFunctions.instance.GetPlayerProfileModel(Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
-            if (pf != null)
+            if(Startup._instance.GameToLoad == null)
             {
-                theProfile = pf;
+                theProfile = Startup.instance.PlayerProfile;
                 InitUserAfterDataSet(aUserId);
             }
+            else
+            {
+                PlayerProfileModel pf = PlayfabHelperFunctions.instance.GetPlayerProfileModel(Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
+                if (pf != null)
+                {
+                    theProfile = pf;
+                    InitUserAfterDataSet(aUserId);
+                }
+            }
+         
         }
     }
 
@@ -210,6 +283,35 @@ public PlayerProfileModel theProfile;
                 _thropies.text = "";
                 SetAiStats();
                 isAIInfo = true;
+
+                int amountLost = 0;
+                int amountWin = 0;
+                for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+                {
+                    if ((Startup.instance.myOldGameList[i].player1_PlayfabId == Startup.instance.MyPlayfabID && Startup.instance.myOldGameList[i].player2_displayName == "AI"))
+                    {
+                        if (Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
+                        {
+                            amountWin++;
+                        }
+                        else
+                        {
+                            amountLost++;
+                        }
+                    }
+                }
+                if (amountWin + amountLost > 0)
+                {
+                    winT.text = amountLost.ToString();
+                    LoseT.text = amountWin.ToString();  
+                }
+                else
+                {
+                    winT.text = "0";
+                    LoseT.text = "0";
+                }
+
+
             }
             else
             {
@@ -247,32 +349,67 @@ public PlayerProfileModel theProfile;
             //LoseT.text = amountLost.ToString();
 
 
-            int amountLost = 0;
-            int amountWin = 0;
-            for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+
+            if (GameManager.instance.thePlayers[1].isAI) // is ai and you press our stats
             {
-                if ((Startup.instance.myOldGameList[i].player1_PlayfabId == theProfile.PlayerId || Startup.instance.myOldGameList[i].player2_PlayfabId == theProfile.PlayerId))
-                {
-                    if (Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
+                    int amountLost = 0;
+                    int amountWin = 0;
+                    for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
                     {
-                        amountWin++;
+                        if ((Startup.instance.myOldGameList[i].player1_PlayfabId == Startup.instance.MyPlayfabID && Startup.instance.myOldGameList[i].player2_displayName == "AI"))
+                        {
+                            if (Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
+                            {
+                                amountWin++;
+                            }
+                            else
+                            {
+                                amountLost++;
+                            }
+                        }
+                    }
+                    if (amountWin + amountLost > 0)
+                    {
+                        winT.text = amountWin.ToString();
+                        LoseT.text = amountLost.ToString();
                     }
                     else
                     {
-                        amountLost++;
+                        winT.text = "0";
+                        LoseT.text = "0";
+                    }
+            }else
+            {
+                int amountLost = 0;
+                int amountWin = 0;
+                for (int i = 0; i < Startup.instance.myOldGameList.Count; i++)
+                {
+                    if ((Startup.instance.myOldGameList[i].player1_PlayfabId == theProfile.PlayerId || Startup.instance.myOldGameList[i].player2_PlayfabId == theProfile.PlayerId))
+                    {
+                        if (Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
+                        {
+                            amountWin++;
+                        }
+                        else
+                        {
+                            amountLost++;
+                        }
                     }
                 }
+                if (amountWin + amountLost > 0)
+                {
+                    winT.text = amountWin.ToString();
+                    LoseT.text = amountLost.ToString();
+                }
+                else
+                {
+                    winT.text = "0";
+                    LoseT.text = "0";
+                }
             }
-            if (amountWin + amountLost > 0)
-            {
-                winT.text = amountWin.ToString();
-                LoseT.text = amountLost.ToString();
-            }
-            else
-            {
-                winT.text = "0";
-                LoseT.text = "0";
-            }
+
+
+    
 
         }
 
@@ -511,6 +648,8 @@ public PlayerProfileModel theProfile;
     }
     public void ChallengePlayer()
     {
+        GameAnalytics.NewDesignEvent("ChallengeFriend");
+
         bool hasActiveGameAgainstPlayer = false;
         for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
         {
@@ -562,13 +701,29 @@ public PlayerProfileModel theProfile;
     }
     public void RemoveFriend()
     {
-        PlayFabClientAPI.RemoveFriend(new RemoveFriendRequest
-        {
-            FriendPlayFabId = theProfile.PlayerId,
+        //PlayFabClientAPI.RemoveFriend(new RemoveFriendRequest
+        //{
+        //    FriendPlayFabId = theProfile.PlayerId,
 
-        }, result => RemovedSucess(result), FailureCallback);
+        //}, result => RemovedSucess(result), FailureCallback);
+
+
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"PlayerID", Startup.instance.MyPlayfabID},
+                    {"PlayerId_Friend", theProfile.PlayerId}
+                    });
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/RemoveFriend.php", jsonString, (result) => {
+            Debug.Log("Done!" + result);
+            RemovedSucess();
+
+        }, (error) => {
+            Debug.Log("Error!" + error);
+            FailureCallback();
+        });
+
     }
-    public void RemovedSucess(RemoveFriendResult result)
+    public void RemovedSucess( )
     {
         FriendsListWindow.instance.UserInfoWindow.SetActive(false);
 
@@ -579,7 +734,7 @@ public PlayerProfileModel theProfile;
 
         FriendsListWindow.instance.RequestLeaderboard();
     }
-    public void FailureCallback(PlayFabError error)
+    public void FailureCallback( )
     {
         Debug.Log("Failed");
     }

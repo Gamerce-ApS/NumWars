@@ -300,14 +300,14 @@ public class GameListItem : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
         if (Startup.instance.StoredAvatarURLS.ContainsKey(otherPlayerID))
         {
-            object outV = "";
+            string outV = "";
             if (Startup.instance.StoredAvatarURLS.TryGetValue(otherPlayerID, out outV))
             {
                 if (outV == null)
                     yield break;
                 try
                 {
-                    string t = outV.ToString();
+                    string t = outV;
                     LoadAvatarURL(t, otherPlayerID);
                 }
                 catch

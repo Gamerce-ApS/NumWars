@@ -26,21 +26,27 @@ MonoBehaviour:
   UserMessagesFailed: 0
   CustomArea: 
   gameKey:
-  - 95ea8d2996e050d55088eb5f9424ce99
+  - 8c4c2b3f96509cfacc858de4382f8ec4
+  - 4041fd25dff2ffe1121b384208902ea0
   secretKey:
-  - b78f42dadf68b1284c23a95588885dcf481265ab
+  - 7a0f5d32030bffc80f6a8bf76e41ba3baaa183c4
+  - 94a92abd8fcb2d03d716431c7e8f00bfea3c3ba1
   Build:
   - 0.1
+  - 0.1
   SelectedPlatformOrganization:
-  - SuperSonic Studios
+  - 
+  - 
   SelectedPlatformStudio:
-  - Gamerce
+  - 
+  - 
   SelectedPlatformGame:
-  - Outnumber - IOS
-  SelectedPlatformGameID: 13120300
-  SelectedOrganization: 01000000
-  SelectedStudio: 01000000
-  SelectedGame: 01000000
+  - 
+  - 
+  SelectedPlatformGameID: 13120300ffffffff
+  SelectedOrganization: 0100000000000000
+  SelectedStudio: 0100000000000000
+  SelectedGame: 0100000000000000
   NewVersion: 
   Changes: 
   SignUpOpen: 0
@@ -48,7 +54,7 @@ MonoBehaviour:
   GameName: Outnumber
   OrganizationName: 
   OrganizationIdentifier: 
-  EmailGA: pb@gamerce.net
+  EmailGA: Outnumberme@gmail.com
   IntroScreen: 0
   InfoLogEditor: 1
   InfoLogBuild: 1
@@ -61,9 +67,9 @@ MonoBehaviour:
   CustomDimensions03: []
   ResourceItemTypes: []
   ResourceCurrencies: []
-  LastCreatedGamePlatform: 0
-  Platforms: 08000000
-  CurrentInspectorState: 3
+  LastCreatedGamePlatform: -1
+  Platforms: 080000000b000000
+  CurrentInspectorState: 1
   ClosedHints: 
   DisplayHints: 0
   DisplayHintsScrollState: {x: 0, y: 0}
@@ -90,7 +96,7 @@ MonoBehaviour:
   IncludeGooglePlay: 1
   FpsCriticalThreshold: 20
   FpsCirticalSubmitInterval: 1
-  PlatformFoldOut: 01
+  PlatformFoldOut: 0101
   CustomDimensions01FoldOut: 0
   CustomDimensions02FoldOut: 0
   CustomDimensions03FoldOut: 0

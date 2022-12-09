@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using GameAnalyticsSDK;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -76,6 +77,8 @@ public class TutorialAction
         }
         if (ID == 11)
         {
+            GameAnalytics.NewDesignEvent("TutorialGame_Done");
+
             SceneManager.LoadScene(0);
             Startup._instance.Refresh(0.1f);
 
@@ -198,6 +201,8 @@ public class TutorialController : MonoBehaviour
         {
             CurrentIndex++;
             myActions[CurrentIndex].Set();
+            GameAnalytics.NewDesignEvent("TutorialGame_Step_"+ CurrentIndex);
+
         }
     }
 

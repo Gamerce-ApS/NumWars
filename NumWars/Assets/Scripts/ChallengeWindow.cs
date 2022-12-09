@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using GameAnalyticsSDK;
 using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
@@ -87,21 +88,19 @@ public class ChallengeWindow : MonoBehaviour
         window.SetActive(true);
         challenger.text = currentChallenges[0].bd.GetOtherPlayer();
 
-        
 
-        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
-        {
 
-            PlayFabId = currentChallenges[0].bd.GetOtherPlayerPlayfab(),
-            ProfileConstraints = new PlayerProfileViewConstraints()
-            {
-                ShowDisplayName = true,
-                ShowAvatarUrl = true
-            }
-        }, result => {
+
+
+        PlayfabCallbackHandler.instance.GetOtherPlayerProfile(currentChallenges[0].bd.GetOtherPlayerPlayfab(), result => {
 
             if (result == null)
                 return;
+
+            PlayerProfileModel theData = new PlayerProfileModel();
+            theData.DisplayName = result.Data["DisplayName"].Value;
+            theData.AvatarUrl = result.Data["avatarURL"].Value;
+            theData.PlayerId = result.Data["PlayerID"].Value;
 
             if (currentChallenges == null || currentChallenges.Count <= 0 || Startup._instance == null)
             {
@@ -110,13 +109,47 @@ public class ChallengeWindow : MonoBehaviour
                 return;
             }
 
-            LoadAvatarURL(result.PlayerProfile.AvatarUrl, currentChallenges[0].bd.GetOtherPlayerPlayfab());
+            LoadAvatarURL(theData.AvatarUrl, currentChallenges[0].bd.GetOtherPlayerPlayfab());
+
 
 
         }, (error) => {
             Debug.Log("Got error retrieving user data:");
             Debug.Log(error.GenerateErrorReport());
         });
+
+
+
+
+
+        //PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        //{
+
+        //    PlayFabId = currentChallenges[0].bd.GetOtherPlayerPlayfab(),
+        //    ProfileConstraints = new PlayerProfileViewConstraints()
+        //    {
+        //        ShowDisplayName = true,
+        //        ShowAvatarUrl = true
+        //    }
+        //}, result => {
+
+        //    if (result == null)
+        //        return;
+
+        //    if (currentChallenges == null || currentChallenges.Count <= 0 || Startup._instance == null)
+        //    {
+        //        bg.gameObject.SetActive(false);
+        //        window.SetActive(false);
+        //        return;
+        //    }
+
+        //    LoadAvatarURL(result.PlayerProfile.AvatarUrl, currentChallenges[0].bd.GetOtherPlayerPlayfab());
+
+
+        //}, (error) => {
+        //    Debug.Log("Got error retrieving user data:");
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
 
         AmountText.text = "Challenge (1/" + currentChallenges.Count+")";
 
@@ -132,6 +165,8 @@ public class ChallengeWindow : MonoBehaviour
         Startup._instance.Refresh(0.1f);
         currentChallenges.RemoveAt(0);
         UpdateWindow();
+
+        GameAnalytics.NewDesignEvent("AcceptChallenge");
 
 
     }

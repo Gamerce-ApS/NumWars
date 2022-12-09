@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using GameAnalyticsSDK;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -135,11 +136,14 @@ public  class BoardData
         if (player2_score.Length > 0)
             score2 = int.Parse(player2_score);
 
+        if(player2_displayName != "AI")
+        {
+            if (GetHasAbboned() == player1_PlayfabId)
+                return player2_PlayfabId;
+            else if (GetHasAbboned() == player2_PlayfabId)
+                return player1_PlayfabId;
+        }
 
-        if( GetHasAbboned() == player1_PlayfabId)
-            return player2_PlayfabId;
-        else if (GetHasAbboned() == player2_PlayfabId)
-            return player1_PlayfabId;
 
         if (score1 > score2)
             return player1_PlayfabId;
@@ -225,8 +229,8 @@ public  class BoardData
 
 
     public bool CheckBoard()
-    {   
-
+    {
+        //return true;
         Dictionary<int, int> d = new Dictionary<int, int>();
         for (int i = 0; i < BoardTiles.Count; i++)
         {
@@ -1015,7 +1019,34 @@ public class Board : MonoBehaviour
 
         return dif;
     }
-    public int CheckAmountValid(StaticTile aTile, string aStringNumber)
+    public bool CheckAmountValidWithoutCurrent(StaticTile aTileCurrent,StaticTile aTile1, StaticTile aTile2)
+    {
+
+        float storedV = aTileCurrent.GetValue();
+        if ((aTileCurrent.myTileType != TileType.NormalTile && aTileCurrent.myTileType != TileType.StartTile) || aTileCurrent.preDestroy == true)
+            aTileCurrent.SetValue(0);
+
+        int valid1 = 0;
+        if ((aTile1.myTileType == TileType.NormalTile || aTile1.myTileType == TileType.StartTile) && aTile1.preDestroy == false )
+            valid1 = 1;
+        else
+            valid1 = CheckAmountValid(aTile1, aTile1.GetValue().ToString());
+
+        int valid2 = 0;
+        if ((aTile2.myTileType == TileType.NormalTile || aTile2.myTileType == TileType.StartTile) && aTile2.preDestroy == false)
+            valid2 = 1;
+        else
+            valid2 = CheckAmountValid(aTile2, aTile2.GetValue().ToString());
+
+        if ((aTileCurrent.myTileType != TileType.NormalTile && aTileCurrent.myTileType != TileType.StartTile) || aTileCurrent.preDestroy == true)
+            aTileCurrent.SetValue( (int)storedV );
+
+        if (valid1 > 0 && valid2 > 0)
+            return true;
+        else
+            return false;
+    }
+    public int CheckAmountValid(StaticTile aTile, string aStringNumber )
     {
         int aNumber = int.Parse(aStringNumber);
    
@@ -1035,28 +1066,32 @@ public class Board : MonoBehaviour
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() +
                               BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
                               aNumber)
-                            up++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14]))
+                                up++;
                 //Down
                 if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() +
                             BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
                             aNumber)
-                            down++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14]))
+                                down++;
                 //Left
                 if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() +
                             BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                             aNumber)
-                            left++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                left++;
                 //Right
                 if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() +
                             BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                             aNumber)
-                            right++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                right++;
             }
 
 
@@ -1068,28 +1103,32 @@ public class Board : MonoBehaviour
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() *
                         BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
                         aNumber)
-                            up++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14]))
+                                up++;
                 //Down
                 if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() *
                         BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
                         aNumber)
-                            down++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14]))
+                                down++;
                 //Left
                 if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() *
                         BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
-                            left++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                left++;
                 //Right
                 if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() *
                         BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
-                            right++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                right++;
             }
 
             if (aTile.myTileType != TileType.AdditionTile && aTile.myTileType != TileType.MultiplicationTile && aTile.myTileType != TileType.DivisionTile)
@@ -1100,28 +1139,32 @@ public class Board : MonoBehaviour
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() -
                         BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
                         aNumber)
-                            up++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14]))
+                                up++;
                 //Down
                 if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() -
                         BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
                         aNumber)
-                            down++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14]))
+                                down++;
                 //Left
                 if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
                         BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
-                            left++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                left++;
                 //Right
                 if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
                         BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
-                            right++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                right++;
 
                 //Up
                 if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
@@ -1129,28 +1172,32 @@ public class Board : MonoBehaviour
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() -
                         BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() ==
                         aNumber)
-                            up++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14]))
+                                up++;
                 //Down
                 if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() -
                         BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() ==
                         aNumber)
-                            down++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14]))
+                                down++;
                 //Left
                 if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
                         BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
-                            left++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                left++;
                 //Right
                 if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() -
                         BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
-                            right++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                right++;
             }
 
             if (aTile.myTileType != TileType.AdditionTile && aTile.myTileType != TileType.MultiplicationTile && aTile.myTileType != TileType.SubtractionTile)
@@ -1161,28 +1208,32 @@ public class Board : MonoBehaviour
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() /
                         BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() ==
                         aNumber)
-                            up++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14]))
+                                up++;
                 //Down
                 if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() /
                         BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() ==
                         aNumber)
-                            down++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14]))
+                                down++;
                 //Left
                 if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
                         BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
-                            left++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                left++;
                 //Right
                 if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
                         BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
-                            right++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                right++;
 
                 //Up
                 if (aTile.BoardPosition.y - 2 >= 0 && aTile.BoardPosition.y - 1 >= 0)
@@ -1190,28 +1241,32 @@ public class Board : MonoBehaviour
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14].GetValue() /
                         BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14].GetValue() ==
                         aNumber)
-                            up++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y - 1) * 14]))
+                                up++;
                 //Down
                 if (aTile.BoardPosition.y + 2 < 14 && aTile.BoardPosition.y + 1 < 14)
                     if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() > 0 && BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() > 0)
                         if (BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14].GetValue() /
                         BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14].GetValue() ==
                         aNumber)
-                            down++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 2) * 14], BoardTiles[(int)aTile.BoardPosition.x + (int)(aTile.BoardPosition.y + 1) * 14]))
+                                down++;
                 //Left
                 if (aTile.BoardPosition.x - 2 >= 0 && aTile.BoardPosition.x - 1 >= 0)
                     if (BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
                         BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
-                            left++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x - 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x - 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                left++;
                 //Right
                 if (aTile.BoardPosition.x + 2 < 14 && aTile.BoardPosition.x + 1 < 14)
                     if (BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0 && BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() > 0)
                         if (BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14].GetValue() /
                         BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14].GetValue() ==
                         aNumber)
-                            right++;
+                            if (CheckAmountValidWithoutCurrent(aTile, BoardTiles[(int)(aTile.BoardPosition.x + 1) + (int)(aTile.BoardPosition.y) * 14], BoardTiles[(int)(aTile.BoardPosition.x + 2) + (int)(aTile.BoardPosition.y) * 14]))
+                                right++;
             }
             // BoardTiles[(int)aTile.BoardPosition.x + (int)aTile.BoardPosition.y * 14].GetValue()
 
@@ -1478,6 +1533,7 @@ public class Board : MonoBehaviour
     }
     public bool TilesAndMoveValid()
     {
+        //return true;
         if (GameManager.instance.thePlayers[1].isAI)
             return true;
 
@@ -1581,9 +1637,10 @@ public class Board : MonoBehaviour
     }
     public void PressContinue()
     {
+        GameAnalytics.NewDesignEvent("MadeMove");
 
 
-        if(Startup.instance.GameToLoad != null)
+        if (Startup.instance.GameToLoad != null)
         {
             if (Startup.instance.GameToLoad.RoomName != boardData.RoomName ||
                  Startup.instance.GameToLoad.player1_PlayfabId != boardData.player1_PlayfabId ||

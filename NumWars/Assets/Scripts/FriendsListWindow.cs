@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using GameAnalyticsSDK;
+using Newtonsoft.Json;
 using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
@@ -73,30 +75,75 @@ public class FriendsListWindow : MonoBehaviour
     //Get the players with the top 10 high scores in the game
     public void RequestLeaderboard(bool forceUpdate = false)
     {
-        if(PlayerPrefs.HasKey("GetFriendsListResult") && PlayerPrefs.HasKey("GetLeaderboardResult") && forceUpdate == false)
+
+        if(PlayerPrefs.HasKey("GetLeaderboardResult") )
+        {
+            PlayerPrefs.DeleteKey("GetLeaderboardResult");
+            PlayerPrefs.DeleteKey("GetFriendsListResult");
+        }
+
+
+        if(PlayerPrefs.HasKey("GetFriendsListResult") && forceUpdate == false)
         {
             LoadLocalInfo();
         }
         else
         {
-            PlayFabClientAPI.GetFriendsList(new GetFriendsListRequest
-            {
-                IncludeFacebookFriends = true,
-                ProfileConstraints = new PlayerProfileViewConstraints()
-                {
-                    ShowDisplayName = true,
-                    ShowAvatarUrl = true,
-                    ShowStatistics = true
-                }
+            AWSBackend.instance.AWSClientAPI("phpBackend/GetFriendsList.php?PlayerID=" + Startup.instance.MyPlayfabID, "",
+             result =>
+             {
+             if (result.Contains("Error: user not found!"))
+             {
+                 return;
+             }
 
-            }, result => GetLeadoardOfFriends(result), FailureCallback);
+             GetFriendsListResult rs = new GetFriendsListResult();
+            //rs.Friends
+
+            AWSBackend.FriendsList list = JsonUtility.FromJson<AWSBackend.FriendsList>("{\"myFriendsList\":" + result + "}");
+             rs.Friends = new List<FriendInfo>();
+             for (int i = 0; i < list.myFriendsList.Length; i++)
+             {
+                 Debug.Log(list.myFriendsList[i].DisplayName + " : " + list.myFriendsList[i].PlayerId);
+
+
+                 FriendInfo finfo = new FriendInfo();
+                 finfo.Profile = new PlayerProfileModel();
+                 finfo.Profile.AvatarUrl = list.myFriendsList[i].avatarURL;
+                 finfo.Profile.DisplayName = list.myFriendsList[i].DisplayName;
+                 finfo.Profile.PlayerId = list.myFriendsList[i].PlayerId;
+                 finfo.Tags = new List<string>();
+                 finfo.Tags.Add(list.myFriendsList[i].Ranking);
+                 finfo.Tags.Add(list.myFriendsList[i].XP);
+                 rs.Friends.Add(finfo);
+
+                }
+                GetLeadoardOfFriends(rs);
+            },
+             error =>
+             {
+                 PlayFabError pfE = new PlayFabError();
+                 FailureCallback(pfE);
+             }
+            );
+
+
+            //PlayFabClientAPI.GetFriendsList(new GetFriendsListRequest
+            // {
+            //     IncludeFacebookFriends = true,
+            //     ProfileConstraints = new PlayerProfileViewConstraints()
+            //     {
+            //         ShowDisplayName = true,
+            //         ShowAvatarUrl = true,
+            //         ShowStatistics = true
+            //     }
+
+            // }, result => GetLeadoardOfFriends(result), FailureCallback);
         }
 
 
 
-
-
-
+        
 
 
     }
@@ -104,23 +151,23 @@ public class FriendsListWindow : MonoBehaviour
     {
         var json = PluginManager.GetPlugin<ISerializerPlugin>(PluginContract.PlayFab_Serializer);
         GetFriendsListResult res = json.DeserializeObject<GetFriendsListResult>(PlayerPrefs.GetString("GetFriendsListResult"));
-        GetLeaderboardResult res2 = json.DeserializeObject<GetLeaderboardResult>(PlayerPrefs.GetString("GetLeaderboardResult"));
+        //GetLeaderboardResult res2 = json.DeserializeObject<GetLeaderboardResult>(PlayerPrefs.GetString("GetLeaderboardResult"));
 
-        DisplayLeaderboard(res,res2);
+        DisplayLeaderboard(res,null);
 
 
 
-        PlayFabClientAPI.GetFriendsList(new GetFriendsListRequest
-        {
-            IncludeFacebookFriends = true,
-            ProfileConstraints = new PlayerProfileViewConstraints()
-            {
-                ShowDisplayName = true,
-                ShowAvatarUrl = true,
-                ShowStatistics = true
-            }
+        //PlayFabClientAPI.GetFriendsList(new GetFriendsListRequest
+        //{
+        //    IncludeFacebookFriends = true,
+        //    ProfileConstraints = new PlayerProfileViewConstraints()
+        //    {
+        //        ShowDisplayName = true,
+        //        ShowAvatarUrl = true,
+        //        ShowStatistics = true
+        //    }
 
-        }, result => GetLeadoardOfFriends(result), FailureCallback);
+        //}, result => GetLeadoardOfFriends(result), FailureCallback);
 
     }
 
@@ -133,19 +180,21 @@ public class FriendsListWindow : MonoBehaviour
 
     public void GetLeadoardOfFriends(GetFriendsListResult result)
     {
-        PlayFabClientAPI.GetFriendLeaderboard(new GetFriendLeaderboardRequest
-        {
-            StatisticName = "Highscore",
+        //PlayFabClientAPI.GetFriendLeaderboard(new GetFriendLeaderboardRequest
+        //{
+        //    StatisticName = "Highscore",
 
-            MaxResultsCount = 100,
-            ProfileConstraints = new PlayerProfileViewConstraints()
-            { 
-                ShowDisplayName = true,
-                ShowAvatarUrl = true,
-                ShowStatistics=true
-            }
+        //    MaxResultsCount = 100,
+        //    ProfileConstraints = new PlayerProfileViewConstraints()
+        //    { 
+        //        ShowDisplayName = true,
+        //        ShowAvatarUrl = true,
+        //        ShowStatistics=true
+        //    }
 
-        }, result2 => DisplayLeaderboard(result,result2,true), FailureCallback);
+        //}, result2 => DisplayLeaderboard(result,result2,true), FailureCallback);
+
+        DisplayLeaderboard(result, null, true);
     }
 
 
@@ -154,7 +203,7 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
         if(newData)
         {
             PlayerPrefs.SetString("GetFriendsListResult", result.ToJson());
-            PlayerPrefs.SetString("GetLeaderboardResult", result2.ToJson());
+            //PlayerPrefs.SetString("GetLeaderboardResult", result2.ToJson());
             foreach (Transform child in _parent)
             {
                 GameObject.Destroy(child.gameObject);
@@ -166,21 +215,21 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
                 GameObject go = GameObject.Instantiate(templateItem, _parent);
 
                 go.transform.GetChild(4).GetComponent<Text>().text = result.Friends[i].Profile.DisplayName;
-                go.transform.GetChild(3).GetComponent<Text>().text = "";
+                go.transform.GetChild(3).GetComponent<Text>().text = result.Friends[i].Tags[0];
                 go.transform.GetChild(6).GetComponent<Text>().text = "";
-                //   go.transform.GetChild(5).GetChild(0).GetComponent<Text>().text = HelperFunctions.XPtoLevel();
+            //   go.transform.GetChild(5).GetChild(0).GetComponent<Text>().text = HelperFunctions.XPtoLevel();
 
 
-                for (int j = 0; j < result2.Leaderboard.Count; j++)
-                {
-                    if (result2.Leaderboard[j].PlayFabId == result.Friends[i].FriendPlayFabId)
-                    {
-                        go.transform.GetChild(3).GetComponent<Text>().text = result2.Leaderboard[j].StatValue.ToString();
-                    }
-                }
+            //for (int j = 0; j < result2.Leaderboard.Count; j++)
+            //{
+            //    if (result2.Leaderboard[j].PlayFabId == result.Friends[i].FriendPlayFabId)
+            //    {
+            //        go.transform.GetChild(3).GetComponent<Text>().text = result2.Leaderboard[j].StatValue.ToString();
+            //    }
+            //}
 
 
-
+           
 
                 string avatarURL = "";
 
@@ -200,23 +249,30 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
 
 
                 bool hasFoundxp = false;
-                for (int j = 0; j < result.Friends[i].Profile.Statistics.Count; j++)
-                {
-                    if (result.Friends[i].Profile.Statistics[j].Name == "Experience")
-                    {
-                        go.transform.GetChild(6).GetComponent<Text>().text = HelperFunctions.XPtoLevel(result.Friends[i].Profile.Statistics[1].Value.ToString()).ToString();
-                        hasFoundxp = true;
-                    }
-                }
+                //for (int j = 0; j < result.Friends[i].Profile.Statistics.Count; j++)
+                //{
+                //    if (result.Friends[i].Profile.Statistics[j].Name == "Experience")
+                //    {
+                //        go.transform.GetChild(6).GetComponent<Text>().text = HelperFunctions.XPtoLevel(result.Friends[i].Profile.Statistics[1].Value.ToString()).ToString();
+                //        hasFoundxp = true;
+                //    }
+                //}
 
 
-                if (hasFoundxp == false)
-                {
-                    go.transform.GetChild(6).gameObject.SetActive(false);
-                }
-
+                //if (hasFoundxp == false)
+                //{
+                //    go.transform.GetChild(6).gameObject.SetActive(false);
+                //}
+                if(result.Friends[i].Tags.Count>1 && result.Friends[i].Tags[1] !=null && result.Friends[i].Tags[1].Length>0)
+            {
+                go.transform.GetChild(6).gameObject.SetActive(true);
+                go.transform.GetChild(6).GetComponent<Text>().text = HelperFunctions.XPtoLevel(result.Friends[i].Tags[1]).ToString();
 
             }
+
+
+
+        }
         
     }
 
@@ -235,16 +291,34 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
     public void AddFriend()
     {
         Debug.Log("Adding Friend:" + inputF.text);
-        
 
-        PlayFabClientAPI.AddFriend(new AddFriendRequest
-        {
-            FriendTitleDisplayName= inputF.text
 
-        }, result => AddeFriendCallback(result), FailureCallbackAdd);
+        //PlayFabClientAPI.AddFriend(new AddFriendRequest
+        //{
+        //    FriendTitleDisplayName= inputF.text
+
+        //}, result => AddeFriendCallback(result), FailureCallbackAdd);
+
+
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"PlayerID", Startup.instance.MyPlayfabID},
+                    {"PlayerId_Friend", inputF.text},
+                    {"DisplayName_Friend", inputF.text} });
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/AddFriend.php", jsonString, (result) => {
+            Debug.Log("Done!" + result);
+            AddeFriendCallback();
+        }, (error) => {
+            Debug.Log("Error!" + error);
+            PlayFabError pfE = new PlayFabError();
+            FailureCallbackAdd(pfE);
+        });
+
     }
-    public void AddeFriendCallback(AddFriendResult result)
+    public void AddeFriendCallback()
     {
+        GameAnalytics.NewDesignEvent("AddFriend");
+
         foreach (Transform child in _parent)
         {
             GameObject.Destroy(child.gameObject);
@@ -256,17 +330,34 @@ public void DisplayLeaderboard(GetFriendsListResult result, GetLeaderboardResult
     }
     private void FailureCallbackAdd(PlayFabError error)
     {
-        if (error.Error == PlayFabErrorCode.UsersAlreadyFriends)
+
+        var json = PluginManager.GetPlugin<ISerializerPlugin>(PluginContract.PlayFab_Serializer);
+        GetFriendsListResult res = json.DeserializeObject<GetFriendsListResult>(PlayerPrefs.GetString("GetFriendsListResult"));
+
+        for (int i = 0; i < res.Friends.Count; i++)
         {
-            errorText.text = "Already friends!";
+            if(res.Friends[i] != null && res.Friends[i].Profile != null && res.Friends[i].Profile.DisplayName == inputF.text)
+            {
+                errorText.text = "Already friends!";
+                return;
+            }
+            
+  
+
+        }
+
+
+        //if (error.Error == PlayFabErrorCode.UsersAlreadyFriends)
+        {
+            errorText.text = "Could not add friend!";
             return;
         }
 
-        errorText.text = "Could not add friend";
-        Debug.LogWarning("Cant Add Friend");
-        Debug.LogError(error.GenerateErrorReport());
+        //errorText.text = "Could not add friend";
+        //Debug.LogWarning("Cant Add Friend");
+        //Debug.LogError(error.GenerateErrorReport());
         
-        MainMenuController.instance.Share();
+        //MainMenuController.instance.Share();
     }
 
 

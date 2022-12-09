@@ -189,11 +189,11 @@ public class Player : MonoBehaviour
     {
 
         //Board.instance.AllTilesNumbers[0] = (2);
-        //Board.instance.AllTilesNumbers[1]=(4);
-        //Board.instance.AllTilesNumbers[2]=(6);
-        //Board.instance.AllTilesNumbers[3]=(10);
-        //Board.instance.AllTilesNumbers[4] =(4);
-        //Board.instance.AllTilesNumbers[5]=(3);
+        //Board.instance.AllTilesNumbers[1] = (5);
+        //Board.instance.AllTilesNumbers[2] = (3);
+        //Board.instance.AllTilesNumbers[3] = (8);
+        //Board.instance.AllTilesNumbers[4] = (2);
+        //Board.instance.AllTilesNumbers[5] = (3);
 
         List<int> addedTiles = new List<int>();
 

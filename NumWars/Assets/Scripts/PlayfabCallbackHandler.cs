@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Newtonsoft.Json;
 using Photon.Pun;
 using PlayFab;
 using PlayFab.ClientModels;
@@ -13,7 +14,7 @@ public enum PlayfabCalls
 {
     LoginWithCustomID,
     GetTitleData,
-    GetPlayerProfile,
+    //GetPlayerProfile,
     GetSharedGroupData,
     GetUserData,
     LoginWithIOSDeviceID,
@@ -23,7 +24,6 @@ public enum PlayfabCalls
     UpdatePlayerStatistics,
     RemoveSharedGroupMembers,
     GetUserDataOldGames,
-    UpdateUserDataGames,
     GetFilesRequest,
     InitiateFileUploads,
     GetAllAvatarGrouped,
@@ -87,8 +87,8 @@ public class PlayfabFunctionCall
             LoginWithCustomID(playerID, onDone, onError);
         else if (myType == PlayfabCalls.GetTitleData)
             GetTitleData(onDoneTitleDataResult, onError);
-        else if (myType == PlayfabCalls.GetPlayerProfile)
-            GetPlayerProfile(onDonePlayerProfileResult, onError);
+        //else if (myType == PlayfabCalls.GetPlayerProfile)
+        //    GetPlayerProfile(onDonePlayerProfileResult, onError);
         else if (myType == PlayfabCalls.GetSharedGroupData)
             GetSharedGroupData(SharedGroupId, onDoneGetSharedGroupDataResult, onError);
         else if (myType == PlayfabCalls.GetUserData)
@@ -96,7 +96,7 @@ public class PlayfabFunctionCall
         else if (myType == PlayfabCalls.LoginWithIOSDeviceID)
             LoginWithIOSDeviceID(playerID, onDone, onError);
         else if (myType == PlayfabCalls.GetOtherPlayerProfile)
-            GetOtherPlayerProfile(playerID, onDonePlayerProfileResult, onError);
+            GetOtherPlayerProfile(playerID, onDoneGetUserDataResult, onError);
         else if (myType == PlayfabCalls.SetPictureIE)
             SetPictureIE(aURL, playerID, aImage, onDoneN, onErrorN);
         else if (myType == PlayfabCalls.UpdateUserData)
@@ -131,23 +131,32 @@ public class PlayfabFunctionCall
     {
         myStatus = Status.Running;
 
-            PlayFabClientAPI.LoginWithCustomID(new LoginWithCustomIDRequest()
-            {
-                CreateAccount = true,
-                CustomId = playerID,
-                InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
-                {
-                    GetUserAccountInfo = true,
-                    GetPlayerProfile = true,
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"DefaultAchivements", Startup._instance.myAchivmentController.GetDefault()},});
 
-                }
-            },
+        AWSBackend.instance.AWSClientAPI("phpBackend/LoginWithCustomID.php?CustomID="+ playerID, jsonString,
               result =>
               {
                   if (shouldCancel)
                       return;
                   myStatus = Status.Finished;
-                  onDone(result);
+
+                  Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+
+
+                  LoginResult lr = new LoginResult();
+                  lr.AuthenticationContext = new PlayFabAuthenticationContext();
+                  lr.AuthenticationContext.PlayFabId = dic["PlayerID"];
+                  lr.InfoResultPayload = new GetPlayerCombinedInfoResultPayload();
+                  lr.InfoResultPayload.PlayerProfile = new PlayerProfileModel();
+                  lr.InfoResultPayload.PlayerProfile.DisplayName = dic["DisplayName"];
+                  lr.InfoResultPayload.AccountInfo = new UserAccountInfo();
+                  lr.InfoResultPayload.AccountInfo.TitleInfo = new UserTitleInfo();
+                  lr.InfoResultPayload.AccountInfo.TitleInfo.AvatarUrl = dic["avatarURL"];
+                  lr.NewlyCreated = false;
+                  //lr.InfoResultPayload.PlayerProfile.DisplayName
+
+                  onDone(lr);
 
 
 
@@ -157,46 +166,116 @@ public class PlayfabFunctionCall
                   if (shouldCancel)
                       return;
                   myStatus = Status.Finished;
-                  onError.Invoke(error);
+                  PlayFabError pfE = new PlayFabError();
+                  onError.Invoke(pfE);
               });
+
+
+
+        //PlayFabClientAPI.LoginWithCustomID(new LoginWithCustomIDRequest()
+        //    {
+        //        CreateAccount = true,
+        //        CustomId = playerID,
+        //        InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+        //        {
+        //            GetUserAccountInfo = true,
+        //            GetPlayerProfile = true,
+
+        //        }
+        //    },
+        //      result =>
+        //      {
+        //          if (shouldCancel)
+        //              return;
+        //          myStatus = Status.Finished;
+        //          onDone(result);
+
+
+
+        //      },
+        //      error =>
+        //      {
+        //          if (shouldCancel)
+        //              return;
+        //          myStatus = Status.Finished;
+        //          onError.Invoke(error);
+        //      });
     }
     void LoginWithIOSDeviceID(string playerID, System.Action<LoginResult> onDone, System.Action<PlayFabError> onError)
     {
         myStatus = Status.Running;
-        PlayFabClientAPI.LoginWithIOSDeviceID(new LoginWithIOSDeviceIDRequest()
-        {
-
-            TitleId = PlayFabSettings.TitleId,
-            DeviceId = SystemInfo.deviceUniqueIdentifier,
-            OS = SystemInfo.operatingSystem,
-            DeviceModel = SystemInfo.deviceModel,
-            CreateAccount = true,
-            InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
-            {
-                GetUserAccountInfo = true,
-                GetPlayerProfile = true
-            }
-        },
-result =>
-{
 
 
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"DefaultAchivements", Startup._instance.myAchivmentController.GetDefault()},});
+
+            AWSBackend.instance.AWSClientAPI("phpBackend/LoginWithCustomID.php?DeviceId=" + SystemInfo.deviceUniqueIdentifier, jsonString,
+              result =>
+              {
+                  if (shouldCancel)
+                      return;
+                  myStatus = Status.Finished;
+
+                  Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
 
 
-    if (shouldCancel)
-        return;
-    myStatus = Status.Finished;
-    onDone(result);
+                  LoginResult lr = new LoginResult();
+                  lr.AuthenticationContext = new PlayFabAuthenticationContext();
+                  lr.AuthenticationContext.PlayFabId = dic["PlayerID"];
+                  lr.InfoResultPayload = new GetPlayerCombinedInfoResultPayload();
+                  lr.InfoResultPayload.PlayerProfile = new PlayerProfileModel();
+                  lr.InfoResultPayload.PlayerProfile.DisplayName = dic["DisplayName"];
+                  lr.InfoResultPayload.AccountInfo = new UserAccountInfo();
+                  lr.InfoResultPayload.AccountInfo.TitleInfo = new UserTitleInfo();
+                  lr.InfoResultPayload.AccountInfo.TitleInfo.AvatarUrl = dic["avatarURL"];
+                  lr.NewlyCreated = false;
+                  //lr.InfoResultPayload.PlayerProfile.DisplayName
 
-   // LoginSucess(result);
-},
-error =>
-{
-    if (shouldCancel)
-        return;
-    myStatus = Status.Finished;
-    onError.Invoke(error);
-});
+                  onDone(lr);
+
+
+
+              },
+              error =>
+              {
+                  if (shouldCancel)
+                      return;
+                  myStatus = Status.Finished;
+                  PlayFabError pfE = new PlayFabError();
+                  onError.Invoke(pfE);
+              });
+
+
+        //PlayFabClientAPI.LoginWithIOSDeviceID(new LoginWithIOSDeviceIDRequest()
+        //{
+
+        //    TitleId = PlayFabSettings.TitleId,
+        //    DeviceId = SystemInfo.deviceUniqueIdentifier,
+        //    OS = SystemInfo.operatingSystem,
+        //    DeviceModel = SystemInfo.deviceModel,
+        //    CreateAccount = true,
+        //    InfoRequestParameters = new GetPlayerCombinedInfoRequestParams()
+        //    {
+        //        GetUserAccountInfo = true,
+        //        GetPlayerProfile = true
+        //    }
+        //},
+        //result =>
+        //{
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+        //    onDone(result);
+
+        //   // LoginSucess(result);
+        //},
+        //error =>
+        //{
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+        //    onError.Invoke(error);
+        //});
 
 
 
@@ -208,140 +287,273 @@ error =>
     public void GetTitleData(System.Action<GetTitleDataResult> onDone, System.Action<PlayFabError> onError)
     {
         myStatus = Status.Running;
-        PlayFabClientAPI.GetTitleData(new GetTitleDataRequest(),
-                  result2 => {
-                      if (shouldCancel)
-                          return;
-                      myStatus = Status.Finished;
-                      onDone.Invoke(result2);
+        AWSBackend.instance.AWSClientAPI("phpBackend/GetTitleData.php", "",
+          result2 => {
+              if (shouldCancel)
+                  return;
+              myStatus = Status.Finished;
+              GetTitleDataResult a = new GetTitleDataResult();
+
+              a.Data = JsonConvert.DeserializeObject<Dictionary<string, string>>(result2);
+
+              onDone.Invoke(a);
 
 
-                  },
-                  error => {
-                      if (shouldCancel)
-                          return;
-                      myStatus = Status.Finished;
-                      onError.Invoke(error);
-                  }
-              );
+          },
+          error => {
+              if (shouldCancel)
+                  return;
+              myStatus = Status.Finished;
+              PlayFabError pfE = new PlayFabError();
+              onError.Invoke(pfE);
+          }
+      );
+
+        //PlayFabClientAPI.GetTitleData(new GetTitleDataRequest(),
+        //          result2 => {
+        //              if (shouldCancel)
+        //                  return;
+        //              myStatus = Status.Finished;
+        //              onDone.Invoke(result2);
+
+
+        //          },
+        //          error => {
+        //              if (shouldCancel)
+        //                  return;
+        //              myStatus = Status.Finished;
+        //              onError.Invoke(error);
+        //          }
+        //      );
     }
     public void GetAllAvatarGrouped(System.Action<ExecuteCloudScriptResult> onDone, System.Action<PlayFabError> onError)
     {
         myStatus = Status.Running;
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "GetAllAvatarGrouped",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabId", Startup.instance.MyPlayfabID }
-        }
-        }, result2 => {
-            if (shouldCancel)
-                return;
-            myStatus = Status.Finished;
-            onDone.Invoke(result2);
 
 
-        },
-        error => {
-            if (shouldCancel)
-                return;
-            myStatus = Status.Finished;
-            onError.Invoke(error);
-        }
-    );
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"PlayerID", Startup.instance.MyPlayfabID},});
+
+
+
+
+    AWSBackend.instance.AWSClientAPI("phpBackend/GetAllAvatarGrouped.php", jsonString, (result2) => {
+        if (shouldCancel)
+                    return;
+                myStatus = Status.Finished;
+        ExecuteCloudScriptResult rs = new ExecuteCloudScriptResult();
+        if(result2.Length>0)
+            rs.FunctionResult = result2;
+        onDone.Invoke(rs);
+
+            },
+            error => {
+                if (shouldCancel)
+                    return;
+                myStatus = Status.Finished;
+                PlayFabError pfE = new PlayFabError();
+                onError.Invoke(pfE);
+            }
+            );
+
+
+        //PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+        //{
+        //    FunctionName = "GetAllAvatarGrouped",
+        //    FunctionParameter = new Dictionary<string, object>() {
+        //    { "PlayFabId", Startup.instance.MyPlayfabID }
+        //}
+        //}, result2 => {
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+        //    onDone.Invoke(result2);
+
+
+        //},
+        //error => {
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+        //    onError.Invoke(error);
+        //}
+        //);
+
     }
 
     public void GetSharedDataGrouped2(string aID, System.Action<ExecuteCloudScriptResult> onDone, System.Action<PlayFabError> onError)
     {
         myStatus = Status.Running;
 
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"PlayerID", aID},});
 
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "GetSharedDataGrouped2",
-            FunctionParameter = new Dictionary<string, object>() {
-            { "PlayFabId", aID }
-        }
-        }, result2 => {
+
+
+
+
+
+
+AWSBackend.instance.AWSClientAPI("phpBackend/GetSharedDataGrouped2_cloudscript.php", jsonString, (result2) => {
             if (shouldCancel)
-                return;
-            myStatus = Status.Finished;
+                    return;
+                myStatus = Status.Finished;
 
-            if (onDone == null)
-                return;
-            onDone.Invoke(result2);
+                if (onDone == null)
+                    return;
+    ExecuteCloudScriptResult rs = new ExecuteCloudScriptResult();
+
+    rs.FunctionResult = result2;
+    onDone.Invoke(rs);
 
 
-        },
+            },
         error => {
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
             if (onError == null)
                 return;
-            onError.Invoke(error);
+            PlayFabError pfE = new PlayFabError();
+            onError.Invoke(pfE);
         }
     );
-    }
+
+            //        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest()
+            //    {
+            //        FunctionName = "GetSharedDataGrouped2",
+            //        FunctionParameter = new Dictionary<string, object>() {
+            //        { "PlayFabId", aID }
+            //    }
+            //    }, result2 => {
+            //        if (shouldCancel)
+            //            return;
+            //        myStatus = Status.Finished;
+
+            //        if (onDone == null)
+            //            return;
+            //        onDone.Invoke(result2);
+
+
+            //    },
+            //    error => {
+            //        if (shouldCancel)
+            //            return;
+            //        myStatus = Status.Finished;
+            //        if (onError == null)
+            //            return;
+            //        onError.Invoke(error);
+            //    }
+            //);
+        }
 
 
 
     public void UpdateUserData(string aEntry, string aValue, System.Action onDone, System.Action onError)
     {
         myStatus = Status.Running;
-        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
-        {
-            Data = new Dictionary<string, string>() {
-                {aEntry, aValue}
 
-            },
-            Permission = UserDataPermission.Public,
-        },
-        result =>
-        {
-            if (shouldCancel)
-                return;
-            myStatus = Status.Finished;
-            Debug.Log("Successfully updated user data");
-            if (onDone != null)
-                onDone.Invoke();
-               },
-        error => {
-            if (shouldCancel)
-                return;
-            Debug.Log("Got error setting user data Ancestor to Arthur");
-           Debug.Log(error.GenerateErrorReport());
-            myStatus = Status.Finished;
-            if (onError != null)
-                onError.Invoke();
-        });
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"PlayerID", Startup.instance.MyPlayfabID},
+                    {aEntry, aValue}});
+
+         AWSBackend.instance.AWSClientAPI("phpBackend/SetUserData.php", jsonString, (result) => {
+             if (shouldCancel)
+                 return;
+             myStatus = Status.Finished;
+             Debug.Log("Successfully updated user data");
+             if (onDone != null)
+                 onDone.Invoke();
+
+
+
+         }, (error) => {
+             if (shouldCancel)
+                 return;
+             Debug.Log("Got error setting user data Ancestor to Arthur");
+             Debug.Log(error);
+             myStatus = Status.Finished;
+             if (onError != null)
+                 onError.Invoke();
+         });
+
+
+
+
+        //PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+        //{
+        //    Data = new Dictionary<string, string>() {
+        //        {aEntry, aValue}
+
+        //    },
+        //    Permission = UserDataPermission.Public,
+        //},
+        //result =>
+        //{
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+        //    Debug.Log("Successfully updated user data");
+        //    if (onDone != null)
+        //        onDone.Invoke();
+        //       },
+        //error => {
+        //    if (shouldCancel)
+        //        return;
+        //    Debug.Log("Got error setting user data Ancestor to Arthur");
+        //   Debug.Log(error.GenerateErrorReport());
+        //    myStatus = Status.Finished;
+        //    if (onError != null)
+        //        onError.Invoke();
+        //});
     }
     public void UpdateUserDataGrouped(Dictionary<string, string> aEntry, System.Action onDone, System.Action onError)
     {
         myStatus = Status.Running;
-        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
-        {
-            Data = aEntry,
-            Permission = UserDataPermission.Public,
-        },
-        result =>
-        {
+        aEntry.Add("PlayerID", Startup._instance.MyPlayfabID);
+        string jsonString = JsonConvert.SerializeObject(aEntry);
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/SetUserData.php", jsonString, (result) => {
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
             Debug.Log("Successfully updated user data");
             if (onDone != null)
                 onDone.Invoke();
-        },
-        error => {
+        }, (error) => {
             if (shouldCancel)
                 return;
             Debug.Log("Got error setting user data Ancestor to Arthur");
-            Debug.Log(error.GenerateErrorReport());
+            Debug.Log(error);
             myStatus = Status.Finished;
             if (onError != null)
                 onError.Invoke();
         });
+
+
+        //PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest()
+        //{
+        //    Data = aEntry,
+        //    Permission = UserDataPermission.Public,
+        //},
+        //result =>
+        //{
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+        //    Debug.Log("Successfully updated user data");
+        //    if (onDone != null)
+        //        onDone.Invoke();
+        //},
+        //error => {
+        //    if (shouldCancel)
+        //        return;
+        //    Debug.Log("Got error setting user data Ancestor to Arthur");
+        //    Debug.Log(error.GenerateErrorReport());
+        //    myStatus = Status.Finished;
+        //    if (onError != null)
+        //        onError.Invoke();
+        //});
     }
 
 
@@ -381,36 +593,61 @@ error =>
     
     public void UpdatePlayerStatistics(int aPlayerStats,string aTable, System.Action onDone, System.Action onError)
     {
-
-
-
         myStatus = Status.Running;
-        PlayFabClientAPI.UpdatePlayerStatistics(new UpdatePlayerStatisticsRequest
-        {
-            Statistics = new List<StatisticUpdate> {
-            new StatisticUpdate {
-                StatisticName = aTable,
-                Value = aPlayerStats
-            }
-        }
-        }, result =>
+
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"PlayerID", Startup._instance.MyPlayfabID},
+                    {"displayName", Startup.instance.displayName},
+                    {"avatarURL", Startup.instance.avatarURL},
+                    //{"Experience", "20"},
+                    {aTable, aPlayerStats.ToString()}});
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/UpdatePlayerStatistics.php", jsonString,
+        result =>
         {
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
             Debug.Log("Successfully submitted high score");
-            if(onDone != null)
-            onDone.Invoke();
+            if (onDone != null)
+                onDone.Invoke();
         },
         error => {
             if (shouldCancel)
                 return;
             Debug.Log("Got error setting stats");
-            Debug.Log(error.GenerateErrorReport());
             myStatus = Status.Finished;
             if (onError != null)
                 onError.Invoke();
         });
+
+
+        //PlayFabClientAPI.UpdatePlayerStatistics(new UpdatePlayerStatisticsRequest
+        //{
+        //    Statistics = new List<StatisticUpdate> {
+        //    new StatisticUpdate {
+        //        StatisticName = aTable,
+        //        Value = aPlayerStats
+        //    }
+        //}
+        //}, result =>
+        //{
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+        //    Debug.Log("Successfully submitted high score");
+        //    if(onDone != null)
+        //    onDone.Invoke();
+        //},
+        //error => {
+        //    if (shouldCancel)
+        //        return;
+        //    Debug.Log("Got error setting stats");
+        //    Debug.Log(error.GenerateErrorReport());
+        //    myStatus = Status.Finished;
+        //    if (onError != null)
+        //        onError.Invoke();
+        //});
     }
     public void UpdatePlayerStatisticsGrouped(List<StatisticUpdate> aEntry, System.Action onDone, System.Action onError)
     {
@@ -477,38 +714,7 @@ error =>
     
 
 
-    public void GetOtherPlayerProfile(string aPlayfabID, System.Action<GetPlayerProfileResult> onDone, System.Action<PlayFabError> onError)
-    {
-        myStatus = Status.Running;
-        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
-        {
-            PlayFabId = aPlayfabID,
-            ProfileConstraints = new PlayerProfileViewConstraints()
-            {
-                ShowDisplayName = true,
-                ShowAvatarUrl = true
-            }
-        },
-        result =>
-        {
-            if (shouldCancel)
-                return;
-            myStatus = Status.Finished;
 
-            if (onDone != null)
-                onDone.Invoke(result);
-        },
-        error =>
-        {
-            if (shouldCancel)
-                return;
-            myStatus = Status.Finished;
-            if (onError != null)
-                onError.Invoke(error);
-        }
-
-        );
-    }
     public void GetFilesRequest(System.Action<string> onDone, System.Action<string> onError)
     {
         myStatus = Status.Running;
@@ -675,48 +881,163 @@ error =>
     public void GetSharedGroupData(string aSharedGroupId, System.Action<GetSharedGroupDataResult> onDone, System.Action<PlayFabError> onError)
     {
         myStatus = Status.Running;
-        PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
-        {
-            SharedGroupId = aSharedGroupId
-        }, result =>
-        {
+        AWSBackend.instance.AWSClientAPI("phpBackend/GetSharedGroupData.php?SharedGroupId="+ aSharedGroupId, "", (result) => {
+
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
 
-            onDone.Invoke(result);
-
-        }, (error) =>
-        {
-            if (shouldCancel)
-                return;
-            myStatus = Status.Finished;
-            onError.Invoke(error);
-        });
-    }
-
-    public void GetUserData( System.Action<GetUserDataResult> onDone, System.Action<PlayFabError> onError)
-    {
-        myStatus = Status.Running;
-
-        PlayFabClientAPI.GetUserData(new GetUserDataRequest()
-        {
-            PlayFabId = Startup._instance.MyPlayfabID,
-            Keys = new List<string> { "Achivments", "MyGames", "Ranking", "StatsData","XP" },
-        }, result => {
-            if (shouldCancel)
-                return;
-            myStatus = Status.Finished;
-
-
-            onDone.Invoke(result);
+            GetSharedGroupDataResult r = new GetSharedGroupDataResult();
+            Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+            r.Data = new Dictionary<string, SharedGroupDataRecord>();
+            foreach (var item in dic)
+            {
+                SharedGroupDataRecord newR = new SharedGroupDataRecord();
+                newR.Value = item.Value;
+                r.Data.Add(item.Key, newR);
+            }
+            onDone.Invoke(r);
 
         }, (error) => {
             if (shouldCancel)
                 return;
             myStatus = Status.Finished;
-            onError.Invoke(error);
+            PlayFabError pfE = new PlayFabError();
+            onError.Invoke(pfE);
+
         });
+
+
+
+        //PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
+        //{
+        //    SharedGroupId = aSharedGroupId
+        //}, result =>
+        //{
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+
+        //    onDone.Invoke(result);
+
+        //}, (error) =>
+        //{
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+        //    onError.Invoke(error);
+        //});
+    }
+    public void GetOtherPlayerProfile(string aPlayfabID, System.Action<GetUserDataResult> onDone, System.Action<PlayFabError> onError)
+    {
+        myStatus = Status.Running;
+        AWSBackend.instance.AWSClientAPI("phpBackend/GetUserData.php?PlayerID=" + aPlayfabID+"&SkipOldGames=1", "",
+         result => {
+             if (shouldCancel)
+                 return;
+             myStatus = Status.Finished;
+
+             GetUserDataResult r = new GetUserDataResult();
+             Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+             r.Data = new Dictionary<string, UserDataRecord>();
+             foreach (var item in dic)
+             {
+                 UserDataRecord newR = new UserDataRecord();
+                 newR.Value = item.Value;
+                 r.Data.Add(item.Key, newR);
+             }
+
+
+             onDone.Invoke(r);
+
+         }, (error) => {
+             if (shouldCancel)
+                 return;
+             myStatus = Status.Finished;
+             PlayFabError pfE = new PlayFabError();
+             onError.Invoke(pfE);
+         });
+        //PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        //{
+        //    PlayFabId = aPlayfabID,
+        //    ProfileConstraints = new PlayerProfileViewConstraints()
+        //    {
+        //        ShowDisplayName = true,
+        //        ShowAvatarUrl = true
+        //    }
+        //},
+        //result =>
+        //{
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+
+        //    if (onDone != null)
+        //        onDone.Invoke(result);
+        //},
+        //error =>
+        //{
+        //    if (shouldCancel)
+        //        return;
+        //    myStatus = Status.Finished;
+        //    if (onError != null)
+        //        onError.Invoke(error);
+        //}
+
+        //);
+    }
+    public void GetUserData( System.Action<GetUserDataResult> onDone, System.Action<PlayFabError> onError)
+    {
+        myStatus = Status.Running;
+
+
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/GetUserData.php?PlayerID=" + Startup._instance.MyPlayfabID, "",
+            result => {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+
+            GetUserDataResult r = new GetUserDataResult();
+            Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+            r.Data = new Dictionary<string, UserDataRecord>();
+            foreach (var item in dic)
+            {
+                UserDataRecord newR = new UserDataRecord();
+                newR.Value = item.Value;
+                r.Data.Add(item.Key, newR);
+             }
+
+
+                onDone.Invoke(r);
+
+        }, (error) => {
+            if (shouldCancel)
+                return;
+            myStatus = Status.Finished;
+            PlayFabError pfE = new PlayFabError();
+            onError.Invoke(pfE);
+        });
+
+
+        //PlayFabClientAPI.GetUserData(new GetUserDataRequest()
+        //        {
+        //            PlayFabId = Startup._instance.MyPlayfabID,
+        //            Keys = new List<string> { "Achivments", "MyGames", "Ranking", "StatsData","XP" },
+        //        }, result => {
+        //            if (shouldCancel)
+        //                return;
+        //            myStatus = Status.Finished;
+
+
+        //            onDone.Invoke(result);
+
+        //        }, (error) => {
+        //            if (shouldCancel)
+        //                return;
+        //            myStatus = Status.Finished;
+        //            onError.Invoke(error);
+        //        });
     }
     public void GetUserDataOldGames(System.Action<GetUserDataResult> onDone, System.Action<PlayFabError> onError)
     {
@@ -808,7 +1129,7 @@ public class PlayfabCallbackHandler : MonoBehaviour
     {
         get
         {
-            if(_instance == null)
+            if(_instance == null && GameObject.Find("Startup") != null)
                 _instance = GameObject.Find("Startup").GetComponent<PlayfabCallbackHandler>();
             return _instance;
         }
@@ -830,10 +1151,7 @@ public class PlayfabCallbackHandler : MonoBehaviour
             {
                 return true;
             }
-            if (myPlayfabFunctionCall[i].myType == PlayfabCalls.GetPlayerProfile)
-            {
-                return true;
-            }
+
         }
         return false;
     }
@@ -928,19 +1246,19 @@ public class PlayfabCallbackHandler : MonoBehaviour
         myPlayfabFunctionCall.Add(a);
     }
 
-    public void GetPlayerProfile(System.Action<GetPlayerProfileResult> onDone, System.Action<PlayFabError> onError)
-    {
-        PlayfabFunctionCall a = new PlayfabFunctionCall();
-        a.myType = PlayfabCalls.GetPlayerProfile;
-        a.onDonePlayerProfileResult = onDone;
-        a.onError = onError;
-        myPlayfabFunctionCall.Add(a);
-    }
-    public void GetOtherPlayerProfile(string aPlayfab, System.Action<GetPlayerProfileResult> onDone, System.Action<PlayFabError> onError)
+    //public void GetPlayerProfile(System.Action<GetPlayerProfileResult> onDone, System.Action<PlayFabError> onError)
+    //{
+    //    PlayfabFunctionCall a = new PlayfabFunctionCall();
+    //    a.myType = PlayfabCalls.GetPlayerProfile;
+    //    a.onDonePlayerProfileResult = onDone;
+    //    a.onError = onError;
+    //    myPlayfabFunctionCall.Add(a);
+    //}
+    public void GetOtherPlayerProfile(string aPlayfab, System.Action<GetUserDataResult> onDone, System.Action<PlayFabError> onError)
     {
         PlayfabFunctionCall a = new PlayfabFunctionCall();
         a.myType = PlayfabCalls.GetOtherPlayerProfile;
-        a.onDonePlayerProfileResult = onDone;
+        a.onDoneGetUserDataResult = onDone;
         a.onError = onError;
         a.playerID = aPlayfab;
         myPlayfabFunctionCall.Add(a);
@@ -1024,17 +1342,17 @@ public class PlayfabCallbackHandler : MonoBehaviour
     }
 
     
-    public void UpdateUserDataGames(string aGames, string aOldGames, System.Action onDoneN, System.Action onErrorN)
-    {
-        PlayfabFunctionCall a = new PlayfabFunctionCall();
-        a.aGames = aGames;
-        a.aOldGames = aOldGames;
-        a.myType = PlayfabCalls.UpdateUserDataGames;
+    //public void UpdateUserDataGames(string aGames, string aOldGames, System.Action onDoneN, System.Action onErrorN)
+    //{
+    //    PlayfabFunctionCall a = new PlayfabFunctionCall();
+    //    a.aGames = aGames;
+    //    a.aOldGames = aOldGames;
+    //    a.myType = PlayfabCalls.UpdateUserDataGames;
 
-        a.onDoneN = onDoneN;
-        a.onErrorN = onErrorN;
-        myPlayfabFunctionCall.Add(a);
-    }
+    //    a.onDoneN = onDoneN;
+    //    a.onErrorN = onErrorN;
+    //    myPlayfabFunctionCall.Add(a);
+    //}
     
     public void UpdatePlayerStatistics(int playerScore,string aTable, System.Action onDoneN, System.Action onErrorN)
     {

@@ -94,7 +94,7 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
                 {
                     transform.position = PlacedOnTile.transform.position;
                     transform.localScale = new Vector3(0.5f * Board.instance.GetScaleDif(), 0.5f * Board.instance.GetScaleDif(), 0.5f * Board.instance.GetScaleDif());
-                    transform.parent = PlayerBoard.instance.MaskedParent.transform;
+                    transform.SetParent(PlayerBoard.instance.MaskedParent.transform);
                 }
                 else
                 {
@@ -273,10 +273,12 @@ public class Tile : MonoBehaviour,  IDragHandler, IBeginDragHandler, IEndDragHan
         Destroy(gameObject);
         PlacedOnTile._child.gameObject.SetActive(true);
     }
+    public bool preDestroy = false;
     public void PreDestroy()
     {
         PlacedOnTile.SetTile(StaticTile.TileType.NormalTile, int.Parse(textLabel.text));
-
+        PlacedOnTile.PreDestroy();
+        preDestroy = true;
         GameManager.instance.thePlayers[0].myTiles.Remove(this);
         GameManager.instance.thePlayers[1].myTiles.Remove(this);
         if(PlacedOnTile != null && PlacedOnTile._child != null)

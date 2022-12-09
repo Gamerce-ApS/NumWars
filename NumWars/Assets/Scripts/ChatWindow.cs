@@ -1,10 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using Newtonsoft.Json;
 using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
 using UnityEngine.UI;
+using static PlayfabHelperFunctions;
 
 [System.Serializable]
 public class EmojiMap
@@ -62,23 +64,59 @@ public class ChatWindow : MonoBehaviour
 
         _loadingGO.SetActive(true);
 
-        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
-        {
-            PlayFabId = Startup._instance.GameToLoad.GetOtherPlayerPlayfab(),
-            ProfileConstraints = new PlayerProfileViewConstraints()
-            {
-                ShowDisplayName = true,
-                ShowAvatarUrl = true
-            }
-        }, result => {
 
-          LoadAvatarURL(result.PlayerProfile.AvatarUrl, Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
+        PlayerProfileModel pf = PlayfabHelperFunctions.instance.GetPlayerProfileModel(Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
+
+        if(pf== null)
+        {
+            PlayfabCallbackHandler.instance.GetOtherPlayerProfile(Startup._instance.GameToLoad.GetOtherPlayerPlayfab(), result => {
+                StoredDataProfiles st = new StoredDataProfiles();
+                st.playfabID = Startup._instance.GameToLoad.GetOtherPlayerPlayfab();
+                st.theData = new PlayerProfileModel();
+                st.theData.DisplayName = result.Data["DisplayName"].Value;
+                st.theData.AvatarUrl = result.Data["avatarURL"].Value;
+                st.theData.PlayerId = result.Data["PlayerID"].Value;
+                PlayfabHelperFunctions.instance._StoredDataProfiles.Add(st);
+
+                LoadAvatarURL(result.Data["avatarURL"].Value, Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
+
+
+            }, (error) => {
+                Debug.Log("Got error retrieving user data:");
+                Debug.Log(error.GenerateErrorReport());
+            });
+        }
+        else
+        {
+            LoadAvatarURL(pf.AvatarUrl, Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
+
+            
+        }
+    
+
+
+
  
 
-        }, (error) => {
-            Debug.Log("Got error retrieving user data:");
-            Debug.Log(error.GenerateErrorReport());
-        });
+
+
+        //PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        //{
+        //    PlayFabId = Startup._instance.GameToLoad.GetOtherPlayerPlayfab(),
+        //    ProfileConstraints = new PlayerProfileViewConstraints()
+        //    {
+        //        ShowDisplayName = true,
+        //        ShowAvatarUrl = true
+        //    }
+        //}, result => {
+
+        //  LoadAvatarURL(result.PlayerProfile.AvatarUrl, Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
+ 
+
+        //}, (error) => {
+        //    Debug.Log("Got error retrieving user data:");
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
 
 
     }
@@ -99,28 +137,46 @@ public class ChatWindow : MonoBehaviour
 
 
             currentChatData += Startup._instance.displayName+ "≤" + aMessage;
-            //chatBox.text = "";
-            PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
-            {
-                SharedGroupId = Startup._instance.GameToLoad.RoomName,
-                Data = new Dictionary<string, string>() {
-                        {"Chat", currentChatData }
 
-            }
-            },
-        result3 =>
-        {
-            RequestChat();
+            string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"SharedGroupId", Startup._instance.GameToLoad.RoomName},
+                    {"chat", currentChatData}});
+
+            AWSBackend.instance.AWSClientAPI("phpBackend/UpdateSharedGroupData.php", jsonString,
+               result3 =>
+               {
+                   RequestChat();
+                   _loadingGO.SetActive(false);
+               },
+                error =>
+                {
+
+                    _loadingGO.SetActive(false);
+                });
 
 
-        },
-        error =>
-        {
-            Debug.Log("Got error making turn");
-            Debug.Log(error.GenerateErrorReport());
-            _loadingGO.SetActive(false);
 
-        });
+            //PlayFabClientAPI.UpdateSharedGroupData(new UpdateSharedGroupDataRequest()
+            //{
+            //    SharedGroupId = Startup._instance.GameToLoad.RoomName,
+            //    Data = new Dictionary<string, string>() {
+            //            {"Chat", currentChatData }
+
+            //}
+            //},
+            //result3 =>
+            //{
+            //    RequestChat();
+
+
+            //},
+            //error =>
+            //{
+            //    Debug.Log("Got error making turn");
+            //    Debug.Log(error.GenerateErrorReport());
+            //    _loadingGO.SetActive(false);
+
+            //});
 
 
         }
@@ -130,29 +186,69 @@ public class ChatWindow : MonoBehaviour
         if (Startup._instance.GameToLoad == null)
             return;
 
-        PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
-        {
-            SharedGroupId = Startup._instance.GameToLoad.RoomName
-        }, result =>
-        {
-            if(result.Data.ContainsKey("Chat"))
-            {
-                currentChatData = result.Data["Chat"].Value;
 
-                string[] messages = result.Data["Chat"].Value.Split('≤');
-
-                LoadChat(messages);
-                PlayerPrefs.SetString(Startup._instance.GameToLoad.RoomName + "_chat", result.Data["Chat"].Value);
-            }
-            else
-                _loadingGO.SetActive(false);
+        PlayfabCallbackHandler.instance.GetSharedGroupData(Startup._instance.GameToLoad.RoomName, result =>
+        {
+            _loadingGO.SetActive(false);
             GameManager.instance.ChatNotificationIcon.SetActive(false);
+            foreach (KeyValuePair<string, SharedGroupDataRecord> entry in result.Data)
+            {
+                if (entry.Key == "chat")
+                {
+
+                    if(entry.Value.Value.Length>0)
+                    {
+                        currentChatData = entry.Value.Value;
+                        string[] messages = entry.Value.Value.Split('≤');
+                        LoadChat(messages);
+                        PlayerPrefs.SetString(Startup._instance.GameToLoad.RoomName + "_chat", entry.Value.Value);
+                    }
+ 
+                }
+            }
+
+
+
+
+           
 
         }, (error) =>
         {
             _loadingGO.SetActive(false);
             Debug.Log(error.GenerateErrorReport());
         });
+
+
+
+
+
+
+        //PlayFabClientAPI.GetSharedGroupData(new GetSharedGroupDataRequest()
+        //{
+        //    SharedGroupId = Startup._instance.GameToLoad.RoomName
+        //}, result =>
+        //{
+        //    if(result.Data.ContainsKey("Chat"))
+        //    {
+        //        currentChatData = result.Data["Chat"].Value;
+
+        //        string[] messages = result.Data["Chat"].Value.Split('≤');
+
+        //        LoadChat(messages);
+        //        PlayerPrefs.SetString(Startup._instance.GameToLoad.RoomName + "_chat", result.Data["Chat"].Value);
+        //    }
+        //    else
+        //        _loadingGO.SetActive(false);
+        //    GameManager.instance.ChatNotificationIcon.SetActive(false);
+
+        //}, (error) =>
+        //{
+        //    _loadingGO.SetActive(false);
+        //    Debug.Log(error.GenerateErrorReport());
+        //});
+
+
+
     }
     public void LoadChat(string[] messages)
     {

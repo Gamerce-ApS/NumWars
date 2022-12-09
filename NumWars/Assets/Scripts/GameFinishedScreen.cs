@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using UnityEngine.SceneManagement;
+using Newtonsoft.Json;
+using System.Web;
+using GameAnalyticsSDK;
 
 public class GameFinishedScreen : MonoBehaviour
 {
@@ -89,7 +92,11 @@ public Text p1_name;
 
 
         if (bf.hasFinished == false && bf.player2_displayName == "AI")
-        PlayfabHelperFunctions.instance.AddAiGameToOldGames(CompressString.StringCompressor.CompressString(bf.GetJson()));
+        {
+            GameAnalytics.NewDesignEvent("GameFinished_AI");
+            PlayfabHelperFunctions.instance.AddAiGameToOldGames(CompressString.StringCompressor.CompressString(bf.GetJson()));
+
+        }
 
 
 
@@ -128,11 +135,16 @@ public Text p1_name;
                     Startup._instance.AdjustThropies(30, bf.player2_PlayfabId, bf.player2_displayName, int.Parse(bf.player1_score));
                 else
                     Startup._instance.AdjustThropies(-15, bf.player2_PlayfabId, bf.player2_displayName, int.Parse(bf.player1_score));
+
+                GameAnalytics.NewDesignEvent("GameFinished_RealPlayer");
+
             }
 
 
 
             opponentPlayfabID = bf.player2_PlayfabId;
+
+            PlayfabHelperFunctions.instance.GetOtherUserDataRank(1,Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
         }
         else
         {
@@ -142,7 +154,7 @@ public Text p1_name;
             p2_wins.text = "-";
 
             p1_name.text = bf.player2_displayName;
-            p1_thropies.text = "-";
+            p1_thropies.text = Startup.instance.myData["Ranking"].Value;
             p1_score.text = bf.player2_score;
             p1_wins.text = "-";
 
@@ -152,11 +164,16 @@ public Text p1_name;
                     Startup._instance.AdjustThropies(30, bf.player1_PlayfabId, bf.player1_displayName, int.Parse(bf.player2_score));
                 else
                     Startup._instance.AdjustThropies(-15, bf.player1_PlayfabId, bf.player1_displayName, int.Parse(bf.player2_score));
+                GameAnalytics.NewDesignEvent("GameFinished_RealPlayer");
             }
 
 
             opponentPlayfabID = bf.player1_PlayfabId;
+            PlayfabHelperFunctions.instance.GetOtherUserDataRank(2, Startup._instance.GameToLoad.GetOtherPlayerPlayfab());
         }
+
+        
+
 
         int p1Win = 0;
         int p2Win = 0;
@@ -320,20 +337,31 @@ public Text p1_name;
 
 
             }
-      
 
-            foreach (IEnumerable item in test)
+            string v2 = (string)result2.FunctionResult;
+            if (v2 != "[]" && v2.Length > 2)
             {
+                Dictionary<string, string> gamelistreturn = JsonConvert.DeserializeObject<Dictionary<string, string>>((string)result2.FunctionResult);
 
-                char[] t = item.ToString().ToCharArray();
-                List<int> b = new List<int>();
-                for (int i = 0; i < t.Length; i++)
+                foreach (var item in gamelistreturn)
                 {
-                    b.Add((t[i]));
+                    string con2 = HttpUtility.UrlDecode(item.Value);
+                    gameList.Add(new BoardData(con2));
                 }
-                string con = PlayfabHelperFunctions.Decompress(b);
-                gameList.Add(new BoardData(con));
             }
+
+            //foreach (IEnumerable item in test)
+            //{
+
+            //    char[] t = item.ToString().ToCharArray();
+            //    List<int> b = new List<int>();
+            //    for (int i = 0; i < t.Length; i++)
+            //    {
+            //        b.Add((t[i]));
+            //    }
+            //    string con = PlayfabHelperFunctions.Decompress(b);
+            //    gameList.Add(new BoardData(con));
+            //}
 
             bool foundActiveGame = false;
             for (int i = 0; i < gameList.Count; i++)
@@ -345,7 +373,7 @@ public Text p1_name;
 
 
 
-            if (foundActiveGame == false)
+            if (foundActiveGame == false && lastBF.player2_displayName != "AI")
             {
 
 
@@ -474,20 +502,31 @@ public Text p1_name;
 
 
 
-            IEnumerable test = (IEnumerable)result2.FunctionResult;
+            //IEnumerable test = (IEnumerable)result2.FunctionResult;
             List<BoardData> gameList = new List<BoardData>();
-            foreach (IEnumerable item in test)
+            string v2 = (string)result2.FunctionResult;
+            if (v2 != "[]" && v2.Length > 2)
             {
+                Dictionary<string, string> gamelistreturn = JsonConvert.DeserializeObject<Dictionary<string, string>>((string)result2.FunctionResult);
 
-                char[] t = item.ToString().ToCharArray();
-                List<int> b = new List<int>();
-                for (int i = 0; i < t.Length; i++)
+                foreach (var item in gamelistreturn)
                 {
-                    b.Add((t[i]));
+                    string con2 = HttpUtility.UrlDecode(item.Value);
+                    gameList.Add(new BoardData(con2));
                 }
-                string con = PlayfabHelperFunctions.Decompress(b);
-                gameList.Add(new BoardData(con));
             }
+            //foreach (IEnumerable item in test)
+            //{
+
+            //    char[] t = item.ToString().ToCharArray();
+            //    List<int> b = new List<int>();
+            //    for (int i = 0; i < t.Length; i++)
+            //    {
+            //        b.Add((t[i]));
+            //    }
+            //    string con = PlayfabHelperFunctions.Decompress(b);
+            //    gameList.Add(new BoardData(con));
+            //}
 
             bool foundActiveGame = false;
             for(int i = 0; i < gameList.Count;i++)
@@ -526,7 +565,7 @@ public Text p1_name;
     public IEnumerator ChallengeProgress()
     {
 
-        yield return new WaitForSeconds(5);
+        yield return new WaitForSeconds(4);
 
 
         SceneManager.LoadScene(0);

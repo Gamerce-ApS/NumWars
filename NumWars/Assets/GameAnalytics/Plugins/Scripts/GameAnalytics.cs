@@ -456,7 +456,7 @@ namespace GameAnalyticsSDK
         {
             if(!GameAnalytics._hasInitializeBeenCalled)
             {
-         //       Debug.LogError("GameAnalytics: REMEMBER THE SDK NEEDS TO BE MANUALLY INITIALIZED NOW");
+                Debug.LogError("GameAnalytics: REMEMBER THE SDK NEEDS TO BE MANUALLY INITIALIZED NOW");
                 return;
             }
             GA_Design.NewEvent(eventName, eventValue, null, false);
