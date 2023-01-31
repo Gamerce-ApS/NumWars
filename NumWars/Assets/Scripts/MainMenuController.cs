@@ -14,6 +14,7 @@ using VoxelBusters.EssentialKit;
 using VoxelBusters.CoreLibrary;
 using GameAnalyticsSDK;
 using UnityEngine.EventSystems;
+using Unity.Notifications.iOS;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -49,6 +50,8 @@ public class MainMenuController : MonoBehaviour
     public GameObject MerginWindow;
 
     public GameObject UpdateWindow;
+
+    public Text onlineGamesLabel;
 
     public GameObject adv1;
     public GameObject adv2;
@@ -145,15 +148,19 @@ public class MainMenuController : MonoBehaviour
 
         Startup._instance.PlaySoundEffect(0);
         PressCloseNewGameWindow();
-        if (Startup._instance.GetHasActiveGameSearch()) // if you have a searching entry you need to wait
-        {
+
+
+        PlayfabHelperFunctions.instance.InitiateSearchForGame();
+
+        //if (Startup._instance.GetHasActiveGameSearch()) // if you have a searching entry you need to wait
+        //{
     
-            return;
-        }
-        else
-        {
-            Startup._instance.JoinRandomRoom();
-        }
+        //    return;
+        //}
+        //else
+        //{
+        //    Startup._instance.JoinRandomRoom();
+        //}
 
     }
     public void PressPolicy()
@@ -223,11 +230,32 @@ public class MainMenuController : MonoBehaviour
             FriendPlay.interactable = false;
             PraticePlay.interactable = false;
         }
- 
+
+        //var timeTrigger = new iOSNotificationTimeIntervalTrigger
+        //{
+        //    TimeInterval = new System.TimeSpan(0, 1, 0),
+        //    Repeats = false
+        //};
+
+        //var notification = new iOSNotification()
+        //{
+        //    // You can specify a custom identifier which can be used to manage the notification later.
+        //    // If you don't provide one, a unique string will be generated automatically.
+        //    Identifier = "_notification_01",
+        //    Title = "Outnumber:",
+        //    Body = "You have a game that is about to expire!",
+        //    Subtitle = "",
+        //    ShowInForeground = true,
+        //    ForegroundPresentationOption = (PresentationOption.Alert | PresentationOption.Sound),
+        //    CategoryIdentifier = "category_a",
+        //    ThreadIdentifier = "thread1",
+        //    Trigger = timeTrigger,
+        //};
+        //Debug.Log("Trigger 9 min");
+        //iOSNotificationCenter.ScheduleNotification(notification);
 
 
-
-}
+    }
 public void PressOpenFriendsWindow()
     {
         GameAnalytics.NewDesignEvent("PressOpenFriendsWindow");

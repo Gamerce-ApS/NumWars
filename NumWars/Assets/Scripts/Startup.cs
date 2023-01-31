@@ -77,7 +77,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
     public static long TIMEOUT = 60 * 60 * 24 * 2;
 
-    public static string LIVE_VERSION = "27";
+    public static string LIVE_VERSION = "30";
 
     // public static long TIMEOUT = 60+60+60;
 
@@ -155,6 +155,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
 #if UNITY_IOS
         UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
+        Debug.Log("ClearLocalNotifications");
         UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
 #endif
 
@@ -360,6 +361,7 @@ public class Startup : MonoBehaviourPunCallbacks
             //PhotonNetwork.Disconnect();
 #if UNITY_IOS
             UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
+            Debug.Log("ClearLocalNotifications");
             UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
 
 
@@ -529,7 +531,6 @@ public class Startup : MonoBehaviourPunCallbacks
     }
     public void Refresh()
     {
-   
 
         _PlayfabHelperFunctions.Refresh();
     }
@@ -1092,6 +1093,7 @@ public class Startup : MonoBehaviourPunCallbacks
             {
                 iOSNotificationCenter.RemoveAllDeliveredNotifications();
                 UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
+                Debug.Log("ClearLocalNotifications");
                 UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
 
                 SetNotificationThatRunsOut();
@@ -1123,6 +1125,15 @@ public class Startup : MonoBehaviourPunCallbacks
             }
       
         }
+        else
+        {
+            iOSNotificationCenter.RemoveAllDeliveredNotifications();
+            UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
+            Debug.Log("ClearLocalNotifications");
+            UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
+
+            SetNotificationThatRunsOut();
+        }
 
 #endif
 
@@ -1131,20 +1142,95 @@ public class Startup : MonoBehaviourPunCallbacks
     }
     public void SetNotificationThatRunsOut()
     {
+        Debug.Log("SetNotificationThatRunsOut");
+        Debug.Log("openGamesList"+ openGamesList.Count);
 #if UNITY_IOS
+
+        UnityEngine.iOS.NotificationServices.ClearLocalNotifications();
+        iOSNotificationCenter.RemoveAllScheduledNotifications();
         for (int i = 0; i < openGamesList.Count; i++)
         {
+
+
+            Debug.Log("openGamesList[i].GetPlayerTurn()" + openGamesList[i].GetPlayerTurn());
+            Debug.Log("openGamesList[i].EmptyTurns" + openGamesList[i].EmptyTurns);
+            Debug.Log("Board.instance.boardData.LastMoveTimeStamp" + openGamesList[i].LastMoveTimeStamp);
+
             if (openGamesList[i].GetPlayerTurn() == 0  &&
-                int.Parse(openGamesList[i].EmptyTurns) < 4)
+                int.Parse(openGamesList[i].EmptyTurns) < 4&&
+                openGamesList[i].LastMoveTimeStamp != null &&
+                openGamesList[i].LastMoveTimeStamp.Length>1)
             {
                 long a = System.DateTimeOffset.Now.ToUnixTimeSeconds();
-                long b = long.Parse(Board.instance.boardData.LastMoveTimeStamp);
+                long b = long.Parse(openGamesList[i].LastMoveTimeStamp);
                 long dif = a - b;
                 long Future = b + Startup.TIMEOUT;
                 long timeToDeadline = Future - a;
                 System.TimeSpan time = System.TimeSpan.FromSeconds(timeToDeadline);
 
-                if( time.TotalMinutes>120)
+
+                //Debug.Log("Time To End S:" + timeToDeadline);
+                //Debug.Log("Time To End TimeSpan:" + time);
+                //Debug.Log("Time To End TimeSpan:" + (int)time.TotalMinutes);
+
+                //Debug.Log("Time To End TimeSpan:" + time.TotalMinutes+ " > "+ (60 * 47 + 50).ToString());
+                //if (time.TotalMinutes > 60 * 47 + 5) // 
+                //{
+                //    Debug.Log("Trigger "+ (time.TotalMinutes - (60 * 47 + 50)).ToString() + " min:");
+                //    var timeTrigger = new iOSNotificationTimeIntervalTrigger
+                //    {
+                //        TimeInterval = new System.TimeSpan(0, 2, 0),
+                //        Repeats = false
+                //    };
+
+                //    var notification = new iOSNotification()
+                //    {
+                //        // You can specify a custom identifier which can be used to manage the notification later.
+                //        // If you don't provide one, a unique string will be generated automatically.
+                //        //Identifier = "_notification_01",
+                //        Title = "Outnumber:",
+                //        Body = "You have a game that is about to expire!",
+                //        Subtitle = "",
+                //        ShowInForeground = true,
+                //        ForegroundPresentationOption = (PresentationOption.Alert | PresentationOption.Sound),
+                //        //CategoryIdentifier = "category_a",
+                //        //ThreadIdentifier = "thread1",
+                //        Trigger = timeTrigger,
+                //    };
+                //    Debug.Log("Trigger 2 min");
+                //    iOSNotificationCenter.ScheduleNotification(notification);
+                //}
+                //if (time.TotalMinutes > 60 * 47 + 50) // 
+                //{
+                //    Debug.Log("Trigger " + (time.TotalMinutes - (60 * 47 + 50)).ToString() + " min:");
+                //    var timeTrigger = new iOSNotificationTimeIntervalTrigger
+                //    {
+                //        TimeInterval = new System.TimeSpan(0, (int)time.TotalMinutes - (60 * 47 + 50), 0),
+                //        Repeats = false
+                //    };
+
+                //    var notification = new iOSNotification()
+                //    {
+                //        // You can specify a custom identifier which can be used to manage the notification later.
+                //        // If you don't provide one, a unique string will be generated automatically.
+                //        //Identifier = "_notification_01",
+                //        Title = "Outnumber:",
+                //        Body = "You have a game that is about to expire!",
+                //        Subtitle = "",
+                //        ShowInForeground = true,
+                //        ForegroundPresentationOption = (PresentationOption.Alert | PresentationOption.Sound),
+                //        //CategoryIdentifier = "category_a",
+                //        //ThreadIdentifier = "thread1",
+                //        Trigger = timeTrigger,
+                //    };
+                //    Debug.Log("Trigger 10 min");
+                //    iOSNotificationCenter.ScheduleNotification(notification);
+                //}
+
+
+
+
+                if ( time.TotalMinutes>60*2) // 1 hour reminder
                 {
                     var timeTrigger = new iOSNotificationTimeIntervalTrigger
                     {
@@ -1156,19 +1242,121 @@ public class Startup : MonoBehaviourPunCallbacks
                     {
                         // You can specify a custom identifier which can be used to manage the notification later.
                         // If you don't provide one, a unique string will be generated automatically.
-                        Identifier = "_notification_01",
+                        //Identifier = "_notification_01",
                         Title = "Outnumber:",
                         Body = "You have a game that is about to expire!",
                         Subtitle = "",
                         ShowInForeground = true,
                         ForegroundPresentationOption = (PresentationOption.Alert | PresentationOption.Sound),
-                        CategoryIdentifier = "category_a",
-                        ThreadIdentifier = "thread1",
+                        //CategoryIdentifier = "category_a",
+                        //ThreadIdentifier = "thread1",
                         Trigger = timeTrigger,
                     };
 
                     iOSNotificationCenter.ScheduleNotification(notification);
                 }
+                if (time.TotalMinutes > 60*6) // 5 hour reminder
+                {
+                    var timeTrigger = new iOSNotificationTimeIntervalTrigger
+                    {
+                        TimeInterval = new System.TimeSpan(0, (int)time.TotalMinutes - 60*5, 0),
+                        Repeats = false
+                    };
+
+                    var notification = new iOSNotification()
+                    {
+                        // You can specify a custom identifier which can be used to manage the notification later.
+                        // If you don't provide one, a unique string will be generated automatically.
+                        //Identifier = "_notification_01",
+                        Title = "Outnumber:",
+                        Body = "Hey, you will lose in 5 hours if you don't make a move",
+                        Subtitle = "",
+                        ShowInForeground = true,
+                        ForegroundPresentationOption = (PresentationOption.Alert | PresentationOption.Sound),
+                        //CategoryIdentifier = "category_a",
+                        //ThreadIdentifier = "thread1",
+                        Trigger = timeTrigger,
+                    };
+
+                    iOSNotificationCenter.ScheduleNotification(notification);
+                }
+                if (time.TotalMinutes > 60*11) // 10 hour reminder
+                {
+                    var timeTrigger = new iOSNotificationTimeIntervalTrigger
+                    {
+                        TimeInterval = new System.TimeSpan(0, (int)time.TotalMinutes - 60 * 10, 0),
+                        Repeats = false
+                    };
+
+                    var notification = new iOSNotification()
+                    {
+                        // You can specify a custom identifier which can be used to manage the notification later.
+                        // If you don't provide one, a unique string will be generated automatically.
+                        //Identifier = "_notification_01",
+                        Title = "Outnumber:",
+                        Body = "Hey, you will lose in 10 hours if you don't make a move",
+                        Subtitle = "",
+                        ShowInForeground = true,
+                        ForegroundPresentationOption = (PresentationOption.Alert | PresentationOption.Sound),
+                        //CategoryIdentifier = "category_a",
+                        //ThreadIdentifier = "thread1",
+                        Trigger = timeTrigger,
+                    };
+
+                    iOSNotificationCenter.ScheduleNotification(notification);
+                }
+                if (time.TotalMinutes > 60 * 21) // 20 hour reminder
+                {
+                    var timeTrigger = new iOSNotificationTimeIntervalTrigger
+                    {
+                        TimeInterval = new System.TimeSpan(0, (int)time.TotalMinutes - 60 * 20, 0),
+                        Repeats = false
+                    };
+
+                    var notification = new iOSNotification()
+                    {
+                        // You can specify a custom identifier which can be used to manage the notification later.
+                        // If you don't provide one, a unique string will be generated automatically.
+                        //Identifier = "_notification_01",
+                        Title = "Outnumber:",
+                        Body = "Hey, you will lose in 20 hours if you don't make a move",
+                        Subtitle = "",
+                        ShowInForeground = true,
+                        ForegroundPresentationOption = (PresentationOption.Alert | PresentationOption.Sound),
+                        //CategoryIdentifier = "category_a",
+                        //ThreadIdentifier = "thread1",
+                        Trigger = timeTrigger,
+                    };
+
+                    iOSNotificationCenter.ScheduleNotification(notification);
+                }
+                if (time.TotalMinutes > 60 * 46) // 20 hour reminder
+                {
+                    var timeTrigger = new iOSNotificationTimeIntervalTrigger
+                    {
+                        TimeInterval = new System.TimeSpan(0, (int)time.TotalMinutes - 60 * 47, 0),
+                        Repeats = false
+                    };
+
+                    var notification = new iOSNotification()
+                    {
+                        // You can specify a custom identifier which can be used to manage the notification later.
+                        // If you don't provide one, a unique string will be generated automatically.
+                        //Identifier = "_notification_01",
+                        Title = "Outnumber:",
+                        Body = "Hey, you will lose in 45 hours if you don't make a move",
+                        Subtitle = "",
+                        ShowInForeground = true,
+                        ForegroundPresentationOption = (PresentationOption.Alert | PresentationOption.Sound),
+                        //CategoryIdentifier = "category_a",
+                        //ThreadIdentifier = "thread1",
+                        Trigger = timeTrigger,
+                    };
+
+                    iOSNotificationCenter.ScheduleNotification(notification);
+                }
+
+
             }
         }
 

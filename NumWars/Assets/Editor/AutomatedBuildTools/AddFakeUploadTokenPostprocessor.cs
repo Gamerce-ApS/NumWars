@@ -54,10 +54,10 @@ public class AddFakeUploadTokenPostprocessor : IPostprocessBuildWithReport
         if (!string.IsNullOrEmpty(project.TargetGuidByName("ReleaseForProfiling")) && !string.IsNullOrEmpty(project.GetBuildPropertyForConfig(targetGUID, "USYM_UPLOAD_AUTH_TOKEN")))
             project.SetBuildProperty(project.TargetGuidByName("ReleaseForProfiling"), "USYM_UPLOAD_AUTH_TOKEN", token);
 
+        project.SetBuildProperty(targetGUID, "ENABLE_BITCODE", "NO");
 
-        
-            
-            
+
+
         project.WriteToFile(pbxFilename);
     }
 }

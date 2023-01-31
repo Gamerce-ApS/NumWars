@@ -93,6 +93,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
     public void Login()
     {
 
+
       //  PlayfabCallbackHandler.instance.UpdateUserDataGrouped(
       //new Dictionary<string, string>() {
       //          {"pushnotification_tooken", Startup.instance.MyPlayfabID}}, null, null);
@@ -142,7 +143,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
         //   playerID = "annellla";
         // playerID = "kudis";
         playerID = "asdafe3eewrer";
-
+        playerID = "asdafe3eewrer2";
         instance = this;
         LoadingOverlay.instance.ShowLoadingFullscreen("LoginWithCustomID");
 
@@ -455,7 +456,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
     public void LoginSucess(LoginResult result)
     {
 
-
+        GetOpenOnlineGamesForLabel(); 
         //entityId = result.EntityToken.Entity.Id;
         // The expected entity type is title_player_account.
         //entityType = result.EntityToken.Entity.Type;
@@ -621,10 +622,10 @@ public class PlayfabHelperFunctions : MonoBehaviour
         if (AddingUsersToGame > 0)
             AddingUsersToGame -= Time.deltaTime;
 
-       //if ( Input.GetKeyUp(KeyCode.U))
-       //{
-       //     test();
-       //}
+        if (Input.GetKeyUp(KeyCode.U))
+        {
+            CloseSearchGame("qwe","asd","2");
+        }
 
 
         if (Input.GetKeyUp(KeyCode.H))
@@ -2626,6 +2627,8 @@ error => {
                 }
             }
 
+                GetOpenOnlineGamesForLabel();
+                GetOpenOnlineGames_Self();
 
             AddingUsersToGame = 60;
 
@@ -2725,7 +2728,7 @@ error => {
             return;
         //if (LoadingOverlay.instance.LoadingCall.Count > 0)
         //    return;
-
+        
         Startup._instance.DontAutoRefresh = false;
 
         //if (LoadingOverlay.instance != null)
@@ -3666,6 +3669,340 @@ error => {
         //});
 
     }
+
+    public void InitiateSearchForGame()
+    {
+        // Get online games
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"Player1", Startup.instance.MyPlayfabID}});
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/GetOpenOnlineGames.php", jsonString, (result) => {
+
+            Debug.Log("Done!" + result);
+
+            if (result.Length <= 0)
+            {
+                MainMenuController.instance.onlineGamesLabel.enabled = false;
+                // No online games, create new entry
+                StartSearchGame();
+                //TODO
+
+                return;
+            }
+
+            OpenGameList list = JsonUtility.FromJson<OpenGameList>("{\"myOpenGamesList\":" + result + "}");
+
+            int openGames = 0;
+            List<OpenGame> avalibleGames = new List<OpenGame>();
+            foreach (var item in list.myOpenGamesList)
+            {
+                if (item.Player1 != Startup.instance.MyPlayfabID)
+                {
+                    avalibleGames.Add(item);
+                    openGames++;
+                }
+            }
+
+            if (MainMenuController.instance != null)
+            {
+                if (openGames <= 0)
+                {
+                    //No online games, we create a new entry
+                    MainMenuController.instance.onlineGamesLabel.enabled = false;
+                    StartSearchGame();
+                }
+                else
+                {
+                    MainMenuController.instance.onlineGamesLabel.enabled = true;
+                    MainMenuController.instance.onlineGamesLabel.text = openGames + " games available!";
+
+                    // If Online game exists
+                    // Close game and start new game against user
+
+
+
+
+
+                    //bool hasActiveGameAgainstPlayer = false;
+                    //for (int i = 0; i < Startup._instance.openGamesList.Count; i++)
+                    //{
+                    //    if (Startup._instance.openGamesList[i].player1_PlayfabId == theProfile.PlayerId || Startup._instance.openGamesList[i].player2_PlayfabId == theProfile.PlayerId)
+                    //    {
+                    //        hasActiveGameAgainstPlayer = true;
+                    //    }
+                    //}
+
+                    PlayfabCallbackHandler.instance.GetOtherPlayerProfile(avalibleGames[0].Player1, result => {
+
+                        Debug.Log("Done getting data");
+
+                        
+
+                        string DisplayName = "Undefined";
+                        if (result.Data.ContainsKey("DisplayName"))
+                            DisplayName = result.Data["DisplayName"].Value;
+
+                        LoadingOverlay.instance.ShowLoadingFullscreen("Challenge in progress..");
+                        string newRoomName = string.Format("{0}-{1}", avalibleGames[0].Player1 + "_" + avalibleGames[0].Player2 + "_", UnityEngine.Random.Range(0, 1000000).ToString()) + UnityEngine.Random.Range(0, 1000000).ToString();    // for int, Random.Range is max-exclusive!
+                        PlayfabHelperFunctions.instance.ChallengePlayer(Startup.instance.MyPlayfabID, avalibleGames[0].Player1, DisplayName, newRoomName);
+                        PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(avalibleGames[0].Player1, newRoomName);
+                        PlayfabHelperFunctions.instance.AddGameToPlayerListCloudScript(avalibleGames[0].Player2, newRoomName);
+                        StartCoroutine(ChallengeProgress());
+                        CloseSearchGame(avalibleGames[0].Player1, Startup.instance.MyPlayfabID, avalibleGames[0].id);
+
+
+
+
+                    }, (error) => {
+                        Debug.Log("Got error retrieving user data:");
+                        Debug.Log(error.GenerateErrorReport());
+                    });
+
+
+            
+
+                }
+            }
+
+
+        }, (error) => {
+            Debug.Log("Error!" + error);
+            PlayFabError pfE = new PlayFabError();
+
+        });
+
+
+
+    }
+
+    public IEnumerator ChallengeProgress()
+    {
+
+        yield return new WaitForSeconds(3);
+        LoadingOverlay.instance.DoneLoading("Challenge in progress..");
+        Startup._instance.Refresh();
+        yield return new WaitForSeconds(2);
+
+
+
+
+    }
+    public void StartSearchGame()
+    {
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"Player1", Startup.instance.MyPlayfabID}});
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/AddSearchForGame.php", jsonString, (result) => {
+            Debug.Log("Done!" + result);
+            if (Startup._instance.SearchingForGameObject == null)
+            {
+                Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
+                Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+                Startup._instance.SearchingForGameObject.SetActive(true);
+                Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+                Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = "LookingForOnlineGame";
+            }
+            else
+            {
+
+            }
+
+        }, (error) => {
+            Debug.Log("Error!" + error);
+            PlayFabError pfE = new PlayFabError();
+            if (Startup._instance.SearchingForGameObject == null)
+            {
+                Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
+                Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+                Startup._instance.SearchingForGameObject.SetActive(true);
+                Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+                Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = "LookingForOnlineGame";
+            }
+            else
+            {
+
+            }
+        });
+    }
+
+    [System.Serializable]
+    public class OpenGameList
+    {
+        public OpenGame[] myOpenGamesList;
+    }
+    [System.Serializable]
+    public class OpenGame
+    {
+        public string id;
+        public string PlayerID;
+        public string Player1;
+        public string Player2;
+        public string TimeCreated;
+        public string TimeClosed;
+        public string isOpen;
+
+    }
+
+    public void GetOpenOnlineGames_Self()
+    {
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"Player1", Startup.instance.MyPlayfabID}});
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/GetOpenOnlineGames_Self.php", jsonString, (result) => {
+
+            Debug.Log("Done!" + result);
+
+            if (result.Length <= 0)
+            {
+                if (Startup._instance.SearchingForGameObject != null)
+                    Destroy(Startup._instance.SearchingForGameObject);
+                return;
+            }
+
+            OpenGameList list = JsonUtility.FromJson<OpenGameList>("{\"myOpenGamesList\":" + result + "}");
+
+            int openGames = 0;
+            bool playerHasAGame = false;
+   
+            if (list.myOpenGamesList.Length>0)
+                playerHasAGame = true;
+
+   
+            if (playerHasAGame)
+            {
+                if (Startup._instance.SearchingForGameObject == null)
+                {
+                    Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
+                    Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+                    Startup._instance.SearchingForGameObject.SetActive(true);
+                    Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                    Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+                    Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = "LookingForOnlineGame";
+                }
+                else
+                {
+
+                }
+            }
+            else
+            {
+                if (Startup._instance.SearchingForGameObject != null)
+                    Destroy(Startup._instance.SearchingForGameObject);
+
+            }
+
+
+
+        }, (error) => {
+            Debug.Log("Error!" + error);
+            PlayFabError pfE = new PlayFabError();
+
+
+        });
+    }
+
+
+    public void GetOpenOnlineGamesForLabel()
+    {
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"Player1", Startup.instance.MyPlayfabID}});
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/GetOpenOnlineGames.php", jsonString, (result) => {
+
+            Debug.Log("Done!" + result);
+
+            if(result.Length<=0)
+            {
+                MainMenuController.instance.onlineGamesLabel.enabled = false;
+                return;
+            }
+
+            OpenGameList list = JsonUtility.FromJson<OpenGameList>("{\"myOpenGamesList\":" + result + "}");
+
+            int openGames = 0;
+            bool playerHasAGame = false;
+            foreach (var item in list.myOpenGamesList)
+            {
+                if(item.Player1 != Startup.instance.MyPlayfabID)
+                {
+                    openGames++;
+                }
+                else
+                {
+                    if(item.isOpen == "1")
+                    playerHasAGame = true;
+                    // There is a looking for game that is owned by the user
+           
+                }
+            }
+            if(playerHasAGame)
+            {
+                if (Startup._instance.SearchingForGameObject == null)
+                {
+                    Startup._instance.SearchingForGameObject = (GameObject)GameObject.Instantiate(PlayfabHelperFunctions.instance.SearchingForGamePrefab, MainMenuController.instance._GameListParent);
+                    Startup._instance.SearchingForGameObject.transform.SetAsFirstSibling();
+                    Startup._instance.SearchingForGameObject.SetActive(true);
+                    Vector3 rc = Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition;
+                    Startup._instance.SearchingForGameObject.GetComponent<RectTransform>().localPosition = new Vector3(rc.x, rc.y, 0);
+                    Startup._instance.SearchingForGameObject.GetComponent<SearchGameInfo>().NameID = "LookingForOnlineGame";
+                }
+                else
+                {
+
+                }
+            }
+            else
+            {
+                if(Startup._instance.SearchingForGameObject != null)
+                    Destroy(Startup._instance.SearchingForGameObject);
+
+            }
+
+            if (MainMenuController.instance != null)
+            {
+                if (openGames <= 0)
+                    MainMenuController.instance.onlineGamesLabel.enabled = false;
+                else
+                {
+                    MainMenuController.instance.onlineGamesLabel.enabled = true;
+                    MainMenuController.instance.onlineGamesLabel.text = openGames + " games available!";
+
+                }
+            }           
+
+
+        }, (error) => {
+            Debug.Log("Error!" + error);
+            PlayFabError pfE = new PlayFabError();
+
+
+        });
+    }
+    public void CloseSearchGame(string p1,string p2, string gameID)
+    {
+        string jsonString = JsonConvert.SerializeObject(new Dictionary<string, string>() {
+                    {"Player1", p1},
+                    {"Player2", p2},
+                    {"gameID", gameID},
+        });
+
+        AWSBackend.instance.AWSClientAPI("phpBackend/CloseSearchGame.php", jsonString, (result) =>
+        {
+            Debug.Log("Done!" + result);
+            //Start online game
+
+        }, (error) => {
+            Debug.Log("Error!" + error);
+            PlayFabError pfE = new PlayFabError();
+
+        });
+    }
+
+
+
+
 
     //public void UploadPhoto()
     //{

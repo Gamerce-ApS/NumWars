@@ -244,7 +244,7 @@ namespace GameAnalyticsSDK.Editor
                 proj.AddFileToBuild(target, proj.AddFile("usr/lib/libz.dylib", "Frameworks/libz.dylib", UnityEditor.iOS.Xcode.PBXSourceTree.Sdk));
                 proj.AddFrameworkToProject(target, "AdSupport.framework", false);
                 proj.AddFrameworkToProject(target, "AppTrackingTransparency.framework", true);
-                //proj.SetBuildProperty(target, "ENABLE_BITCODE", "YES");
+                proj.SetBuildProperty(target, "ENABLE_BITCODE", "NO");
 #if gameanalytics_topon_enabled
                 string toponSubPath = "Libraries/GameAnalytics/Plugins/iOS/GameAnalyticsTopOnHelper.m";
                 string[] topOnGuids = AssetDatabase.FindAssets("GameAnalyticsTopOnHelper", null);

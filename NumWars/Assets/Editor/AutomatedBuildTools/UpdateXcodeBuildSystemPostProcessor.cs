@@ -110,6 +110,7 @@ public class UpdateXcodeBuildSystemPostProcessor : MonoBehaviour
             token = "FakeToken";
         }
         pbxProject.SetBuildProperty(targetGUID, "USYM_UPLOAD_AUTH_TOKEN", token);
+        pbxProject.SetBuildProperty(targetGUID, "ENABLE_BITCODE", "NO");
 
         // Write out the Xcode project
         pbxProject.WriteToFile(pbxProjectPath);
