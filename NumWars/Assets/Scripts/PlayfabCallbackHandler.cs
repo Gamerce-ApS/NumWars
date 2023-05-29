@@ -1397,7 +1397,7 @@ public class PlayfabCallbackHandler : MonoBehaviour
         {
             wrapMode = TextureWrapMode.Clamp
         };
-
+        bool standardPic = false;
         var fileName = Path.Combine(Application.persistentDataPath, playfabID + ".png");
         Debug.Log(fileName);
         if( File.Exists(fileName))
@@ -1415,8 +1415,11 @@ public class PlayfabCallbackHandler : MonoBehaviour
 
              profilePic = www.texture;
 
-            if (www.error != null)
+            if (www.error != null || www.text.Contains("data\":[]") )
+            {
+                standardPic = true;
                 profilePic = ProfilePictureManager.instance.StandardPicture;
+            }
         }
 
 
@@ -1441,7 +1444,7 @@ public class PlayfabCallbackHandler : MonoBehaviour
         if (onDone != null)
             onDone.Invoke();
 
-
+        if(standardPic == false)
         File.WriteAllBytes(Application.persistentDataPath + "/"+playfabID+".png", profilePic.EncodeToPNG());
 
     }

@@ -987,32 +987,38 @@ public class Startup : MonoBehaviourPunCallbacks
             }
 
             myOldGameList.Clear();
+            int aiGames = 0;
             for (int i = 0; i < oldGameList.Length; i++)
             {
                 if (i >= 0 && oldGameList[i].Length > 2)
                 {
                     BoardData bd = new BoardData(CompressString.StringCompressor.DecompressString(oldGameList[i]));
                     myOldGameList.Add(bd);
+                    if (bd.RoomName == "AI_GAME")
+                        aiGames++;
+
                 }
 
 
             }
+            Debug.Log("AI GAMES:" + aiGames);
 
+            
 
             //int realThropies = 0;
             //List<BoardData> RealGamesFinished = new List<BoardData>();
             //for (int i = 0; i < myOldGameList.Count; i++)
             //{
 
-              
+
             //        if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
             //        Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
             //        Startup.instance.myOldGameList[i].GetWinner() == Startup.instance.MyPlayfabID)
             //        {
             //        RealGamesFinished.Add(myOldGameList[i]);
             //    }
-             
-            
+
+
             //        if (Startup.instance.myOldGameList[i].player2_displayName != "AI" &&
             //        Startup.instance.myOldGameList[i].player2_displayName.Length > 0 &&
             //        Startup.instance.myOldGameList[i].GetWinner() != Startup.instance.MyPlayfabID &&
@@ -1035,16 +1041,16 @@ public class Startup : MonoBehaviourPunCallbacks
             //        realThropies -= 15;
             //    }
             //}
-             
+
 
             //Debug.LogWarning("Real Thropies:" + realThropies);
 
 
-                //
+            //
 
 
 
-                foreach (Transform child in MainMenuController.instance._GameListParent.transform)
+            foreach (Transform child in MainMenuController.instance._GameListParent.transform)
             {
                 GameObject.Destroy(child.gameObject);
             }
@@ -1096,7 +1102,7 @@ public class Startup : MonoBehaviourPunCallbacks
                 Debug.Log("ClearLocalNotifications");
                 UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
 
-                SetNotificationThatRunsOut();
+                //SetNotificationThatRunsOut();
 
                 pushHandled.Add(not.Identifier);
                 string theM = not.Body;
@@ -1132,7 +1138,7 @@ public class Startup : MonoBehaviourPunCallbacks
             Debug.Log("ClearLocalNotifications");
             UnityEngine.iOS.NotificationServices.ClearRemoteNotifications();
 
-            SetNotificationThatRunsOut();
+            //SetNotificationThatRunsOut();
         }
 
 #endif
@@ -1655,7 +1661,7 @@ public class Startup : MonoBehaviourPunCallbacks
 
         string achivemntData = JsonUtility.ToJson(new AchivmentList(AchivmentController.instance.myAchivments, AchivmentController.instance.myStatistics, AchivmentController.instance.myAIStatistics));
 
-        myData["XP"].Value = (int.Parse(myData["XP"].Value) + aValue).ToString();
+        myData["XP"].Value = (int.Parse(myData["XP"].Value) + 30).ToString();
 
         PlayfabCallbackHandler.instance.UpdateUserDataGrouped(
             new Dictionary<string, string>() {

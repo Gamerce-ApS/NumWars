@@ -73,6 +73,7 @@ public class PlayfabHelperFunctions : MonoBehaviour
 
 
 
+
         if (PlayerPrefs.HasKey("AppleUserIdKey"))
         {
             MainMenuController.instance.SetAppleLinked(true);
@@ -115,6 +116,9 @@ public class PlayfabHelperFunctions : MonoBehaviour
         else
             playerID = "asdafsfsdf2";
 
+        //PlayerPrefs.SetString("FacebookTooken", "10159330728290589");
+        //PlayerPrefs.SetInt("FacebookLink", 1);
+
         //playerID = "sdfsdfewwr2";
         //playerID = "NewUser1";
         //playerID = "PaxMM";
@@ -142,8 +146,10 @@ public class PlayfabHelperFunctions : MonoBehaviour
         // playerID = "maj";
         //   playerID = "annellla";
         // playerID = "kudis";
-        playerID = "asdafe3eewrer";
-        playerID = "asdafe3eewrer2";
+        //playerID = "asdafe3eewrer";
+        // playerID = "badboymike";
+
+        playerID = "newacc1";
         instance = this;
         LoadingOverlay.instance.ShowLoadingFullscreen("LoginWithCustomID");
 
@@ -152,7 +158,22 @@ public class PlayfabHelperFunctions : MonoBehaviour
         if (FB.IsInitialized)
             OnFacebookInitialized();
         else
-            FB.Init(OnFacebookInitialized);
+        {
+            try
+            {
+
+                Debug.Log("1: OnFacebookInitialized");
+                FB.Init(OnFacebookInitialized);
+
+            }
+            catch
+            {
+                Debug.Log("2: OnFacebookInitialized");
+                OnFacebookInitialized();
+            }
+
+        }
+
 
         if (PlayerPrefs.HasKey("FacebookLink"))
         {
@@ -2988,8 +3009,15 @@ error => {
     public void FacebookLink()
     {
 
-        
-        FB.LogInWithReadPermissions(new List<string>() { "public_profile", "gaming_user_picture" }, OnFacebookLoggedIn);
+        try
+        {
+            FB.LogInWithReadPermissions(new List<string>() { "public_profile", "gaming_user_picture" }, OnFacebookLoggedIn);
+
+        }
+        catch
+        {
+            Debug.LogError("Issue with FB login");
+        }
     }
     public void AppleLink()
     {
@@ -3166,6 +3194,8 @@ error => {
             //    FB.LogInWithReadPermissions(new List<string>() { "public_profile", "gaming_user_picture" }, OnFacebookStartupLogin);
             //else
             {
+                Debug.Log("3: FacebookLogin");
+
                 FacebookLogin();
 
             }
@@ -3251,8 +3281,17 @@ error => {
     public int failedLoginFacebook = 0;
     public void FacebookLogin()
     {
-        Debug.Log("Facebook Auth UserID: "+AccessToken.CurrentAccessToken.UserId);
-        Debug.Log("Facebook Auth Complete! Access Token: " + AccessToken.CurrentAccessToken.TokenString + "\nLogging into PlayFab...");
+        Debug.Log("4: FacebookLogin");
+        try
+        {
+            Debug.Log("Facebook Auth UserID: " + AccessToken.CurrentAccessToken.UserId);
+            Debug.Log("Facebook Auth Complete! Access Token: " + AccessToken.CurrentAccessToken.TokenString + "\nLogging into PlayFab...");
+
+        }
+        catch
+        {
+            Debug.Log("5: FacebookLogin");
+        }
 
 
 
@@ -3262,20 +3301,35 @@ error => {
 
 
         string accessToken = "";
-        if(AccessToken.CurrentAccessToken != null && AccessToken.CurrentAccessToken.UserId.Length>0)
+        Debug.Log("6: FacebookLogin");
+        try
         {
-            PlayerPrefs.SetString("FacebookTooken", AccessToken.CurrentAccessToken.UserId);
-            accessToken = AccessToken.CurrentAccessToken.UserId;
+            if (AccessToken.CurrentAccessToken != null && AccessToken.CurrentAccessToken.UserId.Length > 0)
+            {
+                PlayerPrefs.SetString("FacebookTooken", AccessToken.CurrentAccessToken.UserId);
+                accessToken = AccessToken.CurrentAccessToken.UserId;
+            }
+            Debug.Log("7: FacebookLogin");
+            if (PlayerPrefs.HasKey("FacebookTooken"))
+            {
+                accessToken = PlayerPrefs.GetString("FacebookTooken");
+            }
         }
-        if(PlayerPrefs.HasKey("FacebookTooken"))
+        catch
         {
-            accessToken = PlayerPrefs.GetString("FacebookTooken");
+            if (PlayerPrefs.HasKey("FacebookTooken"))
+            {
+                accessToken = PlayerPrefs.GetString("FacebookTooken");
+            }
         }
 
 
+        Debug.Log("8: FacebookLogin");
         AWSBackend.instance.AWSClientAPI("phpBackend/LoginWithCustomID.php?FacebookTooken=" + accessToken, jsonString,
               result =>
               {
+                  Debug.Log("9: FacebookLogin");
+
                   Dictionary<string, string> dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
 
                   LoginResult lr = new LoginResult();
@@ -3290,14 +3344,15 @@ error => {
                   lr.NewlyCreated = false;
 
                   lr.InfoResultPayload.AccountInfo.FacebookInfo = new UserFacebookInfo();
-                  lr.InfoResultPayload.AccountInfo.FacebookInfo.FacebookId = AccessToken.CurrentAccessToken.UserId;
-
+                  lr.InfoResultPayload.AccountInfo.FacebookInfo.FacebookId = accessToken;
+                  Debug.Log("10: FacebookLogin");
                   LoginSucess(lr);
 
 
               },
               error =>
               {
+                  Debug.Log("11: FacebookLogin");
                   Debug.LogError(error);
                   failedLoginFacebook++;
                   if(failedLoginFacebook>10)
@@ -3305,6 +3360,7 @@ error => {
 
                   LoadingOverlay.instance.LoadingCall.Clear();
                   PlayfabHelperFunctions.instance.ReLogin();
+                  Debug.Log("12: FacebookLogin");
                   SceneManager.LoadScene(0);
                   Startup._instance.Refresh(0.1f);
               });
@@ -3713,7 +3769,7 @@ error => {
                 }
                 else
                 {
-                    MainMenuController.instance.onlineGamesLabel.enabled = true;
+                    //MainMenuController.instance.onlineGamesLabel.enabled = true;
                     MainMenuController.instance.onlineGamesLabel.text = openGames + " games available!";
 
                     // If Online game exists
@@ -3966,7 +4022,7 @@ error => {
                     MainMenuController.instance.onlineGamesLabel.enabled = false;
                 else
                 {
-                    MainMenuController.instance.onlineGamesLabel.enabled = true;
+                    //MainMenuController.instance.onlineGamesLabel.enabled = true;
                     MainMenuController.instance.onlineGamesLabel.text = openGames + " games available!";
 
                 }

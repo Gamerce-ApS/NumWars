@@ -743,6 +743,7 @@ public class ScoreScreen : MonoBehaviour
         else
         {
             GameManager.instance.IsSendingData = false;
+            Startup._instance.AddXP(5);
         }
 
 

@@ -154,6 +154,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: aade9e8c671c74c6cbb0ceec485745a6, type: 3}
   - {fileID: 21300000, guid: f5da629c881c841eb85ef6dc91f1fd12, type: 3}
   - {fileID: 21300000, guid: 78cc78ac5b24a4370ab6283fea91e200, type: 3}
+  - {fileID: 21300000, guid: c47346bc77de64e10bbcb98c13d48566, type: 3}
   - {fileID: 21300000, guid: d41a3fbc4d7ac47e786311db91aca30e, type: 3}
   - {fileID: 21300000, guid: 3a8d93dc931934eebafe9f25f1b7f82b, type: 3}
   - {fileID: 21300000, guid: 758fb0fc196e04713a3e6ac372d6bf72, type: 3}
@@ -165,6 +166,7 @@ SpriteAtlas:
   - {fileID: 21300000, guid: 25c5da9d8624c4e66b20a1caaa84794d, type: 3}
   - {fileID: 21300000, guid: be78c2bdb70ce4f68b38899ac8e13fc0, type: 3}
   - {fileID: 21300000, guid: 127c54dd823b344499ab4d4ceae909d6, type: 3}
+  - {fileID: 21300000, guid: b6cc606ec59b344e784265a399dd7534, type: 3}
   - {fileID: 21300000, guid: 827ac5ee9d91947b3b6de46f6f84e3a5, type: 3}
   - {fileID: 21300000, guid: 5232180fd3e4145f2a00e17bfabe248e, type: 3}
   - {fileID: 21300000, guid: 3701542fe0eba4fcf800c2303276674f, type: 3}
@@ -281,6 +283,7 @@ SpriteAtlas:
   - loggo
   - game_end_bar
   - 4-2
+  - star
   - bg
   - tile_addition
   - bar_bottom
@@ -292,6 +295,7 @@ SpriteAtlas:
   - 13- Smiling Face with Heart-Eyes
   - allgameswindow_title
   - division
+  - star 1
   - scoreBar
   - character
   - levelIcon

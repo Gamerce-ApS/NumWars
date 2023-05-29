@@ -660,7 +660,7 @@ void Update()
             
             if (thePlayers[1].isAI)
             {
-                Startup._instance.AddXP(5);
+                //Startup._instance.AddXP(5);
                 GameManager.instance.SendingDataDelay = 0;
                 thePlayers[1].DoAI();
 

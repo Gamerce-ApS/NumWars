@@ -14,8 +14,9 @@ using VoxelBusters.EssentialKit;
 using VoxelBusters.CoreLibrary;
 using GameAnalyticsSDK;
 using UnityEngine.EventSystems;
+#if UNITY_IOS
 using Unity.Notifications.iOS;
-
+#endif
 public class MainMenuController : MonoBehaviour
 {
 
